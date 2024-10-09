@@ -1,6 +1,6 @@
 "use client";
 
-import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useEffect, useState } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -10,6 +10,7 @@ import {
   LAMPORTS_PER_SOL,
   TransactionMessage,
   VersionedTransaction,
+  Connection,
 } from "@solana/web3.js";
 import WhiteBgShimmerButton from "./magicui/whiteBg-shimmer-button";
 import {
@@ -18,6 +19,7 @@ import {
   Collection,
   getExistingOrder,
   recordNfcTap,
+  supabase,
   updateOrderAirdropStatus,
 } from "@/lib/supabaseClient";
 import { Input } from "./ui/input";
@@ -25,7 +27,6 @@ import confetti from "canvas-confetti";
 import LocationButton from "./LocationButton";
 import { SolanaFMService } from "@/lib/services/solanaExplorerService";
 import Link from "next/link";
-import { GoogleViaTipLinkWalletName } from "@tiplink/wallet-adapter";
 import { useVisitorData } from "@fingerprintjs/fingerprintjs-pro-react";
 import { v4 as uuidv4 } from "uuid";
 import { shortenAddress } from "@/lib/shortenAddress";
@@ -34,6 +35,8 @@ import ShowDonationModal from "./modals/ShowDonationModal";
 import { ExternalLink, Unplug } from "lucide-react";
 import { Wallet } from "lucide-react";
 import CheckInboxModal from "./modals/ShowMailSentModal";
+import { getSupabaseAdmin } from "@/lib/supabaseAdminClient";
+import { getSolPrice } from "@/lib/services/getSolPrice";
 
 interface MintButtonProps {
   collectible: Collectible;
@@ -62,7 +65,6 @@ export default function MintButton({
     disconnect,
   } = useWallet();
   const [isMinting, setIsMinting] = useState(false);
-  const { connection } = useConnection();
   const [isEligible, setIsEligible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +81,7 @@ export default function MintButton({
   const [isAirdropEligible, setIsAirdropEligible] = useState(false);
   const [tipLinkUrl, setTipLinkUrl] = useState<string | null>(null);
   const [showMailSentModal, setShowMailSentModal] = useState(false);
+  const connection = new Connection(process.env.NEXT_PUBLIC_RPC_URL!);
 
   const { getData } = useVisitorData(
     { extendedResult: true },
@@ -254,15 +257,11 @@ export default function MintButton({
       setTipLinkUrl(tipLinkUrl);
       if (!isFree && publicKey) {
         // Step 2: Create payment transaction (only for paid mints)
-        const solPrice = await fetch(
-          "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd"
-        );
-        const solPriceData = await solPrice.json();
-
-        if (solPriceData && !solPriceData.solana) {
+        const solPrice = await getSolPrice();
+        if (!solPrice) {
           return;
         }
-        const solPriceUSD = solPriceData.solana.usd;
+        const solPriceUSD = solPrice;
         priceInSol = collectible.price_usd / solPriceUSD;
         const lamports = Math.round(priceInSol * LAMPORTS_PER_SOL);
         const instructions = [
@@ -285,12 +284,7 @@ export default function MintButton({
 
         // Sign the transaction
         if (!signTransaction) {
-          toast({
-            title: "Error",
-            description: "Failed to sign transaction",
-            variant: "destructive",
-          });
-          return;
+          throw new Error("Failed to sign transaction");
         }
         let signedTx;
         // Serialize the signed transaction
@@ -355,6 +349,22 @@ export default function MintButton({
           "An unexpected error occurred. Please try again later.",
         variant: "destructive",
       });
+      // Set the order status as failed
+      if (existingOrder && existingOrder.id) {
+        const supabaseAdmin = await getSupabaseAdmin();
+        try {
+          const { error } = await supabaseAdmin
+            .from("orders")
+            .update({ status: "failed" })
+            .eq("id", existingOrder.id);
+
+          if (error) {
+            console.error("Failed to update order status:", error);
+          }
+        } catch (updateError) {
+          console.error("Error updating order status:", updateError);
+        }
+      }
       setError("An unexpected error occurred");
     } finally {
       setIsMinting(false);

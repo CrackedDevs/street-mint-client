@@ -18,6 +18,7 @@ import Gallery from "@/components/gallery";
 import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
 import EditionInformation from "@/components/EditionInformation";
+import { getSolPrice } from "@/lib/services/getSolPrice";
 
 async function fetchNFTData(
   id: string,
@@ -34,14 +35,12 @@ async function fetchNFTData(
 
     // Only fetch SOL price if price_usd is defined and greater than 0
     if (collectible.price_usd && collectible.price_usd > 0) {
-      const response = await fetch(
-        "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd"
-      );
-      const data = await response.json();
-      if (response.ok && data && data.solana) {
-        solPriceUSD = data.solana.usd;
-        priceInSOL = collectible.price_usd / solPriceUSD;
+      const solPrice = await getSolPrice();
+      if (!solPrice) {
+        return null;
       }
+      solPriceUSD = solPrice;
+      priceInSOL = collectible.price_usd / solPriceUSD;
     }
 
     let isIRLtapped = false;
