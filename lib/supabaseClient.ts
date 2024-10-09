@@ -515,10 +515,10 @@ export async function checkMintEligibility(walletAddress: string, collectibleId:
         }
 
         //CHECK FOR MINT START AND END DATE
-        const mintStartDateUTC = collectible.mint_start_date ? new Date(collectible.mint_start_date).getTime() : null;
-        const mintEndDateUTC = collectible.mint_end_date ? new Date(collectible.mint_end_date).getTime() : null;
+        const mintStartDateUTC = collectible.mint_start_date ? new Date(collectible.mint_start_date) : null;
+        const mintEndDateUTC = collectible.mint_end_date ? new Date(collectible.mint_end_date) : null;
 
-        const nowUTC = Date.now();
+        const nowUTC = new Date();
 
         // Check if minting has started
         if (mintStartDateUTC && nowUTC < mintStartDateUTC) {

@@ -43,8 +43,8 @@ const EditionInformation = ({
 
   useEffect(() => {
     const updateMintingStatus = () => {
-      const now = Date.now();
-
+      const DateTime = new Date();
+      const now = DateTime.getTime();
       if (!collectible.mint_start_date || !collectible.mint_end_date) {
         setMintingStatus("ongoing");
         return;

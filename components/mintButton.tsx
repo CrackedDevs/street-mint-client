@@ -126,7 +126,7 @@ export default function MintButton({
         localStorage.setItem("DeviceId", id.visitorId);
       }
       setDeviceId(deviceId!);
-      return deviceId;
+      return deviceId!;
     } catch (error) {
       console.error("Error fetching or setting device ID:", error);
       const newDeviceID = uuidv4();
@@ -152,6 +152,7 @@ export default function MintButton({
     const addressToCheck = isFreeMint ? walletAddress : publicKey?.toString();
     if (!deviceId) {
       const device = await fetchDeviceId();
+      setDeviceId(device);
     }
     if (addressToCheck && deviceId) {
       setIsLoading(true);
