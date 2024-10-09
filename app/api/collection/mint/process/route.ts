@@ -86,7 +86,8 @@ const waitForTransactionConfirmation = async (
     if (
       confirmation &&
       confirmation.value &&
-      confirmation.value.confirmationStatus === "confirmed"
+      confirmation.value.confirmationStatus === "confirmed" &&
+      confirmation.value.err == null
     ) {
       return true;
     }
@@ -184,6 +185,7 @@ export async function POST(req: Request, res: NextApiResponse) {
 
             // Retry sending the transaction
             txSignature = await connection.sendRawTransaction(
+              
               transaction.serialize(),
               {
                 skipPreflight: true,

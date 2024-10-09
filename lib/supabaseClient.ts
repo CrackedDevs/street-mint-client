@@ -490,7 +490,7 @@ export async function checkMintEligibility(walletAddress: string, collectibleId:
             .select('id')
             .eq('wallet_address', resolvedWalletAddress)
             .eq('collectible_id', collectibleId)
-            .in('status', ['completed', 'pending'])
+            .in('status', ['completed'])
             .single();
 
         if (orderError && orderError.code !== 'PGRST116') throw orderError; // PGRST116 means no rows returned
@@ -505,7 +505,7 @@ export async function checkMintEligibility(walletAddress: string, collectibleId:
             .select('id, status')
             .eq('device_id', deviceId)
             .eq('collectible_id', collectibleId)
-            .in('status', ['completed', 'pending'])
+            .in('status', ['completed' ])
             .single();
 
 
