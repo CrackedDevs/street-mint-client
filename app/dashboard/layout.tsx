@@ -3,11 +3,9 @@
 import { Toaster } from "@/components/ui/toaster";
 
 import DashboardHeader from "@/components/DashboardHeader";
-import { UserProfileProvider } from "../providers/UserProfileProvider";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <UserProfileProvider>
       <div className="flex flex-col h-screen bg-background">
         {/* Navbar */}
         <DashboardHeader />
@@ -17,6 +15,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
         <Toaster />
       </div>
-    </UserProfileProvider>
+  
   );
 }
