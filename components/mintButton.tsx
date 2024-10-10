@@ -430,7 +430,7 @@ export default function MintButton({
   const renderWalletButton = () => (
     <button
       onClick={connected ? disconnect : () => handleConnect()}
-      className={`w-full h-10 ${
+      className={`w-full h-12 rounded-full ${
         connected
           ? "bg-gray-200 hover:bg-gray-300 text-gray-800"
           : "bg-white text-black"
@@ -452,7 +452,7 @@ export default function MintButton({
 
   const renderMintButton = () => (
     <WhiteBgShimmerButton
-      borderRadius="6px"
+      borderRadius="9999px"
       className="w-full my-4 text-black hover:bg-gray-800 h-[40px] rounded font-bold"
       onClick={handleMintClick}
       disabled={
