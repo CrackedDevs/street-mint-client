@@ -107,7 +107,7 @@ export default function MintButton({
   };
 
   async function fetchDeviceId() {
-    let deviceId = localStorage.getItem("DeviceId");
+    let deviceId = localStorage.getItem("BrowserID");
     console.log("Device ID in mintButton.tsx:", deviceId);
     try {
       if (!deviceId) {
@@ -115,9 +115,9 @@ export default function MintButton({
         setDeviceId(id.visitorId);
         // Store the new device ID
         if (id.browserName == "Safari") {
-          localStorage.setItem("DeviceId", `${id.visitorId}-${uuidv4()}`);
+          localStorage.setItem("BrowserID", `${id.visitorId}-${uuidv4()}`);
         } else {
-          localStorage.setItem("DeviceId", id.visitorId);
+          localStorage.setItem("BrowserID", id.visitorId);
         }
       }
       setDeviceId(deviceId!);
@@ -125,7 +125,7 @@ export default function MintButton({
     } catch (error) {
       console.error("Error fetching or setting device ID:", error);
       const newDeviceID = uuidv4();
-      localStorage.setItem("DeviceId", newDeviceID);
+      localStorage.setItem("BrowserID", newDeviceID);
       setDeviceId(newDeviceID);
       return newDeviceID;
     }

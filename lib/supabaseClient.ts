@@ -505,12 +505,13 @@ export async function checkMintEligibility(walletAddress: string, collectibleId:
             .select('id, status')
             .eq('device_id', deviceId)
             .eq('collectible_id', collectibleId)
-            .in('status', ['completed' ])
+            .in('status', ['completed'])
             .single();
 
 
         if (deviceError && deviceError.code !== 'PGRST116') throw deviceError;
         if (existingDeviceMint) {
+            console.log("Device has already been used to mint this NFT", { "deviceID": deviceId, "walletAddress": walletAddress, "collectibleId": collectibleId });
             return { eligible: false, reason: 'This device has already been used to mint this NFT.' };
         }
 
@@ -614,11 +615,6 @@ export async function verifyNfcSignature(rnd: string, sign: string, pubKey: stri
         console.log("NFC tap already recorded");
         return false;
     }
-
-    // const recordSuccess = await recordNfcTap(rnd);
-    // if (!recordSuccess) {
-    //     return false;
-    // }
 
     return true;
 }
