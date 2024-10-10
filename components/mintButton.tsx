@@ -111,10 +111,14 @@ export default function MintButton({
     console.log("Device ID in mintButton.tsx:", deviceId);
     try {
       if (!deviceId) {
-        const id = await getData({ ignoreCache: true });
+        const id = await getData({ ignoreCache: true, extendedResult: true });
         setDeviceId(id.visitorId);
         // Store the new device ID
-        localStorage.setItem("DeviceId", id.visitorId);
+        if (id.browserName == "Safari") {
+          localStorage.setItem("DeviceId", `${id.visitorId}-${uuidv4()}`);
+        } else {
+          localStorage.setItem("DeviceId", id.visitorId);
+        }
       }
       setDeviceId(deviceId!);
       return deviceId!;
