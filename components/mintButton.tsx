@@ -212,7 +212,7 @@ export default function MintButton({
   }, [connected, publicKey, walletAddress, deviceId, collectible.id, isFreeMint]);
 
   useEffect(() => {
-    if (connected && publicKey) {
+    if (connected && publicKey && collectible.price_usd === 0) {
       setWalletAddress(publicKey.toString());
     }
   }, [connected]);
@@ -482,19 +482,28 @@ export default function MintButton({
 
     if (isWalletInjected) {
 
-      if (connected) {
+      if (connected && isEligible) {
         return (<></>)
       }
 
 
         return (<button
-      onClick={() => handleConnect()}
+          onClick={connected ? disconnect : () => handleConnect()}
       className={`w-full h-10 rounded-full ${
         connected ? "bg-gray-200 hover:bg-gray-300 text-gray-800" : "bg-white text-black"
       } font-bold py-2 px-4 rounded transition duration-300 ease-in-out flex items-center justify-center`}
     >
+      {connected ? (
+        <>
+          <Unplug className="mr-2 h-5 w-5" />
+          Disconnect {publicKey && shortenAddress(publicKey.toString())}
+        </>
+      ) : (
+        <>
           <Wallet className="mr-2 h-5 w-5" />
           Connect wallet
+        </>
+      )}
         </button>);
   };
 
@@ -581,9 +590,7 @@ export default function MintButton({
     </div>
   );
 
-  const isTapped = true
-
-  if (!isTapped) {
+  if (!isIRLtapped) {
     if (collectible.location)
       return <LocationButton location={collectible.location} />;
     else {
