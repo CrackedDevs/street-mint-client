@@ -1,3 +1,11 @@
+declare global {
+  interface Window {
+    phantom: any;
+    solflare: any;
+    backpack: any;
+  }
+}
+
 "use client";
 
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
@@ -32,6 +40,16 @@ import ShowAirdropModal from "./modals/ShowAirdropModal";
 import ShowDonationModal from "./modals/ShowDonationModal";
 import { ExternalLink, Unplug } from "lucide-react";
 import { Wallet } from "lucide-react";
+import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import Image from "next/image";
 
 interface MintButtonProps {
   collectible: Collectible;
@@ -40,6 +58,12 @@ interface MintButtonProps {
   isIRLtapped: boolean;
   mintStatus: string;
 }
+
+const wallets = [
+  { name: 'Phantom', icon: '/phantom.svg' },
+  { name: 'Solflare', icon: '/solflare.png' },
+  { name: 'Backpack', icon: '/backpack.svg' },
+]
 
 export default function MintButton({
   collectible,
@@ -404,20 +428,6 @@ export default function MintButton({
     return "LOADING...";
   };
 
-  if (!isIRLtapped) {
-    if (collectible.location)
-      return (
-        <div className="flex flex-col gap-4 w-full justify-center items-center">
-          <span className="text-sm text-gray-400 mb-2">
-            {collectible.location_note}
-          </span>
-          <LocationButton location={collectible.location} />
-        </div>
-      );
-    else {
-      return <div></div>;
-    }
-  }
   const handleConnect = () => {
     const button = document.querySelector(
       ".wallet-adapter-button"
@@ -427,8 +437,50 @@ export default function MintButton({
     }
   };
 
-  const renderWalletButton = () => (
-    <button
+  const handleWalletConnection = (walletName: string) => {
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isAndroid = /android/.test(userAgent);
+    const isIOS = /iphone|ipad|ipod/.test(userAgent);
+    const currentUrl = encodeURIComponent(window.location.href);
+    const ref = encodeURIComponent(window.location.origin);
+
+    switch (walletName) {
+      case 'Phantom':
+        if (isAndroid || isIOS) {
+          window.location.href = `https://phantom.app/ul/browse/${currentUrl}?ref=${ref}`;
+        } else {
+          throw new Error("Phantom is not supported on desktop");
+        }
+        break;
+      case 'Solflare':
+        if (isAndroid || isIOS) {
+          window.location.href = `https://solflare.com/ul/v1/browse/${currentUrl}?ref=${ref}`;
+        } else {
+          throw new Error("Solflare is not supported on desktop");
+        }
+        break;
+      case 'Backpack':
+        if (isAndroid || isIOS) {
+          window.location.href = `https://backpack.app/ul/browse/${currentUrl}?ref=${ref}`;
+        } else {
+          throw new Error("Backpack is not supported on desktop");
+        }
+        break;
+      default:
+        console.log(`${walletName} connection not implemented`);
+    }
+  };
+
+  const renderWalletButton = () => {
+
+    const isPhantomInjected = window?.phantom;
+    const isSolflareInjected = window?.solflare;
+    const isBackpackInjected = window.backpack?.isBackpack;
+
+    const isWalletInjected = isPhantomInjected || isSolflareInjected || isBackpackInjected;
+
+    if (isWalletInjected) {
+      return (<button
       onClick={connected ? disconnect : () => handleConnect()}
       className={`w-full h-12 rounded-full ${
         connected
@@ -447,8 +499,57 @@ export default function MintButton({
           Connect wallet
         </>
       )}
-    </button>
+    </button>);
+  };
+
+    return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          className="text-black w-full h-12 rounded-full font-bold py-2 px-4 transition duration-300 ease-in-out flex items-center justify-center"
+        >
+          {connected ? (
+            <>
+              <Unplug className="mr-2 h-5 w-5" />
+              Disconnect {publicKey && shortenAddress(publicKey.toString())}
+            </>
+          ) : (
+            <>
+              <Wallet className="mr-2 h-5 w-5" />
+              Connect wallet
+            </>
+          )}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md rounded-xl w-[95%]">
+        <DialogHeader className="relative">
+          <DialogTitle className="text-3xl font-bold text-center pt-6 text-black">
+            Connect Wallet
+          </DialogTitle>
+        </DialogHeader>
+        <div className="py-6">
+          <p className="text-center text-gray-600 mb-6 text-sm font-medium">
+            Choose your preferred wallet to get started
+          </p>
+          <div className="grid gap-3">
+            {wallets.map((wallet) => (
+              <Button
+                key={wallet.name}
+                variant="outline"
+                className="bg-white flex items-center justify-start gap-3 px-3 py-6 rounded-lg hover:bg-gray-50 border-gray-200 text-black transition-colors"
+                onClick={() => handleWalletConnection(wallet.name)}
+              >
+                <Image src={wallet.icon} alt={`${wallet.name} icon`} width={32} height={32} className="h-8 w-8 relative rounded" />
+                <span className="font-medium">{wallet.name}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
+};
 
   const renderMintButton = () => (
     <WhiteBgShimmerButton
@@ -498,6 +599,14 @@ export default function MintButton({
     </div>
   );
 
+  if (!isIRLtapped) {
+    if (collectible.location)
+      return <LocationButton location={collectible.location} />;
+    else {
+      return <div></div>;
+    }
+  }
+
   return (
     <div className="flex flex-col w-full justify-center items-center">
       <ShowDonationModal
@@ -531,10 +640,10 @@ export default function MintButton({
               </div>
             ) : (
               <div className="w-full mt-4 flex flex-col items-center justify-center">
-                {renderWalletButton()}
                 <div className="hidden">
                   <WalletMultiButton />
                 </div>
+                {renderWalletButton()}
                 {existingOrder?.status !== "completed" &&
                   walletAddress &&
                   renderMintButton()}

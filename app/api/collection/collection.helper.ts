@@ -165,7 +165,7 @@ export async function mintNFTWithBubbleGumTree(
 
       const txSignature = bs58.encode(mintTx.signature);
       const solscanLink =
-        process.env.NODE_ENV === "development"
+        process.env.NEXT_PUBLIC_NODE_ENV === "development"
           ? `https://explorer.solana.com/tx/${txSignature}?cluster=devnet`
           : `https://explorer.solana.com/tx/${txSignature}`;
 
