@@ -1,8 +1,8 @@
 export class SolanaFMService {
-    private static readonly BASE_URL = 'https://solana.fm';
+    private static readonly BASE_URL = 'https://solscan.io';
     private static readonly CLUSTER = process.env.NEXT_PUBLIC_NODE_ENV === 'development' ? 'devnet-alpha' : 'mainnet-beta';
 
-    private static getUrl(type: 'tx' | 'address', id: string): string {
+    private static getUrl(type: 'tx' | 'address' | 'token', id: string): string {
         return `${this.BASE_URL}/${type}/${id}?cluster=${this.CLUSTER}`;
     }
 
@@ -12,5 +12,9 @@ export class SolanaFMService {
 
     static getAddress(address: string): string {
         return this.getUrl('address', address);
+    }
+
+    static getToken(tokenAddress: string): string {
+        return this.getUrl('token', tokenAddress);
     }
 }

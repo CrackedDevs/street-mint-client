@@ -152,7 +152,7 @@ export const GalleryGrid = () => {
                 variant="outline"
                 onClick={() =>
                   window.open(
-                    SolanaFMService.getAddress(nft.mintAddress),
+                    SolanaFMService.getToken(nft.mintAddress),
                     "_blank"
                   )
                 }
