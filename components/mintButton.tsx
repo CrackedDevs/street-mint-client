@@ -137,12 +137,6 @@ export default function MintButton({
   async function checkEligibilityAndExistingOrder() {
     if (connected) {
       setWalletAddress(publicKey?.toString() || "");
-      if (collectible.price_usd > 0 && randomNumber) {
-        const recordSuccess = await recordNfcTap(randomNumber);
-        if (!recordSuccess) {
-          return;
-        }
-      }
     }
     const addressToCheck = isFreeMint ? walletAddress : publicKey?.toString();
     if (!deviceId) {
@@ -213,7 +207,12 @@ export default function MintButton({
     }
     setIsMinting(true);
     setError(null);
-
+    if (collectible.price_usd > 0 && randomNumber) {
+      const recordSuccess = await recordNfcTap(randomNumber);
+      if (!recordSuccess) {
+        return;
+      }
+    }
     try {
       let signedTransaction = null;
 
