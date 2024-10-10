@@ -434,25 +434,26 @@ export default function MintButton({
     const isAndroid = /android/.test(userAgent);
     const isIOS = /iphone|ipad|ipod/.test(userAgent);
     const currentUrl = encodeURIComponent(window.location.href);
+    const ref = encodeURIComponent(window.location.origin);
 
     switch (walletName) {
       case 'Phantom':
         if (isAndroid || isIOS) {
-          window.location.href = `https://phantom.app/ul/browse/${currentUrl}`;
+          window.location.href = `https://phantom.app/ul/browse/${currentUrl}?ref=${ref}`;
         } else {
           throw new Error("Phantom is not supported on desktop");
         }
         break;
       case 'Solflare':
         if (isAndroid || isIOS) {
-          window.location.href = `https://solflare.com/ul/v1/browse/${currentUrl}`;
+          window.location.href = `https://solflare.com/ul/v1/browse/${currentUrl}?ref=${ref}`;
         } else {
           throw new Error("Solflare is not supported on desktop");
         }
         break;
       case 'Backpack':
         if (isAndroid || isIOS) {
-          window.location.href = `https://backpack.app/browse/${currentUrl}`;
+          window.location.href = `https://backpack.app/browse/${currentUrl}?ref=${ref}`;
         } else {
           throw new Error("Backpack is not supported on desktop");
         }
