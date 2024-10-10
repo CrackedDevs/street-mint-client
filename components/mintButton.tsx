@@ -581,7 +581,7 @@ export default function MintButton({
 
   const isTapped = true
 
-  if (isTapped) {
+  if (!isTapped) {
     if (collectible.location)
       return <LocationButton location={collectible.location} />;
     else {
