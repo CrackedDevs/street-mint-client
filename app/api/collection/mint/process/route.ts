@@ -86,7 +86,8 @@ const waitForTransactionConfirmation = async (
     if (
       confirmation &&
       confirmation.value &&
-      confirmation.value.confirmationStatus === "confirmed"
+      confirmation.value.confirmationStatus === "confirmed" &&
+      confirmation.value.err == null
     ) {
       return true;
     }
@@ -184,6 +185,7 @@ export async function POST(req: Request, res: NextApiResponse) {
 
             // Retry sending the transaction
             txSignature = await connection.sendRawTransaction(
+              
               transaction.serialize(),
               {
                 skipPreflight: true,
@@ -257,15 +259,14 @@ export async function POST(req: Request, res: NextApiResponse) {
         }
         const { data, error } = await resend.emails.send({
           text: "Claim your Collectible!",
-          from: "Darly Kelly <darly@mail.irls.xyz>",
+          from: "Daryl <daryl@mail.irls.xyz>",
           to: [wallet_address],
-          subject: "Claim your Collectible!",
+          subject: "Claim IRLS your Collectible!",
           react: TipLinkEmailTemplate({ tiplinkUrl: tiplink_url, nftImageUrl }),
         });
 
         if (error) {
           console.log(error);
-          // return NextResponse.json({ success: false, error: error.message }, { status: 400 });
         }
 
         console.log("Email sent successfully");

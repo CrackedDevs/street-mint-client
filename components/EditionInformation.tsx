@@ -25,6 +25,7 @@ const EditionInformation = ({
   soldCount,
   isIRLSmint,
   isIRLtapped,
+  randomNumber,
 }: {
   collection: Collection;
   collectible: Collectible;
@@ -33,6 +34,7 @@ const EditionInformation = ({
   soldCount: number;
   isIRLtapped: boolean;
   isIRLSmint?: boolean;
+  randomNumber: string | null;
 }) => {
   const [mintingStatus, setMintingStatus] = useState<
     "not-started" | "ongoing" | "ended" | "loading"
@@ -41,8 +43,8 @@ const EditionInformation = ({
 
   useEffect(() => {
     const updateMintingStatus = () => {
-      const now = Date.now();
-
+      const DateTime = new Date();
+      const now = DateTime.getTime();
       if (!collectible.mint_start_date || !collectible.mint_end_date) {
         setMintingStatus("ongoing");
         return;
@@ -140,6 +142,7 @@ const EditionInformation = ({
       </CardContent>
       <CardFooter className="flex flex-col md:flex-row md:justify-between md:items-center space-y-2 md:space-y-0 md:space-x-4">
         <MintButton
+          randomNumber={randomNumber}
           isIRLtapped={
             process.env.NEXT_PUBLIC_NODE_ENV === "development"
               ? true

@@ -45,6 +45,8 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
+        {/* NFC Public Key Update Button */}
+        <div className="mt-10 flex items-center justify-center"></div>
 
         {/* Feature section */}
         <div className="mx-auto mt-32 max-w-7xl px-6 sm:mt-56 lg:px-8">

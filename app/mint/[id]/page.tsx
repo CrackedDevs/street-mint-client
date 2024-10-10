@@ -6,11 +6,13 @@ import {
   QuantityType,
   verifyNfcSignature,
   getCompletedOrdersCount,
+  recordNfcTap,
 } from "@/lib/supabaseClient";
 import Gallery from "@/components/gallery";
 import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
 import EditionInformation from "@/components/EditionInformation";
+import { getSolPrice } from "@/lib/services/getSolPrice";
 
 async function getNFTData(id: string, rnd: string, sign: string) {
   let isIRLtapped = false;
@@ -21,13 +23,11 @@ async function getNFTData(id: string, rnd: string, sign: string) {
 
   // Only fetch SOL price if usdc_price is defined and greater than 0
   if (collectible.price_usd && collectible.price_usd > 0) {
-    const response = await fetch(
-      "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd"
-    );
-    const data = await response.json();
-    if (response.ok && data && data.solana) {
-      solPriceInUSD = data.solana.usd;
+    const solPrice = await getSolPrice();
+    if (!solPrice) {
+      return null;
     }
+    solPriceInUSD = solPrice;
   }
 
   if (collectible.nfc_public_key) {
@@ -60,6 +60,13 @@ async function getNFTData(id: string, rnd: string, sign: string) {
   }
   const soldCount = await getCompletedOrdersCount(collectible.id);
 
+  if (collectible.price_usd == 0 && rnd && sign) {
+    const recordSuccess = await recordNfcTap(rnd);
+    if (!recordSuccess) {
+      return;
+    }
+  }
+
   return {
     collectible,
     collection,
@@ -68,6 +75,7 @@ async function getNFTData(id: string, rnd: string, sign: string) {
     remainingQuantity,
     isIRLtapped,
     soldCount,
+    randomNumber: rnd,
   };
 }
 
@@ -103,6 +111,7 @@ export default async function NFTPage({
     remainingQuantity,
     soldCount,
     isIRLtapped,
+    randomNumber,
   } = data;
 
   return (
@@ -146,6 +155,7 @@ export default async function NFTPage({
             <ArtistInfoComponent artist={artist} />
             {/* Edition Information Section */}
             <EditionInformation
+              randomNumber={randomNumber}
               soldCount={soldCount}
               isIRLtapped={isIRLtapped}
               collection={{

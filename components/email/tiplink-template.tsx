@@ -29,6 +29,18 @@ export default function TipLinkEmailTemplate({
           boxShadow: "0 0 10px rgba(0,0,0,0.1)",
         }}
       >
+        <img
+          src="https://iaulwnqmthzvuxfubnsb.supabase.co/storage/v1/object/public/nft-images/photo_2024-09-12_22-11-09.jpg"
+          alt="IRLS Logo"
+          width={150}
+          height={70}
+          style={{
+            display: "block",
+            maxWidth: "150px",
+            height: "auto",
+            margin: "0 auto 20px",
+          }}
+        />
         <h1
           style={{
             color: "#4a4a4a",
@@ -36,7 +48,7 @@ export default function TipLinkEmailTemplate({
             marginBottom: "20px",
           }}
         >
-          Your Collectible is Ready! 🎉
+          Congratulations! Your IRL Collectible is ready to be claimed 🎉
         </h1>
         <img
           src={nftImageUrl}
@@ -65,10 +77,11 @@ export default function TipLinkEmailTemplate({
             textTransform: "uppercase",
           }}
         >
-          Claim Your Collectible
+          Claim Your IRL Collectible
         </a>
         <p>
-          This link is your golden ticket to your Collectible. Keep it safe!
+          This link is your golden ticket to your IRL Collectible. Make sure you
+          claim it to qualify for digital and physical prizes!
         </p>
       </div>
     </div>

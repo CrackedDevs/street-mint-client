@@ -490,7 +490,7 @@ export async function checkMintEligibility(walletAddress: string, collectibleId:
             .select('id')
             .eq('wallet_address', resolvedWalletAddress)
             .eq('collectible_id', collectibleId)
-            .in('status', ['completed', 'pending'])
+            .in('status', ['completed'])
             .single();
 
         if (orderError && orderError.code !== 'PGRST116') throw orderError; // PGRST116 means no rows returned
@@ -505,20 +505,21 @@ export async function checkMintEligibility(walletAddress: string, collectibleId:
             .select('id, status')
             .eq('device_id', deviceId)
             .eq('collectible_id', collectibleId)
-            .in('status', ['completed', 'pending'])
+            .in('status', ['completed'])
             .single();
 
 
         if (deviceError && deviceError.code !== 'PGRST116') throw deviceError;
         if (existingDeviceMint) {
+            console.log("Device has already been used to mint this NFT", { "deviceID": deviceId, "walletAddress": walletAddress, "collectibleId": collectibleId });
             return { eligible: false, reason: 'This device has already been used to mint this NFT.' };
         }
 
         //CHECK FOR MINT START AND END DATE
-        const mintStartDateUTC = collectible.mint_start_date ? new Date(collectible.mint_start_date).getTime() : null;
-        const mintEndDateUTC = collectible.mint_end_date ? new Date(collectible.mint_end_date).getTime() : null;
+        const mintStartDateUTC = collectible.mint_start_date ? new Date(collectible.mint_start_date) : null;
+        const mintEndDateUTC = collectible.mint_end_date ? new Date(collectible.mint_end_date) : null;
 
-        const nowUTC = Date.now();
+        const nowUTC = new Date();
 
         // Check if minting has started
         if (mintStartDateUTC && nowUTC < mintStartDateUTC) {
@@ -615,16 +616,21 @@ export async function verifyNfcSignature(rnd: string, sign: string, pubKey: stri
         return false;
     }
 
+    return true;
+}
+
+export async function recordNfcTap(rnd: string): Promise<boolean> {
     const { error: insertError } = await supabase
         .from('nfc_taps')
         .insert({ random_number: rnd });
 
     if (insertError) {
         console.error('Error recording NFC tap:', insertError);
-        return false
+        return false;
     }
     return true;
 }
+
 
 export async function getCompletedOrdersCount(collectibleId: number): Promise<number> {
     const { count, error } = await supabase

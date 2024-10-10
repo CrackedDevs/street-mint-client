@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import AppWalletProvider from "@/components/AppWalletProvider";
-import { UserProfileProvider } from "./providers/UserProfileProvider";
 import { FpjsProvider } from "@fingerprintjs/fingerprintjs-pro-react";
+import { UserProfileProvider } from "./providers/UserProfileProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
