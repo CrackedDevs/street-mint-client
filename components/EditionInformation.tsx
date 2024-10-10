@@ -17,6 +17,8 @@ import { Earth, Stars, Clock } from "lucide-react";
 import { TimeService } from "@/lib/services/timeService";
 import { EditionService } from "@/lib/services/editionService";
 
+export type MintStatus = "not-started" | "ongoing" | "ended" | "loading";
+
 const EditionInformation = ({
   collection,
   collectible,
@@ -37,7 +39,7 @@ const EditionInformation = ({
   randomNumber: string | null;
 }) => {
   const [mintingStatus, setMintingStatus] = useState<
-    "not-started" | "ongoing" | "ended" | "loading"
+  MintStatus
   >("loading");
   const [timeLeft, setTimeLeft] = useState<string>("");
 

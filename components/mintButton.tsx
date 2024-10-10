@@ -56,13 +56,14 @@ import Image from "next/image";
 import CheckInboxModal from "./modals/ShowMailSentModal";
 import { getSupabaseAdmin } from "@/lib/supabaseAdminClient";
 import { getSolPrice } from "@/lib/services/getSolPrice";
+import { MintStatus } from "./EditionInformation";
 
 interface MintButtonProps {
   collectible: Collectible;
   collection: Collection;
   artistWalletAddress: string;
   isIRLtapped: boolean;
-  mintStatus: string;
+  mintStatus: MintStatus;
   randomNumber: string | null;
 }
 
@@ -166,6 +167,15 @@ export default function MintButton({
     if (!deviceId) {
       const device = await fetchDeviceId();
       setDeviceId(device);
+    }
+    if (tokenAddress
+    ) {
+      toast({
+        title: "Error",
+        description: "You have already minted this NFT",
+        variant: "destructive",
+      });
+      return;
     }
     if (addressToCheck && deviceId) {
       setIsLoading(true);
@@ -476,24 +486,21 @@ export default function MintButton({
     const isWalletInjected = isPhantomInjected || isSolflareInjected || isBackpackInjected;
 
     if (isWalletInjected) {
-      return (<button
-      onClick={connected ? disconnect : () => handleConnect()}
-      className={`w-full h-10 ${
+
+      if (connected) {
+        return (<></>)
+      }
+
+
+        return (<button
+      onClick={() => handleConnect()}
+      className={`w-full h-10 rounded-full ${
         connected ? "bg-gray-200 hover:bg-gray-300 text-gray-800" : "bg-white text-black"
       } font-bold py-2 px-4 rounded transition duration-300 ease-in-out flex items-center justify-center`}
     >
-      {connected ? (
-        <>
-          <Unplug className="mr-2 h-5 w-5" />
-          Disconnect {publicKey && shortenAddress(publicKey.toString())}
-        </>
-      ) : (
-        <>
           <Wallet className="mr-2 h-5 w-5" />
           Connect wallet
-        </>
-      )}
-    </button>);
+        </button>);
   };
 
     return (
