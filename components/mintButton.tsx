@@ -566,7 +566,7 @@ export default function MintButton({
   const renderCompletedMint = () => (
     <div className="flex flex-col items-center my-3 w-full">
       <Link
-        href={SolanaFMService.getAddress(tokenAddress || existingOrder.mint_address)}
+        href={SolanaFMService.getToken(tokenAddress || existingOrder.mint_address)}
         target="_blank"
         className="w-full"
       >
