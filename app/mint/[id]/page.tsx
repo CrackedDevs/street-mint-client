@@ -207,7 +207,7 @@ export default async function NFTPage({
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  {collectible.location || "N/A"}
+                  {collectible.location ? 'Google Maps' : "N/A"}
                 </a>
               </div>
               <div>

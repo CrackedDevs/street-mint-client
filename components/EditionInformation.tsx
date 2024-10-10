@@ -13,7 +13,7 @@ import SparklesText from "@/components/magicui/sparkles-text";
 import AnimatedShinyText from "@/components/magicui/animated-shiny-text";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import { Earth, Stars } from "lucide-react";
+import { Earth, Stars, Clock } from "lucide-react";
 import { TimeService } from "@/lib/services/timeService";
 import { EditionService } from "@/lib/services/editionService";
 
@@ -37,8 +37,8 @@ const EditionInformation = ({
   randomNumber: string | null;
 }) => {
   const [mintingStatus, setMintingStatus] = useState<
-    "not-started" | "ongoing" | "ended"
-  >("not-started");
+    "not-started" | "ongoing" | "ended" | "loading"
+  >("loading");
   const [timeLeft, setTimeLeft] = useState<string>("");
 
   useEffect(() => {
@@ -76,130 +76,100 @@ const EditionInformation = ({
   const effectiveIsIRLtapped = collectible.whitelist ? true : isIRLtapped;
 
   return (
-    <div>
-      <Card className="bg-black mx-auto text-white my-2">
-        <CardHeader className="space-y-3 flex justify-between">
-          <div className="flex justify-between items-center w-full">
-            <div className="flex justify-between items-center">
-              <Badge
-                variant="secondary"
-                className="text-black text-md md:text-lg"
-              >
-                {EditionService.getEditionTypeText(
-                  collectible.quantity_type as QuantityType
-                )}
-              </Badge>
-              <span className="md:text-2xl text-md ml-2 font-bold">
-                {collectible.quantity_type === QuantityType.Limited &&
-                  remainingQuantity !== null && (
-                    <span>
-                      {remainingQuantity} of {collectible.quantity}
-                    </span>
-                  )}
+    <Card className="w-full md:max-w-[600px] bg-black text-white border border-white/10">
+      <CardHeader className="space-y-1">
+        <div className="flex justify-between items-center">
+          <Badge variant="outline" className="border-white/20 text-white rounded-xl">
+            {EditionService.getEditionTypeText(
+              collectible.quantity_type as QuantityType
+            )}
+          </Badge>
+          {collectible.quantity_type === QuantityType.Limited &&
+            remainingQuantity !== null && (
+              <span className="text-sm font-medium">
+                {remainingQuantity} of {collectible.quantity}
               </span>
-            </div>
-            <div
-              className={cn(
-                "group rounded-full border border-black/5 bg-neutral-100 text-base text-white transition-all ease-in hover:cursor-pointer hover:bg-neutral-200 dark:border-white/5 dark:bg-neutral-900 dark:hover:bg-neutral-800 w-fit"
-              )}
+            )}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4 md:space-y-6">
+        <div className="md:flex md:justify-between md:items-center pt-4">
+          <div className="text-center md:text-left pb-2">
+            <span
+            className="text-5xl md:text-6xl font-bold"
             >
-              <AnimatedShinyText className="inline-flex w-fit items-center justify-center px-2 md:px-4 py-1 transition ease-out hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
-                <span>✨ Gasless Mint</span>
-              </AnimatedShinyText>
-            </div>
+              {
+                collectible.price_usd === 0
+                  ? "Free Mint"
+                  : `$${collectible.price_usd.toFixed(2)}`
+              }
+            </span>
           </div>
-          <CardTitle className="text-3xl font-extrabold">
-            {collectible.name}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 gap-10">
-          <div className="flex justify-between gap-10 flex-col items-baseline">
-            <div className="flex w-full justify-center items-center">
-              <SparklesText
-                className="text-5xl font-bold"
-                sparklesCount={5}
-                text={`${
-                  collectible.price_usd === 0
-                    ? "Free Mint"
-                    : `$${collectible.price_usd.toFixed(2)}`
-                }`}
-              />
-            </div>
-            <div className="flex  flex-row w-full justify-between">
-              <div>
-                {soldCount > 0 && (
-                  <span className="text-white text-lg">
-                    Minted: {soldCount}
-                  </span>
-                )}
-              </div>
-              <Badge variant="secondary" className="text-black text-sm">
-                EXCLUSIVE IRL MINT <Earth className="ml-2" />
-              </Badge>
-            </div>
+          <div className="flex justify-between text-sm mt-2 md:mt-0 md:flex-col md:items-end">
+            {soldCount > 0 && <span>Minted: {soldCount}</span>}
+            <Badge variant="outline" className="border-white/20 text-white md:mt-2 rounded-xl">
+              EXCLUSIVE IRL MINT <Earth className="ml-2 w-4 h-4" />
+            </Badge>
           </div>
-
-          {/* Minting Status and Time Left */}
-          <div className="flex flex-row justify-between items-center space-y-2">
-            {mintingStatus === "ongoing" && (
-              <Badge variant="secondary" className="text-black text-md">
-                Live <Stars className="ml-2" />
-              </Badge>
+        </div>
+        <div className="flex items-center justify-center md:justify-start space-x-2 bg-white/10 rounded-full py-2 px-4">
+          <Badge
+            variant="secondary"
+            className={cn(
+              "font-semibold rounded-xl",
+              mintingStatus === "ongoing" && "bg-green-500 text-black",
+              mintingStatus === "not-started" && "bg-yellow-500 text-black",
+              mintingStatus === "ended" && "bg-red-500 text-black",
+              mintingStatus === "loading" && "bg-gray-500 text-black"
             )}
-            {mintingStatus === "not-started" && (
-              <Badge variant="secondary" className="text-black text-md">
-                Upcoming <Stars className="ml-2" />
-              </Badge>
-            )}
-            {mintingStatus === "ended" && (
-              <Badge variant="secondary" className="text-black text-md">
-                Ended <Stars className="ml-2" />
-              </Badge>
-            )}
-            {timeLeft && (
-              <div className="text-lg font-semibold">
+          >
+            {mintingStatus === "ongoing" && "Live"}
+            {mintingStatus === "not-started" && "Upcoming"}
+            {mintingStatus === "ended" && "Ended"}
+            {mintingStatus === "loading" && "Loading..."}
+          </Badge>
+          {timeLeft && (
+            <>
+              <Clock className="w-4 h-4" />
+              <span className="text-sm font-medium">
                 {mintingStatus === "not-started"
                   ? `Starts in: ${timeLeft}`
                   : `${timeLeft} left`}
-              </div>
-            )}
-          </div>
-
-          {/* Render MintButton only if minting has started */}
-
-          <MintButton
-            randomNumber={randomNumber}
-            isIRLtapped={
-              process.env.NODE_ENV === "development"
-                ? true
-                : effectiveIsIRLtapped
-            }
-            artistWalletAddress={artistWalletAddress}
-            collectible={{
-              ...collectible,
-              quantity_type: collectible.quantity_type as QuantityType,
-            }}
-            collection={{
-              ...collection,
-            }}
-            mintStatus={mintingStatus}
-          />
-        </CardContent>
-        <CardFooter>
-          {isIRLSmint ? (
-            <p className="text-sm text-gray-300">
-              Locate the IRLS Mint station, tap it with your phone to claim your
-              digital collectible.
-            </p>
-          ) : (
-            <p className="text-sm text-gray-300">
-              Locate the Street Mint station, tap it with your phone to claim
-              your digital collectible.
-            </p>
+              </span>
+            </>
           )}
-        </CardFooter>
-      </Card>
-    </div>
+        </div>
+      </CardContent>
+      <CardFooter className="flex flex-col md:flex-row md:justify-between md:items-center space-y-2 md:space-y-0 md:space-x-4">
+        <MintButton
+          randomNumber={randomNumber}
+          isIRLtapped={
+            process.env.NEXT_PUBLIC_NODE_ENV === "development"
+              ? true
+              : effectiveIsIRLtapped
+          }
+          artistWalletAddress={artistWalletAddress}
+          collectible={{
+            ...collectible,
+            quantity_type: collectible.quantity_type as QuantityType,
+          }}
+          collection={{
+            ...collection,
+          }}
+          mintStatus={mintingStatus}
+        />
+        <div className="text-center md:text-right text-sm">
+          <AnimatedShinyText className="inline-flex w-fit items-center justify-center px-2 md:px-4 py-1 transition ease-out text-white hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
+            <span>✨ Gasless Mint</span>
+          </AnimatedShinyText>
+          <p className="text-xs mt-1 text-white/70">
+            {isIRLSmint
+              ? "Locate the IRLS Mint station, tap it with your phone to claim your digital collectible."
+              : "Locate the Street Mint station, tap it with your phone to claim your digital collectible."}
+          </p>
+        </div>
+      </CardFooter>
+    </Card>
   );
 };
 
