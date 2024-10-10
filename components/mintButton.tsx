@@ -626,6 +626,7 @@ export default function MintButton({
               </div>
             ) : (
               <div className="w-full mt-4 flex flex-col items-center justify-center">
+                {renderWalletButton()}
                 <div className="hidden">
                   <WalletMultiButton />
                 </div>
