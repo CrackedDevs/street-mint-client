@@ -170,11 +170,6 @@ export default function MintButton({
     }
     if (tokenAddress
     ) {
-      toast({
-        title: "Error",
-        description: "You have already minted this NFT",
-        variant: "destructive",
-      });
       return;
     }
     if (addressToCheck && deviceId) {
