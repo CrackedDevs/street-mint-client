@@ -453,7 +453,7 @@ export default function MintButton({
         break;
       case 'Backpack':
         if (isAndroid || isIOS) {
-          window.location.href = `https://backpack.app/browse/${currentUrl}?ref=${ref}`;
+          window.location.href = `https://backpack.app/ul/browse/${currentUrl}?ref=${ref}`;
         } else {
           throw new Error("Backpack is not supported on desktop");
         }
