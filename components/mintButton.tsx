@@ -1,3 +1,11 @@
+declare global {
+  interface Window {
+    phantom: any;
+    solflare: any;
+    backpack: any;
+  }
+}
+
 "use client";
 
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
@@ -463,7 +471,38 @@ export default function MintButton({
     }
   };
 
-  const renderWalletButton = () => (
+  const renderWalletButton = () => {
+
+    const isPhantomInjected = window?.phantom;
+    const isSolflareInjected = window?.solflare;
+    const isBackpackInjected = window.backpack?.isBackpack;
+
+    const isWalletInjected = isPhantomInjected || isSolflareInjected || isBackpackInjected;
+
+    if (isWalletInjected) {
+      return (<button
+      onClick={connected ? disconnect : () => handleConnect()}
+      className={`w-full h-12 rounded-full ${
+        connected
+          ? "bg-gray-200 hover:bg-gray-300 text-gray-800"
+          : "bg-white text-black"
+      } font-bold py-2 px-4 rounded transition duration-300 ease-in-out flex items-center justify-center`}
+    >
+      {connected ? (
+        <>
+          <Unplug className="mr-2 h-5 w-5" />
+          Disconnect {publicKey && shortenAddress(publicKey.toString())}
+        </>
+      ) : (
+        <>
+          <Wallet className="mr-2 h-5 w-5" />
+          Connect wallet
+        </>
+      )}
+    </button>);
+  };
+
+    return (
     <Dialog>
       <DialogTrigger asChild>
         <Button
@@ -510,6 +549,7 @@ export default function MintButton({
       </DialogContent>
     </Dialog>
   );
+};
 
   const renderMintButton = () => (
     <WhiteBgShimmerButton
@@ -600,6 +640,9 @@ export default function MintButton({
               </div>
             ) : (
               <div className="w-full mt-4 flex flex-col items-center justify-center">
+                <div className="hidden">
+                  <WalletMultiButton />
+                </div>
                 {renderWalletButton()}
                 {existingOrder?.status !== "completed" &&
                   walletAddress &&
