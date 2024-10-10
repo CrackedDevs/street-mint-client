@@ -211,19 +211,19 @@ export default function MintButton({
     checkEligibilityAndExistingOrder();
   }, [connected, publicKey, walletAddress, deviceId, collectible.id, isFreeMint]);
 
-  useEffect(() => {
-    if (connected && publicKey) {
-      setWalletAddress(publicKey.toString());
-    }
-  }, [connected]);
+  // useEffect(() => {
+  //   if (connected && publicKey) {
+  //     setWalletAddress(publicKey.toString());
+  //   }
+  // }, [connected]);
 
-  useEffect(() => {
-    //Auto fill the wallet address if the user has previously minted
-    const lastMintInput = localStorage.getItem("lastMintInput");
-    if (lastMintInput) {
-      setWalletAddress(lastMintInput || "");
-    }
-  }, []);
+  // useEffect(() => {
+  //   //Auto fill the wallet address if the user has previously minted
+  //   const lastMintInput = localStorage.getItem("lastMintInput");
+  //   if (lastMintInput) {
+  //     setWalletAddress(lastMintInput || "");
+  //   }
+  // }, []);
 
   const handlePaymentAndMint = async () => {
     const addressToUse = isFreeMint ? walletAddress : publicKey?.toString();
