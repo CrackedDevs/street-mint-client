@@ -141,7 +141,7 @@ const EditionInformation = ({
       <CardFooter className="flex flex-col md:flex-row md:justify-between md:items-center space-y-2 md:space-y-0 md:space-x-4">
         <MintButton
           isIRLtapped={
-            process.env.NODE_ENV === "development"
+            process.env.NEXT_PUBLIC_NODE_ENV === "development"
               ? true
               : effectiveIsIRLtapped
           }

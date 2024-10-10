@@ -420,13 +420,6 @@ export default function MintButton({
     return "LOADING...";
   };
 
-  if (!isIRLtapped) {
-    if (collectible.location)
-      return <LocationButton location={collectible.location} />;
-    else {
-      return <div></div>;
-    }
-  }
   const handleConnect = () => {
     const button = document.querySelector(
       ".wallet-adapter-button"
@@ -564,6 +557,14 @@ export default function MintButton({
       </Link>
     </div>
   );
+
+  if (!isIRLtapped) {
+    if (collectible.location)
+      return <LocationButton location={collectible.location} />;
+    else {
+      return <div></div>;
+    }
+  }
 
   return (
     <div className="flex flex-col w-full justify-center items-center">
