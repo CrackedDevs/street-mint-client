@@ -1,7 +1,8 @@
 import React from "react";
-import { X, Linkedin, Instagram } from "lucide-react";
+import { Linkedin, Instagram } from "lucide-react";
 import { Artist } from "@/lib/supabaseClient";
 import Image from "next/image";
+import X from "./x";
 
 interface ArtistInfoComponentProps {
   artist: Artist;
