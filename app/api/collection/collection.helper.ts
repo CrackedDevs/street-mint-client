@@ -47,6 +47,7 @@ export async function createBubbleGumTree() {
   const merkleTree = generateSigner(umi);
 
   try {
+    console.time("Create NFT"); // Start timer for NFT creation
     await createNft(umi, {
       mint: collectionMint,
       name: "StreetMint V1",
@@ -57,11 +58,13 @@ export async function createBubbleGumTree() {
       updateAuthority: umi.identity.publicKey,
       isMutable: true,
     }).sendAndConfirm(umi);
+    console.timeEnd("Create NFT"); // End timer for NFT creation
 
     console.log(
       `✅ Created collection: ${collectionMint.publicKey.toString()}`
     );
 
+    console.time("Create Tree"); // Start timer for tree creation
     const builder = await createTree(umi, {
       merkleTree,
       maxDepth: 20,
@@ -69,11 +72,11 @@ export async function createBubbleGumTree() {
       canopyDepth: 10,
     });
     await builder.sendAndConfirm(umi);
+    console.timeEnd("Create Tree"); // End timer for tree creation
 
     console.log(
       `✅ Created Bubble Gum Tree: ${merkleTree.publicKey.toString()}`
     );
-    // console.log(`Tree transaction: ${tx.signature.toString()}`);
 
     return {
       merkleTreePublicKey: merkleTree.publicKey.toString(),
@@ -92,28 +95,32 @@ export async function mintNFTWithBubbleGumTree(
   name: string,
   metadata_uri: string,
   maxRetries = 3
-) {
+): Promise<{ signature: string }> {
   const umi = initializeUmi(process.env.RPC_URL!, process.env.PRIVATE_KEY!);
   let retries = 0;
   let mintTx;
 
   while (retries < maxRetries) {
     try {
+      console.time(`Minting NFT - Attempt ${retries + 1}`); // Start timer for minting
       console.log(`Attempt ${retries + 1} to mint NFT`);
       const merkleTree = publicKey(merkleTreePublicKey);
       const leafOwner = publicKey(minterAddress);
       const collectionMintPubkey = publicKey(collectionMintPublicKey);
 
+      console.time("Fetch Collection Asset"); // Start timer for fetching collection asset
       const collectionAsset = await fetchDigitalAsset(
         umi,
         collectionMintPubkey
       );
+      console.timeEnd("Fetch Collection Asset"); // End timer for fetching collection asset
       console.log(
         "Collection mint fetched:",
         collectionAsset.publicKey.toString()
       );
 
-      mintTx = await mintToCollectionV1(umi, {
+      console.time("Mint to Collection"); // Start timer for minting to collection
+      const transaction = await mintToCollectionV1(umi, {
         leafOwner: leafOwner,
         merkleTree,
         collectionMint: collectionMintPubkey,
@@ -126,7 +133,19 @@ export async function mintNFTWithBubbleGumTree(
             { address: umi.identity.publicKey, verified: true, share: 100 },
           ],
         },
-      }).sendAndConfirm(umi);
+      })
+      console.timeEnd("Mint to Collection"); // End timer for minting to collection
+      console.time("Send and Confirm");
+      mintTx = await transaction.sendAndConfirm(umi, {
+        send: {
+          skipPreflight: true,
+        },
+        confirm: {
+          commitment: "confirmed",
+        },
+      });
+      console.timeEnd("Send and Confirm"); // End timer for sending and confirming
+      console.timeEnd(`Minting NFT - Attempt ${retries + 1}`); // End timer for minting
 
       console.log("NFT minted successfully");
       break; // Exit the retry loop if minting is successful
@@ -146,51 +165,9 @@ export async function mintNFTWithBubbleGumTree(
     throw new Error("Minting failed");
   }
 
-  let postMintRetries = 0;
-  const maxPostMintRetries = 3;
+  const signatureBase58 = bs58.encode(mintTx.signature);
 
-  while (postMintRetries < maxPostMintRetries) {
-    console.log(`Attempt ${retries + 1} to post mint functions`);
-    try {
-      const leaf: LeafSchema = await parseLeafFromMintToCollectionV1Transaction(
-        umi,
-        mintTx.signature
-      );
-      const assetId = findLeafAssetIdPda(umi, {
-        merkleTree: publicKey(merkleTreePublicKey),
-        leafIndex: leaf.nonce,
-      });
-      console.log("ASSET ID", assetId);
-      const tokenAddress = assetId.toString().split(",")[0];
-
-      const txSignature = bs58.encode(mintTx.signature);
-      const solscanLink =
-        process.env.NEXT_PUBLIC_NODE_ENV === "development"
-          ? `https://explorer.solana.com/tx/${txSignature}?cluster=devnet`
-          : `https://explorer.solana.com/tx/${txSignature}`;
-
-      console.log("NFT minting details:", {
-        signature: txSignature,
-        solscanLink: solscanLink,
-        tokenAddress: tokenAddress,
-      });
-
-      return { signature: txSignature, solscanLink: solscanLink, tokenAddress };
-    } catch (error: any) {
-      console.error(
-        `Error in post-minting operations (attempt ${postMintRetries + 1}):`,
-        error
-      );
-      postMintRetries++;
-      if (postMintRetries >= maxPostMintRetries) {
-        throw new Error(
-          `NFT minted successfully, but encountered an error in post-minting operations after ${maxPostMintRetries} attempts: ${error.message}`
-        );
-      }
-      // Wait for a short time before retrying
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-    }
-  }
+  return { signature: signatureBase58 };
 }
 
 export async function resolveSolDomain(

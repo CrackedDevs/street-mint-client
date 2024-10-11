@@ -97,6 +97,8 @@ const waitForTransactionConfirmation = async (
 };
 
 export async function POST(req: Request, res: NextApiResponse) {
+  console.time("POST Request Duration"); // Start timing the entire POST request
+
   const {
     orderId,
     signedTransaction,
@@ -105,23 +107,29 @@ export async function POST(req: Request, res: NextApiResponse) {
     isEmail,
     nftImageUrl,
   } = await req.json();
+  
+  console.time("Initial Checks Duration"); // Start timing initial checks
   //log all
   console.log("tipLinkWalletAddress", tipLinkWalletAddress);
   console.log("isEmail", isEmail);
   if (!orderId) {
+    console.timeEnd("Initial Checks Duration"); // End timing initial checks
     return NextResponse.json(
       { success: false, error: "Transaction not found" },
       { status: 400 }
     );
   }
+  console.timeEnd("Initial Checks Duration"); // End timing initial checks
 
   try {
+    console.time("Fetch Order Duration"); // Start timing order fetch
     // Fetch order
     const { data: order, error: fetchError } = await supabase
       .from("orders")
       .select("*, collectibles(name, metadata_uri)")
       .eq("id", orderId)
       .single();
+    console.timeEnd("Fetch Order Duration"); // End timing order fetch
 
     if (!order) {
       throw new Error("Invalid Tansaction");
@@ -155,8 +163,11 @@ export async function POST(req: Request, res: NextApiResponse) {
         Buffer.from(signedTransaction, "base64")
       );
 
+      console.time("Transaction Verification Duration"); // Start timing transaction verification
       // Verify transaction amount
       const isAmountCorrect = verifyTransactionAmount(transaction, priceInSol);
+      console.timeEnd("Transaction Verification Duration"); // End timing transaction verification
+
       if (!isAmountCorrect) {
         throw new Error("Transaction amount does not match the NFT price");
       }
@@ -215,6 +226,7 @@ export async function POST(req: Request, res: NextApiResponse) {
       throw new Error("Something went wrong");
     }
 
+    console.time("Mint NFT Duration"); // Start timing NFT minting
     // Mint NFT
     const mintResult = await mintNFTWithBubbleGumTree(
       merkleTreePublicKey,
@@ -225,6 +237,7 @@ export async function POST(req: Request, res: NextApiResponse) {
       order.collectibles.name,
       order.collectibles.metadata_uri
     );
+    console.timeEnd("Mint NFT Duration"); // End timing NFT minting
 
     if (!mintResult || !mintResult.signature) {
       console.log("Failed to mint NFT");
@@ -237,7 +250,6 @@ export async function POST(req: Request, res: NextApiResponse) {
       .update({
         status: "completed",
         mint_signature: mintResult.signature,
-        mint_address: mintResult.tokenAddress,
         wallet_address: resolvedWalletAddress,
       })
       .eq("id", orderId);
@@ -248,6 +260,7 @@ export async function POST(req: Request, res: NextApiResponse) {
 
     if (isEmail && tipLinkWalletAddress) {
       //send email
+      console.time("Email Sending Duration"); // Start timing email sending
       try {
         const { wallet_address, tiplink_url } = order;
         if (!wallet_address || !tiplink_url) {
@@ -272,12 +285,13 @@ export async function POST(req: Request, res: NextApiResponse) {
       } catch (emailError) {
         console.error("Error sending email:", emailError);
       }
+      console.timeEnd("Email Sending Duration"); // End timing email sending
     }
+    console.timeEnd("POST Request Duration"); // End timing the entire POST request
     return NextResponse.json(
       {
         success: true,
         mintSignature: mintResult.signature,
-        tokenAddress: mintResult.tokenAddress,
       },
       { status: 200 }
     );
@@ -289,6 +303,7 @@ export async function POST(req: Request, res: NextApiResponse) {
       .from("orders")
       .update({ status: "failed" })
       .eq("id", orderId);
+    console.timeEnd("POST Request Duration"); // End timing the entire POST request
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
