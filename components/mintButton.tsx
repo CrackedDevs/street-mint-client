@@ -87,7 +87,6 @@ export default function MintButton({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [transactionSignature, setTransactionSignature] = useState<string | null>(null);
-  const [tokenAddress, setTokenAddress] = useState<string | null>(null);
   const [deviceId, setDeviceId] = useState("");
   const [existingOrder, setExistingOrder] = useState<any | null>(null);
   const isFreeMint = collectible.price_usd === 0;
@@ -168,7 +167,7 @@ export default function MintButton({
       const device = await fetchDeviceId();
       setDeviceId(device);
     }
-    if (tokenAddress
+    if (transactionSignature
     ) {
       return;
     }
@@ -320,10 +319,9 @@ export default function MintButton({
         throw new Error(errorData.error || "Failed to process minting");
       }
 
-      const { success, tokenAddress, mintSignature } = await processResponse.json();
+      const { success, mintSignature } = await processResponse.json();
       if (success) {
         setTransactionSignature(mintSignature);
-        setTokenAddress(tokenAddress);
         TriggerConfetti();
         setExistingOrder({ id: orderId, status: "completed" });
         toast({
@@ -570,7 +568,7 @@ export default function MintButton({
   const renderCompletedMint = () => (
     <div className="flex flex-col items-center my-3 w-full">
       <Link
-        href={SolanaFMService.getToken(tokenAddress || existingOrder.mint_address)}
+        href={SolanaFMService.getTransaction(transactionSignature || existingOrder.mint_address)}
         target="_blank"
         className="w-full"
       >
@@ -578,14 +576,8 @@ export default function MintButton({
           borderRadius="6px"
           className="w-full mb-4 hover:bg-gray-800 h-[45px] text-black rounded font-bold"
         >
-          VIEW COLLECTIBLE
+          VIEW TRANSACTION
         </WhiteBgShimmerButton>
-      </Link>
-      <Link href={SolanaFMService.getTransaction(transactionSignature || existingOrder.mint_signature)} target="_blank">
-        <button className="text-sm text-white transition-colors flex items-center">
-          <ExternalLink className="w-4 h-4 mr-1" />
-          View Transaction
-        </button>
       </Link>
     </div>
   );
@@ -608,7 +600,7 @@ export default function MintButton({
       <ShowAirdropModal showAirdropModal={showAirdropModal} setShowAirdropModal={setShowAirdropModal} />
       <CheckInboxModal showModal={showMailSentModal} setShowModal={setShowMailSentModal} />
 
-      {((transactionSignature && tokenAddress) || existingOrder?.status === "completed") && renderCompletedMint()}
+      {(transactionSignature || existingOrder?.status === "completed") && renderCompletedMint()}
       {mintStatus === "ongoing" && (
         <div className="flex flex-col items-center justify-center w-full">
           <div className="flex flex-col items-center justify-center w-full">
