@@ -1,3 +1,4 @@
+"use client";
 declare global {
   interface Window {
     phantom: any;
@@ -5,8 +6,6 @@ declare global {
     backpack: any;
   }
 }
-
-"use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
@@ -21,6 +20,7 @@ import {
   Connection,
   ComputeBudgetProgram,
 } from "@solana/web3.js";
+
 import WhiteBgShimmerButton from "./magicui/whiteBg-shimmer-button";
 import {
   checkMintEligibility,
@@ -57,6 +57,7 @@ import CheckInboxModal from "./modals/ShowMailSentModal";
 import { getSupabaseAdmin } from "@/lib/supabaseAdminClient";
 import { getSolPrice } from "@/lib/services/getSolPrice";
 import { MintStatus } from "./EditionInformation";
+import WaitlistModal from "./modals/PromotionalModal";
 
 interface MintButtonProps {
   collectible: Collectible;
@@ -68,10 +69,10 @@ interface MintButtonProps {
 }
 
 const wallets = [
-  { name: 'Phantom', icon: '/phantom.svg' },
-  { name: 'Solflare', icon: '/solflare.png' },
-  { name: 'Backpack', icon: '/backpack.svg' },
-]
+  { name: "Phantom", icon: "/phantom.svg" },
+  { name: "Solflare", icon: "/solflare.png" },
+  { name: "Backpack", icon: "/backpack.svg" },
+];
 
 export default function MintButton({
   collectible,
@@ -81,12 +82,22 @@ export default function MintButton({
   mintStatus,
   randomNumber,
 }: MintButtonProps) {
-  const { connected, connect, publicKey, signTransaction, select, connecting, disconnect } = useWallet();
+  const {
+    connected,
+    connect,
+    publicKey,
+    signTransaction,
+    select,
+    connecting,
+    disconnect,
+  } = useWallet();
   const [isMinting, setIsMinting] = useState(false);
   const [isEligible, setIsEligible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [transactionSignature, setTransactionSignature] = useState<string | null>(null);
+  const [transactionSignature, setTransactionSignature] = useState<
+    string | null
+  >(null);
   const [deviceId, setDeviceId] = useState("");
   const [existingOrder, setExistingOrder] = useState<any | null>(null);
   const isFreeMint = collectible.price_usd === 0;
@@ -97,8 +108,12 @@ export default function MintButton({
   const [tipLinkUrl, setTipLinkUrl] = useState<string | null>(null);
   const [showMailSentModal, setShowMailSentModal] = useState(false);
   const connection = new Connection(process.env.NEXT_PUBLIC_RPC_URL!);
+  const [showWaitlistModal, setShowWaitlistModal] = useState(false);
 
-  const { getData } = useVisitorData({ extendedResult: true }, { immediate: true });
+  const { getData } = useVisitorData(
+    { extendedResult: true },
+    { immediate: true }
+  );
 
   const TriggerConfetti = (): void => {
     const end = Date.now() + 3 * 1000; // 3 seconds
@@ -167,8 +182,7 @@ export default function MintButton({
       const device = await fetchDeviceId();
       setDeviceId(device);
     }
-    if (transactionSignature
-    ) {
+    if (transactionSignature) {
       return;
     }
     if (addressToCheck && deviceId) {
@@ -178,7 +192,11 @@ export default function MintButton({
           eligible,
           reason,
           isAirdropEligible: airdropEligible,
-        } = await checkMintEligibility(addressToCheck, collectible.id, deviceId);
+        } = await checkMintEligibility(
+          addressToCheck,
+          collectible.id,
+          deviceId
+        );
         setIsEligible(eligible);
         setIsAirdropEligible(airdropEligible || false);
         setIsLoading(false);
@@ -208,7 +226,14 @@ export default function MintButton({
 
   useEffect(() => {
     checkEligibilityAndExistingOrder();
-  }, [connected, publicKey, walletAddress, deviceId, collectible.id, isFreeMint]);
+  }, [
+    connected,
+    publicKey,
+    walletAddress,
+    deviceId,
+    collectible.id,
+    isFreeMint,
+  ]);
 
   useEffect(() => {
     if (connected && publicKey && collectible.price_usd === 0) {
@@ -260,7 +285,8 @@ export default function MintButton({
         throw new Error(errorData.error || "Failed to initiate minting");
       }
       let priceInSol = 0;
-      const { orderId, isFree, tipLinkWalletAddress, tipLinkUrl } = await initResponse.json();
+      const { orderId, isFree, tipLinkWalletAddress, tipLinkUrl } =
+        await initResponse.json();
       setTipLinkUrl(tipLinkUrl);
       if (!isFree && publicKey) {
         // Step 2: Create payment transaction (only for paid mints)
@@ -282,7 +308,8 @@ export default function MintButton({
           }),
         ];
 
-        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+        const { blockhash, lastValidBlockHeight } =
+          await connection.getLatestBlockhash();
         const messageV0 = new TransactionMessage({
           payerKey: publicKey,
           recentBlockhash: blockhash,
@@ -298,7 +325,9 @@ export default function MintButton({
         let signedTx;
         // Serialize the signed transaction
         signedTx = await signTransaction(transaction);
-        signedTransaction = Buffer.from(signedTx.serialize()).toString("base64");
+        signedTransaction = Buffer.from(signedTx.serialize()).toString(
+          "base64"
+        );
       }
 
       const processResponse = await fetch("/api/collection/mint/process", {
@@ -337,11 +366,11 @@ export default function MintButton({
           setShowAirdropModal(true);
           updateOrderAirdropStatus(orderId, true);
         }
+        if (collectible.id === 2980058898) {
+          setShowWaitlistModal(true);
+        }
         localStorage.setItem("lastMintInput", addressToUse);
         setWalletAddress("");
-        //TODO: UNCOMMENT THIS AFTER 20 SEPTEMBER 2024
-        //setShowDonationModal(true);
-        //TODO: UNCOMMENT THIS AFTER 20 SEPTEMBER 2024
       } else {
         throw new Error("Minting process failed");
       }
@@ -349,14 +378,19 @@ export default function MintButton({
       console.error("Error minting NFT:", error);
       toast({
         title: "Something went wrong while minting your collectible ",
-        description: error.message || "An unexpected error occurred. Please try again later.",
+        description:
+          error.message ||
+          "An unexpected error occurred. Please try again later.",
         variant: "destructive",
       });
       // Set the order status as failed
       if (existingOrder && existingOrder.id) {
         const supabaseAdmin = await getSupabaseAdmin();
         try {
-          const { error } = await supabaseAdmin.from("orders").update({ status: "failed" }).eq("id", existingOrder.id);
+          const { error } = await supabaseAdmin
+            .from("orders")
+            .update({ status: "failed" })
+            .eq("id", existingOrder.id);
 
           if (error) {
             console.error("Failed to update order status:", error);
@@ -430,7 +464,9 @@ export default function MintButton({
   };
 
   const handleConnect = () => {
-    const button = document.querySelector(".wallet-adapter-button") as HTMLElement;
+    const button = document.querySelector(
+      ".wallet-adapter-button"
+    ) as HTMLElement;
     if (button) {
       button.click();
     }
@@ -444,21 +480,21 @@ export default function MintButton({
     const ref = encodeURIComponent(window.location.origin);
 
     switch (walletName) {
-      case 'Phantom':
+      case "Phantom":
         if (isAndroid || isIOS) {
           window.location.href = `https://phantom.app/ul/browse/${currentUrl}?ref=${ref}`;
         } else {
           throw new Error("Phantom is not supported on desktop");
         }
         break;
-      case 'Solflare':
+      case "Solflare":
         if (isAndroid || isIOS) {
           window.location.href = `https://solflare.com/ul/v1/browse/${currentUrl}?ref=${ref}`;
         } else {
           throw new Error("Solflare is not supported on desktop");
         }
         break;
-      case 'Backpack':
+      case "Backpack":
         if (isAndroid || isIOS) {
           window.location.href = `https://backpack.app/ul/browse/${currentUrl}?ref=${ref}`;
         } else {
@@ -471,46 +507,26 @@ export default function MintButton({
   };
 
   const renderWalletButton = () => {
-
     const isPhantomInjected = window?.phantom;
     const isSolflareInjected = window?.solflare;
     const isBackpackInjected = window.backpack?.isBackpack;
 
-    const isWalletInjected = isPhantomInjected || isSolflareInjected || isBackpackInjected;
+    const isWalletInjected =
+      isPhantomInjected || isSolflareInjected || isBackpackInjected;
 
     if (isWalletInjected) {
-
       if (connected && isEligible) {
-        return (<></>)
+        return <></>;
       }
 
-
-        return (<button
+      return (
+        <button
           onClick={connected ? disconnect : () => handleConnect()}
-      className={`w-full h-10 rounded-full ${
-        connected ? "bg-gray-200 hover:bg-gray-300 text-gray-800" : "bg-white text-black"
-      } font-bold py-2 px-4 rounded transition duration-300 ease-in-out flex items-center justify-center`}
-    >
-      {connected ? (
-        <>
-          <Unplug className="mr-2 h-5 w-5" />
-          Disconnect {publicKey && shortenAddress(publicKey.toString())}
-        </>
-      ) : (
-        <>
-          <Wallet className="mr-2 h-5 w-5" />
-          Connect wallet
-        </>
-      )}
-        </button>);
-  };
-
-    return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="text-black w-full h-12 rounded-full font-bold py-2 px-4 transition duration-300 ease-in-out flex items-center justify-center"
+          className={`w-full h-10 rounded-full ${
+            connected
+              ? "bg-gray-200 hover:bg-gray-300 text-gray-800"
+              : "bg-white text-black"
+          } font-bold py-2 px-4 rounded transition duration-300 ease-in-out flex items-center justify-center`}
         >
           {connected ? (
             <>
@@ -523,43 +539,76 @@ export default function MintButton({
               Connect wallet
             </>
           )}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md rounded-xl w-[95%]">
-        <DialogHeader className="relative">
-          <DialogTitle className="text-3xl font-bold text-center pt-6 text-black">
-            Connect Wallet
-          </DialogTitle>
-        </DialogHeader>
-        <div className="py-6">
-          <p className="text-center text-gray-600 mb-6 text-sm font-medium">
-            Choose your preferred wallet to get started
-          </p>
-          <div className="grid gap-3">
-            {wallets.map((wallet) => (
-              <Button
-                key={wallet.name}
-                variant="outline"
-                className="bg-white flex items-center justify-start gap-3 px-3 py-6 rounded-lg hover:bg-gray-50 border-gray-200 text-black transition-colors"
-                onClick={() => handleWalletConnection(wallet.name)}
-              >
-                <Image src={wallet.icon} alt={`${wallet.name} icon`} width={32} height={32} className="h-8 w-8 relative rounded" />
-                <span className="font-medium">{wallet.name}</span>
-              </Button>
-            ))}
+        </button>
+      );
+    }
+
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            className="text-black w-full h-12 rounded-full font-bold py-2 px-4 transition duration-300 ease-in-out flex items-center justify-center"
+          >
+            {connected ? (
+              <>
+                <Unplug className="mr-2 h-5 w-5" />
+                Disconnect {publicKey && shortenAddress(publicKey.toString())}
+              </>
+            ) : (
+              <>
+                <Wallet className="mr-2 h-5 w-5" />
+                Connect wallet
+              </>
+            )}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md rounded-xl w-[95%]">
+          <DialogHeader className="relative">
+            <DialogTitle className="text-3xl font-bold text-center pt-6 text-black">
+              Connect Wallet
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-6">
+            <p className="text-center text-gray-600 mb-6 text-sm font-medium">
+              Choose your preferred wallet to get started
+            </p>
+            <div className="grid gap-3">
+              {wallets.map((wallet) => (
+                <Button
+                  key={wallet.name}
+                  variant="outline"
+                  className="bg-white flex items-center justify-start gap-3 px-3 py-6 rounded-lg hover:bg-gray-50 border-gray-200 text-black transition-colors"
+                  onClick={() => handleWalletConnection(wallet.name)}
+                >
+                  <Image
+                    src={wallet.icon}
+                    alt={`${wallet.name} icon`}
+                    width={32}
+                    height={32}
+                    className="h-8 w-8 relative rounded"
+                  />
+                  <span className="font-medium">{wallet.name}</span>
+                </Button>
+              ))}
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   const renderMintButton = () => (
     <WhiteBgShimmerButton
       borderRadius="9999px"
       className="w-full my-4 text-black hover:bg-gray-800 h-[40px] rounded font-bold"
       onClick={handleMintClick}
-      disabled={isMinting || !isEligible || existingOrder?.status === "completed" || isLoading}
+      disabled={
+        isMinting ||
+        !isEligible ||
+        existingOrder?.status === "completed" ||
+        isLoading
+      }
     >
       {getButtonText()}
     </WhiteBgShimmerButton>
@@ -568,7 +617,9 @@ export default function MintButton({
   const renderCompletedMint = () => (
     <div className="flex flex-col items-center my-3 w-full">
       <Link
-        href={SolanaFMService.getTransaction(transactionSignature || existingOrder.mint_address)}
+        href={SolanaFMService.getTransaction(
+          transactionSignature || existingOrder.mint_address
+        )}
         target="_blank"
         className="w-full"
       >
@@ -597,10 +648,21 @@ export default function MintButton({
         setShowDonationModal={setShowDonationModal}
         artistWalletAddress={artistWalletAddress}
       />
-      <ShowAirdropModal showAirdropModal={showAirdropModal} setShowAirdropModal={setShowAirdropModal} />
-      <CheckInboxModal showModal={showMailSentModal} setShowModal={setShowMailSentModal} />
+      <ShowAirdropModal
+        showAirdropModal={showAirdropModal}
+        setShowAirdropModal={setShowAirdropModal}
+      />
+      <CheckInboxModal
+        showModal={showMailSentModal}
+        setShowModal={setShowMailSentModal}
+      />
+      <WaitlistModal
+        showModal={showWaitlistModal}
+        setShowModal={setShowWaitlistModal}
+      />
 
-      {(transactionSignature || existingOrder?.status === "completed") && renderCompletedMint()}
+      {(transactionSignature || existingOrder?.status === "completed") &&
+        renderCompletedMint()}
       {mintStatus === "ongoing" && (
         <div className="flex flex-col items-center justify-center w-full">
           <div className="flex flex-col items-center justify-center w-full">
@@ -613,7 +675,9 @@ export default function MintButton({
                   onChange={(e) => setWalletAddress(e.target.value)}
                   className="w-full h-12 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
                 />
-                {existingOrder?.status !== "completed" && walletAddress && renderMintButton()}
+                {existingOrder?.status !== "completed" &&
+                  walletAddress &&
+                  renderMintButton()}
               </div>
             ) : (
               <div className="w-full mt-4 flex flex-col items-center justify-center">

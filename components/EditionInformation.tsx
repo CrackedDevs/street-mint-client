@@ -38,9 +38,7 @@ const EditionInformation = ({
   isIRLSmint?: boolean;
   randomNumber: string | null;
 }) => {
-  const [mintingStatus, setMintingStatus] = useState<
-  MintStatus
-  >("loading");
+  const [mintingStatus, setMintingStatus] = useState<MintStatus>("loading");
   const [timeLeft, setTimeLeft] = useState<string>("");
 
   useEffect(() => {
@@ -81,7 +79,10 @@ const EditionInformation = ({
     <Card className="w-full md:max-w-[600px] bg-black text-white border border-white/10">
       <CardHeader className="space-y-1">
         <div className="flex justify-between items-center">
-          <Badge variant="outline" className="border-white/20 text-white rounded-xl">
+          <Badge
+            variant="outline"
+            className="border-white/20 text-white rounded-xl"
+          >
             {EditionService.getEditionTypeText(
               collectible.quantity_type as QuantityType
             )}
@@ -97,19 +98,18 @@ const EditionInformation = ({
       <CardContent className="space-y-4 md:space-y-6">
         <div className="md:flex md:justify-between md:items-center pt-4">
           <div className="text-center md:text-left pb-2">
-            <span
-            className="text-5xl md:text-6xl font-bold"
-            >
-              {
-                collectible.price_usd === 0
-                  ? "Free Mint"
-                  : `$${collectible.price_usd.toFixed(2)}`
-              }
+            <span className="text-5xl md:text-6xl font-bold">
+              {collectible.price_usd === 0
+                ? "Free Mint"
+                : `$${collectible.price_usd.toFixed(2)}`}
             </span>
           </div>
           <div className="flex justify-between text-sm mt-2 md:mt-0 md:flex-col md:items-end">
             {soldCount > 0 && <span>Minted: {soldCount}</span>}
-            <Badge variant="outline" className="border-white/20 text-white md:mt-2 rounded-xl">
+            <Badge
+              variant="outline"
+              className="border-white/20 text-white md:mt-2 rounded-xl"
+            >
               EXCLUSIVE IRL MINT <Earth className="ml-2 w-4 h-4" />
             </Badge>
           </div>
@@ -146,9 +146,7 @@ const EditionInformation = ({
         <MintButton
           randomNumber={randomNumber}
           isIRLtapped={
-            process.env.NEXT_PUBLIC_NODE_ENV === "development"
-              ? true
-              : effectiveIsIRLtapped
+            process.env.NODE_ENV === "development" ? true : effectiveIsIRLtapped
           }
           artistWalletAddress={artistWalletAddress}
           collectible={{
