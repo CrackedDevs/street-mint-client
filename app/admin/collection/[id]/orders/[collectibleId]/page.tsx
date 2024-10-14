@@ -35,6 +35,7 @@ import { Input } from "@/components/ui/input";
 import { SolanaFMService } from "@/lib/services/solanaExplorerService";
 import { toast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import Papa from "papaparse";
 
 interface Order {
   id: string;
@@ -54,6 +55,7 @@ interface Order {
   device_id: string | null;
   nft_type: string | null;
   airdrop_won: boolean | null;
+  tiplink_url: string | null;
 }
 
 const formatAddress = (address: string | null) => {
@@ -117,7 +119,7 @@ const columns: ColumnDef<Order>[] = [
       const signature = row.getValue("transaction_signature") as string;
       return signature ? (
         <a
-          href={`https://explorer.solana.com/tx/${signature}?cluster=devnet`}
+          href={SolanaFMService.getTransaction(signature)}
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-600 hover:underline"
@@ -198,10 +200,35 @@ export default function CollectionOrders() {
     },
     initialState: {
       pagination: {
-        pageSize: 20,
+        pageSize: 10,
       },
     },
   });
+
+  const exportToCSV = () => {
+    const csvData = orders.map((order) => ({
+      id: order.id,
+      wallet_address: order.wallet_address ?? "N/A",
+      tiplink_url: order.tiplink_url ?? "N/A",
+      status: order.status ?? "N/A",
+      transaction: order.transaction_signature
+        ? SolanaFMService.getTransaction(order.transaction_signature)
+        : "N/A",
+      mint: order.mint_signature
+        ? SolanaFMService.getTransaction(order.mint_signature)
+        : "N/A",
+    }));
+
+    const csv = Papa.unparse(csvData);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `orders-${collectibleId}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="p-8">
@@ -322,6 +349,9 @@ export default function CollectionOrders() {
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
+        <Button variant="outline" onClick={() => exportToCSV()}>
+          Export to CSV
+        </Button>
         <div className="space-x-2 flex items-center">
           <Button
             variant="outline"
