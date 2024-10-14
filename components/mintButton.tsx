@@ -109,6 +109,7 @@ export default function MintButton({
   const [showMailSentModal, setShowMailSentModal] = useState(false);
   const connection = new Connection(process.env.NEXT_PUBLIC_RPC_URL!);
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
+  const [visitorInfo, setVisitorInfo] = useState<{ deviceId: string; visitorId: string; browserName: string } | null>(null);
 
   const { getData } = useVisitorData(
     { extendedResult: true },
@@ -151,6 +152,7 @@ export default function MintButton({
     try {
       if (!deviceId) {
         const id = await getData({ ignoreCache: true, extendedResult: true });
+        console.log("ID in mintButton.tsx:", id.visitorId, id.browserName);
         setDeviceId(id.visitorId);
         // Store the new device ID
         if (id.browserName == "Safari") {
@@ -158,6 +160,8 @@ export default function MintButton({
         } else {
           localStorage.setItem("BrowserID", id.visitorId);
         }
+        // Set visitor info state
+        setVisitorInfo({ deviceId: id.visitorId, visitorId: id.visitorId, browserName: id.browserName });
       }
       setDeviceId(deviceId!);
       return deviceId!;
@@ -694,6 +698,15 @@ export default function MintButton({
 
           {error && <p className="text-red-500 mt-2">{error}</p>}
         </div>
+      )}
+      {visitorInfo ? (
+        <div className="text-blue-500">
+          <p>Device ID: {visitorInfo.deviceId}</p>
+          <p>Visitor ID: {visitorInfo.visitorId}</p>
+          <p>Browser Name: {visitorInfo.browserName}</p>
+        </div>
+      ) : (
+        <div>No info</div>
       )}
     </div>
   );
