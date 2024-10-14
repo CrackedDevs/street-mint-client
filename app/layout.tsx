@@ -24,8 +24,8 @@ export default function RootLayout({
           <UserProfileProvider>
             <FpjsProvider
               loadOptions={{
-                apiKey: "w0ZUI01Dq1WYInPXn8Ar",
-                region: "ap",
+                apiKey: "QfdwrskbKbdCSPM318hE",
+                region: "us",
               }}
             >
               {children}
