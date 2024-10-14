@@ -107,7 +107,7 @@ export async function POST(req: Request, res: NextApiResponse) {
     isEmail,
     nftImageUrl,
   } = await req.json();
-  
+
   console.time("Initial Checks Duration"); // Start timing initial checks
   //log all
   console.log("tipLinkWalletAddress", tipLinkWalletAddress);

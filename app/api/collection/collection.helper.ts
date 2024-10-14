@@ -133,7 +133,7 @@ export async function mintNFTWithBubbleGumTree(
             { address: umi.identity.publicKey, verified: true, share: 100 },
           ],
         },
-      })
+      });
       console.timeEnd("Mint to Collection"); // End timer for minting to collection
       console.time("Send and Confirm");
       mintTx = await transaction.sendAndConfirm(umi, {
