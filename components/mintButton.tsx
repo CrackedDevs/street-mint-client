@@ -155,15 +155,17 @@ export default function MintButton({
         console.log("ID in mintButton.tsx:", id.visitorId, id.browserName);
         setDeviceId(id.visitorId);
         // Store the new device ID
-        if (id.browserName == "Safari") {
+        if (id.browserName == "Mobile Safari") {
           localStorage.setItem("BrowserID", `${id.visitorId}-${uuidv4()}`);
         } else {
           localStorage.setItem("BrowserID", id.visitorId);
         }
         // Set visitor info state
         setVisitorInfo({ deviceId: id.visitorId, visitorId: id.visitorId, browserName: id.browserName });
+      } else {
+        setDeviceId(deviceId);
+        setVisitorInfo({ deviceId: deviceId, visitorId: deviceId, browserName: "from localstorage" });
       }
-      setDeviceId(deviceId!);
       return deviceId!;
     } catch (error) {
       console.error("Error fetching or setting device ID:", error);
