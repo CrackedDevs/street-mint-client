@@ -146,7 +146,7 @@ const EditionInformation = ({
         <MintButton
           randomNumber={randomNumber}
           isIRLtapped={
-            process.env.NODE_ENV === "development" ? true : effectiveIsIRLtapped
+            process.env.NEXT_PUBLIC_NODE_ENV === "development" ? true : effectiveIsIRLtapped
           }
           artistWalletAddress={artistWalletAddress}
           collectible={{
