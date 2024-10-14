@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Copy } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { SolanaFMService } from "@/lib/services/solanaExplorerService";
+import { toast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 
 interface Order {
   id: string;
@@ -68,7 +70,25 @@ const columns: ColumnDef<Order>[] = [
   {
     accessorKey: "wallet_address",
     header: "Wallet Address",
-    cell: ({ row }) => formatAddress(row.getValue("wallet_address")),
+    cell: ({ row }) => {
+      const address = row.getValue("wallet_address") as string;
+
+      const copyToClipboard = () => {
+        navigator.clipboard.writeText(address);
+        toast({
+          title: "Copied to clipboard",
+        });
+      };
+
+      return (
+        <div className="flex items-center space-x-2">
+          <span>{formatAddress(address)}</span>
+          <Button variant="ghost" size="icon" onClick={copyToClipboard}>
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
+      );
+    },
     filterFn: (row, id, value) => {
       const cellValue = row.getValue(id) as string | undefined;
       return cellValue?.toLowerCase().includes(value.toLowerCase()) ?? false;
@@ -176,10 +196,16 @@ export default function CollectionOrders() {
       columnVisibility,
       rowSelection,
     },
+    initialState: {
+      pagination: {
+        pageSize: 20,
+      },
+    },
   });
 
   return (
     <div className="p-8">
+      <Toaster />
       <div className="flex items-center justify-between mb-6">
         <Button
           onClick={() => router.back()}
@@ -296,7 +322,7 @@ export default function CollectionOrders() {
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
-        <div className="space-x-2">
+        <div className="space-x-2 flex items-center">
           <Button
             variant="outline"
             size="sm"
@@ -305,6 +331,10 @@ export default function CollectionOrders() {
           >
             Previous
           </Button>
+          <span className="text-sm">
+            Page {table.getState().pagination.pageIndex + 1} of{" "}
+            {table.getPageCount()}
+          </span>
           <Button
             variant="outline"
             size="sm"
