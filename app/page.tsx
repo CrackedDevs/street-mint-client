@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function LandingPage() {
   // Check if we're on irls.xyz domain
-  const isIrlsDomain = typeof window !== "undefined" && window.location.hostname === "irls.xyz";
+  const isIrlsDomain = typeof window !== "undefined" && window.location.hostname === "www.irls.xyz";
   console.log("isIrlsDomain", typeof window !== "undefined" && window.location.hostname);
   const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
 
