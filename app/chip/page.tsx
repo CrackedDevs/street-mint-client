@@ -1,7 +1,8 @@
 'use client';
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function ChipPage() {
+function ChipContent() {
   const searchParams = useSearchParams();
   
   const tagID = searchParams.get('x');
@@ -17,5 +18,13 @@ export default function ChipPage() {
         <p><strong>Code:</strong> {code || 'Not provided'}</p>
       </div>
     </div>
+  );
+}
+
+export default function ChipPage() {
+  return (
+    <Suspense fallback={<div className="p-4">Loading...</div>}>
+      <ChipContent />
+    </Suspense>
   );
 } 
