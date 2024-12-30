@@ -103,6 +103,8 @@ export const supabase = createClient<Database>(supabaseUrl!, supabaseAnonKey!, {
     },
 },);
 
+
+
 const getAuthenticatedUser = async (): Promise<{ user: User | null; error: AuthError | null }> => {
     const {
         data: { user },
@@ -591,45 +593,6 @@ export async function getExistingOrder(walletAddress: string, collectibleId: num
     }
 }
 
-export async function verifyNfcSignature(rnd: string, sign: string, pubKey: string): Promise<boolean> {
-    if (!rnd || !sign || !pubKey) {
-        return false;
-    }
-    const isValid = await isSignatureValid(rnd, sign, pubKey);
-    if (!isValid) {
-        console.log("NFC signature is not valid");
-        return false;
-    }
-
-    const { data, error } = await supabase
-        .from('nfc_taps')
-        .select('id')
-        .eq('random_number', rnd)
-        .single();
-
-    if (error && error.code !== 'PGRST116') {
-        console.error('Error checking NFC tap:', error);
-        return false
-    }
-    if (data) {
-        console.log("NFC tap already recorded");
-        return false;
-    }
-
-    return true;
-}
-
-export async function recordNfcTap(rnd: string): Promise<boolean> {
-    const { error: insertError } = await supabase
-        .from('nfc_taps')
-        .insert({ random_number: rnd });
-
-    if (insertError) {
-        console.error('Error recording NFC tap:', insertError);
-        return false;
-    }
-    return true;
-}
 
 
 export async function getCompletedOrdersCount(collectibleId: number): Promise<number> {

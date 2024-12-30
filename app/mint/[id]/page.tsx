@@ -4,15 +4,14 @@ import {
   getArtistById,
   fetchCollectibleById,
   QuantityType,
-  verifyNfcSignature,
   getCompletedOrdersCount,
-  recordNfcTap,
 } from "@/lib/supabaseClient";
 import Gallery from "@/components/gallery";
 import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
 import EditionInformation from "@/components/EditionInformation";
 import { getSolPrice } from "@/lib/services/getSolPrice";
+import { recordNfcTap, verifyNfcSignature } from "@/lib/supabaseAdminClient";
 
 async function getNFTData(id: string, rnd: string, sign: string) {
   let isIRLtapped = false;

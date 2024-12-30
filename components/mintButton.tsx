@@ -27,8 +27,6 @@ import {
   Collectible,
   Collection,
   getExistingOrder,
-  recordNfcTap,
-  supabase,
   updateOrderAirdropStatus,
 } from "@/lib/supabaseClient";
 import { Input } from "./ui/input";
@@ -43,7 +41,6 @@ import ShowAirdropModal from "./modals/ShowAirdropModal";
 import ShowDonationModal from "./modals/ShowDonationModal";
 import { ExternalLink, Unplug } from "lucide-react";
 import { Wallet } from "lucide-react";
-import { Button } from "./ui/button";
 import {
   Dialog,
   DialogContent,
@@ -54,10 +51,11 @@ import {
 } from "./ui/dialog";
 import Image from "next/image";
 import CheckInboxModal from "./modals/ShowMailSentModal";
-import { getSupabaseAdmin } from "@/lib/supabaseAdminClient";
+import { getSupabaseAdmin, recordNfcTap } from "@/lib/supabaseAdminClient";
 import { getSolPrice } from "@/lib/services/getSolPrice";
 import { MintStatus } from "./EditionInformation";
 import WaitlistModal from "./modals/PromotionalModal";
+import { Button } from "./ui/button";
 
 interface MintButtonProps {
   collectible: Collectible;
