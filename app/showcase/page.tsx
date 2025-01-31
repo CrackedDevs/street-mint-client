@@ -1,81 +1,21 @@
 "use client";
 import Image from "next/image";
-import { Clock, MapPin } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import CollectibleMegaCard from "@/components/collectibleMegaCard";
 import DotPattern from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
-import { fetchAllCollectibles, Collectible } from "@/lib/supabaseClient";
+import { fetchAllCollectibles, CollectibleDetailed } from "@/lib/supabaseClient";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface ArtworkItem {
-  id: string;
-  title: string;
-  creator: {
-    name: string;
-    logo: string;
-  };
-  image: string;
-  editionType: string[];
-  price: string;
-  isFreeClaimable: boolean;
-  location: string;
-  address: string;
-  status: "upcoming" | "live" | "ending";
-  timeRemaining: number;
-}
-
-const artworks: ArtworkItem[] = [
-  {
-    id: "1",
-    title: "YOUNG NAS - NYC, 1992",
-    creator: {
-      name: "Chi Modu",
-      logo: "/placeholder.svg?height=40&width=40",
-    },
-    image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/photo_4965280750693887341_y.jpg-BvwzTS2x7CgVMue5si7zJyY1wh53bk.jpeg",
-    editionType: ["PHYSICAL + DIGITAL NFT", "2 EDITIONS"],
-    price: "2.5 ETH",
-    isFreeClaimable: true,
-    location: "New York City",
-    address: "40.7128° N, 74.0060° W",
-    status: "live",
-    timeRemaining: 172800, // 48 hours in seconds
-  },
-  {
-    id: "2",
-    title: "TUPAC - LA, 1993",
-    creator: {
-      name: "Another Photographer",
-      logo: "/placeholder.svg?height=40&width=40",
-    },
-    image: "/placeholder.svg?height=600&width=600",
-    editionType: ["DIGITAL NFT", "5 EDITIONS"],
-    price: "1.8 ETH",
-    isFreeClaimable: false,
-    location: "Los Angeles",
-    address: "34.0522° N, 118.2437° W",
-    status: "upcoming",
-    timeRemaining: 86400, // 24 hours in seconds
-  },
-  // Add more items as needed
-];
 
 export default function ArtworkList() {
   const [collectibles, setCollectibles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const formatTimeRemaining = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${minutes}m`;
-  };
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
+  const LIMIT = 10;
 
   const isIrlsDomain =
     typeof window !== "undefined" &&
@@ -92,12 +32,17 @@ export default function ArtworkList() {
       setError(null);
 
       try {
-        const allCollectiblesData = await fetchAllCollectibles();
-        if (!allCollectiblesData) {
-          throw new Error("Failed to fetch all collectibles data");
+        const response = await fetchAllCollectibles(offset, LIMIT);
+        if (!response) {
+          throw new Error("Failed to fetch collectibles data");
         }
-        console.log("allCollectiblesData", allCollectiblesData);
-        setCollectibles(allCollectiblesData);
+        
+        const { collectibles: newCollectibles, hasMore: moreAvailable } = response;
+
+        setCollectibles(prev => 
+          offset === 0 ? newCollectibles : [...prev, ...newCollectibles]
+        );
+        setHasMore(moreAvailable);
       } catch (error) {
         console.error("Error in fetchCollections:", error);
         setError("An unexpected error occurred. Please try again later.");
@@ -112,7 +57,11 @@ export default function ArtworkList() {
     }
 
     fetchCollectibles();
-  }, []);
+  }, [offset]);
+
+  const loadMore = () => {
+    setOffset(prev => prev + LIMIT);
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -132,16 +81,28 @@ export default function ArtworkList() {
           </nav>
         </header>
 
-        {loading ? (
+        {loading && offset === 0 ? (
           <div className="py-32 space-y-16">
-            <Skeleton className=" h-full w-full min-h-[80vh] max-w-[92vw] mx-auto space-y-16 py-24 relative z-120" />
+            <Skeleton className="h-full w-full min-h-[80vh] max-w-[92vw] mx-auto space-y-16 py-24 relative z-120" />
           </div>
         ) : (
           <div>
             <div className="w-full max-w-[92vw] mx-auto space-y-16 py-32 relative">
               {collectibles.map((collectible, index) => (
-                <CollectibleMegaCard collectible={collectible} index={index} />
+                <CollectibleMegaCard key={collectible.id} collectible={collectible} index={index} />
               ))}
+              
+              {hasMore && (
+                <div className="flex justify-center pb-16">
+                  <Button 
+                    onClick={loadMore}
+                    disabled={loading}
+                    className="w-48 text-lg h-12"
+                  >
+                    {loading ? "Loading..." : "Load More"}
+                  </Button>
+                </div>
+              )}
             </div>
             <DotPattern
               className={cn(
