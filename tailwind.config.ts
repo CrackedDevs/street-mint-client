@@ -15,8 +15,7 @@ const config: Config = {
   			slide: 'slide var(--speed) ease-in-out infinite alternate',
   			grid: 'grid 45s linear infinite',
   			'border-beam': 'border-beam calc(var(--duration)*1s) infinite linear',
-  			'shimmer-slide': 'shimmer-slide var(--speed) ease-in-out infinite alternate',
-  			'spin-around': 'spin-around calc(var(--speed) * 2) infinite linear'
+  			'shimmer-slide': 'shimmer-slide var(--speed) ease-in-out infinite alternate'
   		},
   		keyframes: {
   			'spin-around': {
@@ -54,20 +53,6 @@ const config: Config = {
   			'shimmer-slide': {
   				to: {
   					transform: 'translate(calc(100cqw - 100%), 0)'
-  				}
-  			},
-  			'spin-around': {
-  				'0%': {
-  					transform: 'translateZ(0) rotate(0)'
-  				},
-  				'15%, 35%': {
-  					transform: 'translateZ(0) rotate(90deg)'
-  				},
-  				'65%, 85%': {
-  					transform: 'translateZ(0) rotate(270deg)'
-  				},
-  				'100%': {
-  					transform: 'translateZ(0) rotate(360deg)'
   				}
   			}
   		},
