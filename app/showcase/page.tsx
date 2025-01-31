@@ -8,11 +8,11 @@ import { fetchAllCollectibles, CollectibleDetailed } from "@/lib/supabaseClient"
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 
 export default function ArtworkList() {
-  const [collectibles, setCollectibles] = useState<any[]>([]);
+  const [collectibles, setCollectibles] = useState<CollectibleDetailed[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
   const LIMIT = 10;
@@ -29,7 +29,6 @@ export default function ArtworkList() {
   useEffect(() => {
     async function fetchCollectibles() {
       setLoading(true);
-      setError(null);
 
       try {
         const response = await fetchAllCollectibles(offset, LIMIT);
@@ -45,7 +44,6 @@ export default function ArtworkList() {
         setHasMore(moreAvailable);
       } catch (error) {
         console.error("Error in fetchCollections:", error);
-        setError("An unexpected error occurred. Please try again later.");
         toast({
           title: "Error",
           description: "Failed to fetch collections. Please try again later.",
@@ -68,7 +66,7 @@ export default function ArtworkList() {
       <div>
         <header className="absolute inset-x-0 top-0 z-50 bg-white border-b border-gray-300">
           <nav className="flex justify-center p-6 lg:px-8" aria-label="Global">
-            <a href="#" className="-m-1.5 p-1.5">
+            <Link href="/" className="-m-1.5 p-1.5">
               <span className="sr-only">{BRAND_NAME}</span>
               <Image
                 src={isIrlsDomain ? "/irlLogo.svg" : "/logo.svg"}
@@ -77,7 +75,7 @@ export default function ArtworkList() {
                 height={100}
                 className="h-10 w-auto"
               />
-            </a>
+            </Link>
           </nav>
         </header>
 
