@@ -4,12 +4,13 @@ import { Clock, MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import CollectibleCard from "@/components/collectibleCard";
+import CollectibleMegaCard from "@/components/collectibleMegaCard";
 import DotPattern from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
 import { fetchAllCollectibles, Collectible } from "@/lib/supabaseClient";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ArtworkItem {
   id: string;
@@ -66,11 +67,9 @@ const artworks: ArtworkItem[] = [
 ];
 
 export default function ArtworkList() {
-
-    const [collectibles, setCollectibles] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
+  const [collectibles, setCollectibles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const formatTimeRemaining = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -93,12 +92,12 @@ export default function ArtworkList() {
       setError(null);
 
       try {
-          const allCollectiblesData = await fetchAllCollectibles();
-          if (!allCollectiblesData) {
-            throw new Error("Failed to fetch all collectibles data");
-          }
-          console.log("allCollectiblesData", allCollectiblesData);
-          setCollectibles(allCollectiblesData);
+        const allCollectiblesData = await fetchAllCollectibles();
+        if (!allCollectiblesData) {
+          throw new Error("Failed to fetch all collectibles data");
+        }
+        console.log("allCollectiblesData", allCollectiblesData);
+        setCollectibles(allCollectiblesData);
       } catch (error) {
         console.error("Error in fetchCollections:", error);
         setError("An unexpected error occurred. Please try again later.");
@@ -116,33 +115,43 @@ export default function ArtworkList() {
   }, []);
 
   return (
-    <div>
-      <header className="absolute inset-x-0 top-0 z-50 bg-white">
-        <nav className="flex justify-center p-6 lg:px-8" aria-label="Global">
-          <a href="#" className="-m-1.5 p-1.5">
-            <span className="sr-only">{BRAND_NAME}</span>
-            <Image
-              src={isIrlsDomain ? "/irlLogo.svg" : "/logo.svg"}
-              alt={isIrlsDomain ? "IRLS logo" : "Street mint logo"}
-              width={250}
-              height={100}
-              className="h-10 w-auto"
-            />
-          </a>
-        </nav>
-      </header>
+    <div className="min-h-screen bg-background text-foreground">
+      <div>
+        <header className="absolute inset-x-0 top-0 z-50 bg-white border-b border-gray-300">
+          <nav className="flex justify-center p-6 lg:px-8" aria-label="Global">
+            <a href="#" className="-m-1.5 p-1.5">
+              <span className="sr-only">{BRAND_NAME}</span>
+              <Image
+                src={isIrlsDomain ? "/irlLogo.svg" : "/logo.svg"}
+                alt={isIrlsDomain ? "IRLS logo" : "Street mint logo"}
+                width={250}
+                height={100}
+                className="h-10 w-auto"
+              />
+            </a>
+          </nav>
+        </header>
 
-      <div className="w-full max-w-7xl mx-auto space-y-16 py-24 relative">
-        {collectibles.map((collectible, index) => (
-          <CollectibleCard collectible={collectible} index={index} />
-        ))}
-      </div>
-      <DotPattern
-        className={cn(
-          "absolute inset-0 w-full h-full z-0",
-          "[mask-image:radial-gradient(ellipse_at_center,white,transparent)]"
+        {loading ? (
+          <div className="py-32 space-y-16">
+            <Skeleton className=" h-full w-full min-h-[80vh] max-w-[92vw] mx-auto space-y-16 py-24 relative z-120" />
+          </div>
+        ) : (
+          <div>
+            <div className="w-full max-w-[92vw] mx-auto space-y-16 py-32 relative">
+              {collectibles.map((collectible, index) => (
+                <CollectibleMegaCard collectible={collectible} index={index} />
+              ))}
+            </div>
+            <DotPattern
+              className={cn(
+                "absolute inset-0 w-full h-full z-0",
+                "[mask-image:radial-gradient(ellipse_at_center,white,transparent)]"
+              )}
+            />
+          </div>
         )}
-      />
+      </div>
     </div>
   );
 }

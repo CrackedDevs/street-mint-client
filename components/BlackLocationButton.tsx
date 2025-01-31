@@ -1,5 +1,5 @@
 import React from "react";
-import BlackBgShimmerButton from "./magicui/whiteBg-shimmer-button";
+import ShimmerButton from "./magicui/shimmer-button";
 import { MapIcon } from "lucide-react";
 
 interface LocationButtonProps {
@@ -16,15 +16,15 @@ const LocationButton: React.FC<LocationButtonProps> = ({ location }) => {
   };
 
   return (
-    <BlackBgShimmerButton
+    <ShimmerButton
       borderRadius="9999px"
-      className="w-full text-black flex  hover:bg-gray-200 h-[40px] rounded font-bold"
+      className="w-full text-white flex  hover:bg-gray-200 h-[60px] rounded font-bold"
       onClick={handleLocationClick}
       disabled={!location}
     >
       <span className="mr-4"> View Location</span>
       <MapIcon />
-    </BlackBgShimmerButton>
+    </ShimmerButton>
   );
 };
 
