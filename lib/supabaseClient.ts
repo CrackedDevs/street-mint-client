@@ -28,7 +28,6 @@ export enum QuantityType {
     Limited = "limited",
 }
 
-
 export type Collectible = {
     id: number;
     name: string;
@@ -63,7 +62,6 @@ interface Order {
     // Add other fields as necessary
 }
 
-
 export type PopulatedCollection = {
     id: number;
     name: string;
@@ -83,6 +81,11 @@ export type Artist = {
     farcaster_username?: string | null;
     wallet_address: string;
 };
+
+export type CollectibleDetailed = Collectible & {
+    collection: Collection;
+    artist: Artist;
+}
 
 export type ArtistWithoutWallet = Omit<Artist, 'wallet_address'>;
 
@@ -440,6 +443,66 @@ export const fetchCollectiblesByCollectionId = async (collectionId: number) => {
         return null;
     }
     return data;
+};
+
+export const fetchAllCollectibles = async (offset: number = 0, limit: number = 10) => {
+    const { data, error } = await supabase
+        .from("collectibles")
+        .select(`
+            id,
+            name,
+            description,
+            primary_image_url,
+            quantity_type,
+            quantity,
+            price_usd,
+            location,
+            location_note,
+            gallery_urls,
+            metadata_uri,
+            nfc_public_key,
+            mint_start_date,
+            mint_end_date,
+            airdrop_eligibility_index,
+            whitelist,
+            collection_id,
+            created_at
+        `)
+        .range(offset, offset + limit - 1)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error("Error fetching all collectibles:", error);
+        return null;
+    }
+
+    const allCollectibles : CollectibleDetailed[] = (await Promise.all(data.map(async (collectible) => {
+        const collection = await getCollectionById(collectible.collection_id);
+        if (!collection) {
+            console.error("Error fetching collection:", collection);
+            return null;
+        }
+        const artist = await getArtistById(collection.artist);
+        if (!artist) {
+            console.error("Error fetching artist:", artist);
+            return null;
+        }
+        return {
+            ...collectible,
+            collection,
+            artist
+        } as CollectibleDetailed;
+    }))).filter((item): item is CollectibleDetailed => item !== null);
+
+    const { count } = await supabase
+        .from("collectibles")
+        .select("id", { count: 'exact', head: true }) as { count: number | null };
+
+    return {
+        collectibles: allCollectibles,
+        total: count || 0,
+        hasMore: offset + limit < (count || 0)
+    };
 };
 
 export async function checkMintEligibility(walletAddress: string, collectibleId: number, deviceId: string): Promise<{ eligible: boolean; reason?: string, isAirdropEligible?: boolean }> {

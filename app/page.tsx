@@ -1,8 +1,18 @@
 "use client";
+import {
+  CollectibleDetailed,
+  fetchAllCollectibles,
+} from "@/lib/supabaseClient";
 import { Wallet, ShoppingBag, ChevronRight, Cpu } from "lucide-react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import CollectibleMegaCard from "@/components/collectibleMegaCard";
+import Link from "next/link";
 
 export default function LandingPage() {
+  const [collectibles, setCollectibles] = useState<CollectibleDetailed[]>([]);
+
   // Check if we're on irls.xyz domain
   const isIrlsDomain =
     typeof window !== "undefined" &&
@@ -12,6 +22,26 @@ export default function LandingPage() {
     typeof window !== "undefined" && window.location.hostname
   );
   const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
+
+  useEffect(() => {
+    async function fetchCollectibles() {
+      try {
+        const response = await fetchAllCollectibles(0, 10);
+        if (!response) {
+          throw new Error("Failed to fetch collectibles data");
+        }
+
+        const { collectibles: newCollectibles, hasMore: moreAvailable } =
+          response;
+
+        setCollectibles(newCollectibles);
+      } catch (error) {
+        console.error("Error in fetchCollections:", error);
+      }
+    }
+
+    fetchCollectibles();
+  }, []);
 
   return (
     <div className="bg-white">
@@ -117,6 +147,31 @@ export default function LandingPage() {
                 </div>
               ))}
             </dl>
+          </div>
+        </div>
+
+        <div>
+          <h1 className="mx-auto mt-24 text-4xl font-bold text-black lg:text-center">
+            {BRAND_NAME} Showcase
+          </h1>
+          <div>
+            <div className="w-full max-w-[90vw] mx-auto space-y-16 py-8 relative">
+              {collectibles.map((collectible, index) => (
+                <CollectibleMegaCard
+                  key={collectible.id}
+                  collectible={collectible}
+                  index={index}
+                />
+              ))}
+
+              <div className="flex justify-center">
+                <Link href="/showcase">
+                  <Button className="w-54 py-2 px-4 text-lg h-12">
+                    See all collectibles →
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
 
