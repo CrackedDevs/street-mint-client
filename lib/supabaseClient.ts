@@ -448,7 +448,26 @@ export const fetchCollectiblesByCollectionId = async (collectionId: number) => {
 export const fetchAllCollectibles = async (offset: number = 0, limit: number = 10) => {
     const { data, error } = await supabase
         .from("collectibles")
-        .select("*")
+        .select(`
+            id,
+            name,
+            description,
+            primary_image_url,
+            quantity_type,
+            quantity,
+            price_usd,
+            location,
+            location_note,
+            gallery_urls,
+            metadata_uri,
+            nfc_public_key,
+            mint_start_date,
+            mint_end_date,
+            airdrop_eligibility_index,
+            whitelist,
+            collection_id,
+            created_at
+        `)
         .range(offset, offset + limit - 1)
         .order('created_at', { ascending: false });
 
@@ -477,7 +496,7 @@ export const fetchAllCollectibles = async (offset: number = 0, limit: number = 1
 
     const { count } = await supabase
         .from("collectibles")
-        .select("*", { count: 'exact', head: true });
+        .select("id", { count: 'exact', head: true }) as { count: number | null };
 
     return {
         collectibles: allCollectibles,
