@@ -23,7 +23,7 @@ enum Section {
 
 export default function AdminDashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [password, setPassword] = useState("XxmYMe4dWTjF");
+  const [password, setPassword] = useState("");
   const [collections, setCollections] = useState<PopulatedCollection[]>([]);
   const [selectedSection, setSelectedSection] = useState<Section>(
     Section.ChipManager
