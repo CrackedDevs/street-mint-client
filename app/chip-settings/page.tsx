@@ -1,12 +1,14 @@
 "use client";
 
+import AddChipForm from "@/components/AddChipForm";
+import ChipTable from "@/components/ChipTable";
 import { useState } from "react";
 import { PopulatedCollection } from "@/lib/supabaseClient";
-import CollectionCard from "@/components/collectionCard";
-import { loginAdmin } from "./actions";
+import { loginAdmin } from "../admin/actions";
+import Link from "next/link";
 import AdminNavBar from "@/components/AdminNavBar";
 
-export default function AdminDashboard() {
+export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState("XxmYMe4dWTjF");
   const [collections, setCollections] = useState<PopulatedCollection[]>([]);
@@ -51,23 +53,12 @@ export default function AdminDashboard() {
   return (
     <div>
       <AdminNavBar />
-      <div className="p-8">
-        <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {collections.map((collection) => (
-            <div key={collection.id} className="relative z-20 bg-white">
-              <CollectionCard
-                isAdmin={true}
-                collection={{
-                  id: collection.id?.toString() || "",
-                  name: collection.name,
-                  description: collection.description,
-                  collectible_image_urls: collection.collectible_image_urls,
-                }}
-              />
-            </div>
-          ))}
-        </div>
+      <div className="container mx-auto p-4 py-10 space-y-8">
+        <h1 className="text-3xl font-bold text-center mb-12">
+          Chip Collectible Manager 🔐
+        </h1>
+        <AddChipForm />
+        <ChipTable />
       </div>
     </div>
   );
