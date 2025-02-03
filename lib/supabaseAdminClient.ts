@@ -18,11 +18,13 @@ const supabaseAdmin = createClient<Database>(supabaseUrl!, supabaseServiceRoleKe
 
 export type ChipLink = {
     id: number;
-    chip_id: string | null;
-    collectible_id: number | null;
+    chip_id: string;
+    collectible_id: number;
     active: boolean;
     created_at: string;
 }
+
+export type ChipLinkCreate = Omit<ChipLink, "id" | "created_at">;
 
 export async function getSupabaseAdmin() {
     return supabaseAdmin;
@@ -74,6 +76,7 @@ export async function recordNfcTap(rnd: string): Promise<boolean> {
 }
 
 export async function getAllChipLinks() {
+    console.log("getAllChipLinks");
     const supabaseAdmin = await getSupabaseAdmin();
     const { data, error } : { data: ChipLink[] | null, error: any } = await supabaseAdmin
         .from('chip_links')
@@ -115,9 +118,9 @@ export async function getChipLinkByCollectibleId(collectibleId: number) {
     return data;
 }
 
-export async function createChipLink(chipLink: ChipLink) {
+export async function createChipLink(chipLink: ChipLinkCreate): Promise<boolean> {
     const supabaseAdmin = await getSupabaseAdmin();
-    const { data, error }: { data: ChipLink | null, error: any } = await supabaseAdmin
+    const { error }: { error: any } = await supabaseAdmin
         .from('chip_links')
         .insert({
             chip_id: chipLink.chip_id,
@@ -127,9 +130,9 @@ export async function createChipLink(chipLink: ChipLink) {
 
     if (error) {
         console.error('Error creating chip link:', error);
-        return null;
+        return false;
     }
-    return data;
+    return true;
 }
 
 export async function updateChipLink(id: number, chipLink: ChipLink) {

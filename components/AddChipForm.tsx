@@ -3,16 +3,22 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ChipLinkCreate } from "@/lib/supabaseAdminClient";
+import { Loader2 } from "lucide-react";
 
-export default function AddChipForm() {
-  const [chipId, setChipId] = useState("")
-  const [collectibleId, setCollectibleId] = useState("")
+export default function AddChipForm({ onAddChipLink }: { onAddChipLink: (chipLink: ChipLinkCreate) => void }) {
+  const [chipId, setChipId] = useState("");
+  const [collectibleId, setCollectibleId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Add", { chipId, collectibleId })
+    console.log("Add", { chipId, collectibleId });
+    setIsLoading(true);
+    onAddChipLink({ chip_id: chipId, collectible_id: parseInt(collectibleId), active: true });
     setChipId("")
     setCollectibleId("")
+    setIsLoading(false);
   }
 
   return (
@@ -33,7 +39,9 @@ export default function AddChipForm() {
         className="px-5 text-base font-semibold h-full"
         required
       />
-      <Button type="submit" className="min-w-24 font-semibold text-lg h-full">Add</Button>
+      <Button type="submit" className="min-w-24 font-semibold text-lg h-full">
+        {isLoading ? <Loader2 className="animate-spin" /> : "Add"}
+      </Button>
     </form>
   )
 }

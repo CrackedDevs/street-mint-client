@@ -57,22 +57,22 @@ export type Database = {
       chip_links: {
         Row: {
           active: boolean
-          chip_id: string | null
-          collectible_id: number | null
+          chip_id: string
+          collectible_id: number
           created_at: string
           id: number
         }
         Insert: {
           active?: boolean
-          chip_id?: string | null
-          collectible_id?: number | null
+          chip_id: string
+          collectible_id: number
           created_at?: string
           id?: number
         }
         Update: {
           active?: boolean
-          chip_id?: string | null
-          collectible_id?: number | null
+          chip_id?: string
+          collectible_id?: number
           created_at?: string
           id?: number
         }

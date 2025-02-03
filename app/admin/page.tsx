@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PopulatedCollection } from "@/lib/supabaseClient";
 import CollectionCard from "@/components/collectionCard";
 import { loginAdmin } from "./actions";
 import { Button } from "@/components/ui/button";
 import AddChipForm from "@/components/AddChipForm";
 import ChipTable from "@/components/ChipTable";
+import { ChipLink, createChipLink, getAllChipLinks, ChipLinkCreate } from "@/lib/supabaseAdminClient";
 
 enum Section {
   Library = "library",
@@ -18,8 +19,9 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState("XxmYMe4dWTjF");
   const [collections, setCollections] = useState<PopulatedCollection[]>([]);
   const [selectedSection, setSelectedSection] = useState<Section>(
-    Section.Library
+    Section.ChipManager
   );
+  const [chipLinks, setChipLinks] = useState<ChipLink[]>([]);
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -29,6 +31,28 @@ export default function AdminDashboard() {
       setCollections(result.collections);
     } else {
       alert("Incorrect password");
+    }
+  };
+
+  const fetchChipLinks = async () => {
+    const links = await getAllChipLinks();
+    console.log("links", links);
+    if (links) {
+      setChipLinks(links);
+    }
+  };
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchChipLinks();
+    }
+  }, [isLoggedIn]);
+
+  const addChipLink = async (chipLink: ChipLinkCreate) => {
+    const result = await createChipLink(chipLink);
+    console.log("result", result);
+    if (result) {
+      fetchChipLinks();
     }
   };
 
@@ -108,8 +132,8 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-bold text-center mb-12">
             Chip Collectible Manager 🔐
           </h1>
-          <AddChipForm />
-          <ChipTable />
+          <AddChipForm onAddChipLink={addChipLink} />
+          <ChipTable chipLinks={chipLinks} />
         </div>
       )}
     </div>
