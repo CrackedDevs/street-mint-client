@@ -67,7 +67,7 @@ export default function CollectibleMegaCard({
     <div key={collectible.id} className="relative z-20 bg-white border-black">
       <Card key={collectible.id} className="border-black shadow-none p-1">
         <CardContent
-          className={`grid md:grid-cols-2 gap-12 p-8 ${
+          className={`grid md:grid-cols-2 gap-6 md:gap-12 p-4 md:p-8 ${
             index % 2 === 0 ? "" : "md:grid-flow-col-dense"
           }`}
         >
@@ -83,31 +83,31 @@ export default function CollectibleMegaCard({
               className="object-cover rounded-lg"
             />
           </div>
-          <div className="flex flex-col justify-between mt-1">
-            <div className="space-y-8">
-              <div className="flex items-center gap-4">
+          <div className="flex flex-col justify-between">
+            <div className="space-y-4 md:space-y-8">
+              <div className="flex items-center gap-3">
                 {collectible.artist.avatar_url && (
                   <div>
                     <Image
                       src={collectible.artist.avatar_url || ""}
                       alt={collectible.artist.username}
-                      width={48}
-                      height={48}
+                      width={44}
+                      height={44}
                       className="rounded-full"
                     />
                   </div>
                 )}
-                <span className="text-xl font-semibold">
+                <span className="text-lg md:text-xl font-semibold">
                   {collectible.artist.username}
                 </span>
               </div>
 
-              <div className="flex flex-col gap-8">
-                <div className="flex gap-2">
+              <div className="flex flex-col gap-4 md:gap-8">
+                <div className="flex flex-wrap gap-2">
                   <Badge
                     key={index}
                     variant="outline"
-                    className="text-md font-normal border-black rounded-full"
+                    className="text-sm font-normal border-black rounded-full"
                   >
                     {EditionService.getEditionTypeText(
                       collectible.quantity_type as QuantityType
@@ -115,41 +115,46 @@ export default function CollectibleMegaCard({
                   </Badge>
                   <Badge
                     variant="outline"
-                    className="text-md font-normal border-black rounded-full"
+                    className="text-sm font-normal border-black rounded-full"
                   >
                     Exlusive IRL Mint <Earth className="ml-2 w-4 h-4" />
                   </Badge>
                 </div>
-                <h2 className="text-5xl font-bold">{collectible.name}</h2>
               </div>
 
-              <div className="space-y-6 pt-2">
-                <div className="flex items-center gap-4">
+              <div>
+                <h3 className="text-3xl md:text-4xl font-bold">
+                  {collectible.name}
+                </h3>
+              </div>
+
+              <div className="space-y-4 md:space-y-5">
+                <div className="">
                   {collectible.price_usd === 0 ? (
                     <Badge
                       variant="secondary"
-                      className="w-fit text-base text-green-700"
+                      className="w-fit text-sm md:text-base text-green-700"
                     >
                       Free Claim Available
                     </Badge>
                   ) : (
-                    <div className="flex justify-between items-center text-lg">
-                      <span className="text-muted-foreground text-4xl font-semibold">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground text-2xl md:text-4xl font-semibold">
                         ${collectible.price_usd}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div className="text-base text-muted-foreground text-lg">
+                <div className="text-sm md:text-lg text-muted-foreground">
                   {collectible.location_note}
                 </div>
 
-                <div className="flex items-center gap-2 text-base cursor-default pt-3">
+                <div className="flex items-center gap-2 cursor-default">
                   <Badge
                     variant="secondary"
                     className={cn(
-                      "font-semibold rounded-2xl py-2 px-6 text-lg",
+                      "font-semibold rounded-2xl py-1 md:py-1.5 px-3 md:px-5 text-base md:text-sm",
                       mintingStatus === "ongoing" && "bg-green-400 text-black",
                       mintingStatus === "not-started" &&
                         "bg-yellow-400 text-black",
@@ -157,7 +162,7 @@ export default function CollectibleMegaCard({
                       mintingStatus === "loading" && "bg-gray-500 text-black"
                     )}
                   >
-                    <Clock className="w-6 h-6 mr-3" />
+                    <Clock className="w-4 h-4 md:w-5 md:h-5 mr-2 md:mr-3" />
                     {mintingStatus === "ongoing" ? (
                       timeLeft ? (
                         <div>
@@ -191,31 +196,34 @@ export default function CollectibleMegaCard({
               </div>
             </div>
 
-            <div className="py-4">
-              <p className="text-md text-muted-foreground">
+            <div className="py-5">
+              <p className="text-sm md:text-md text-muted-foreground">
                 {collectible.description.length > 490
                   ? `${collectible.description.substring(0, 490)}...`
                   : collectible.description}
               </p>
             </div>
 
-            <div className="w-full flex items-center gap-4">
+            <div className="w-full flex flex-col sm:flex-row items-center gap-4">
               {collectible.location && (
-                <Link href={collectible.location}>
+                <Link href={collectible.location} className="w-full sm:w-auto">
                   <Button
                     variant="destructive"
-                    className="text-lg py-8 px-6 bg-white border-gray-300 hover:bg-gray-300 text-gray-700 border-2 rounded-lg whitespace-nowrap"
+                    className="w-full text-base md:text-lg py-6 md:py-7 px-4 md:px-6 bg-white border-gray-300 hover:bg-gray-300 text-gray-700 border-2 rounded-lg whitespace-nowrap"
                   >
-                    <MapPin className="w-5 h-5 mr-2" />
+                    <MapPin className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                     View Location
                   </Button>
                 </Link>
               )}
 
               <Link href={`/mint/${collectible.id}`} className="w-full">
-                <Button className="w-full text-xl py-8 rounded-lg" size="lg">
+                <Button
+                  className="w-full text-lg md:text-xl py-7 md:py-7 rounded-lg"
+                  size="lg"
+                >
                   More Info
-                  <ChevronRight className="ml-2 h-6 w-6" />
+                  <ChevronRight className="ml-2 h-5 w-5 md:h-6 md:w-6" />
                 </Button>
               </Link>
             </div>
