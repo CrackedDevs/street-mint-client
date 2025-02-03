@@ -54,6 +54,38 @@ export type Database = {
         }
         Relationships: []
       }
+      chip_links: {
+        Row: {
+          active: boolean
+          chip_id: string | null
+          collectible_id: number | null
+          created_at: string
+          id: number
+        }
+        Insert: {
+          active?: boolean
+          chip_id?: string | null
+          collectible_id?: number | null
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          active?: boolean
+          chip_id?: string | null
+          collectible_id?: number | null
+          created_at?: string
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chip_links_collectible_id_fkey"
+            columns: ["collectible_id"]
+            isOneToOne: true
+            referencedRelation: "collectibles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collectibles: {
         Row: {
           airdrop_eligibility_index: number | null
@@ -362,4 +394,19 @@ export type Enums<
   ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
     ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
