@@ -1,7 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { MoreVertical, Pencil, Trash2, ArrowUpDown } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import {
+  MoreVertical,
+  Pencil,
+  Trash2,
+  ArrowUpDown,
+  Search,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,13 +24,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import UpdateChipModal from "./UpdateChipModal";
-import SearchBar from "./SearchBar";
+import { Input } from "@/components/ui/input";
 import { ChipLink } from "@/lib/supabaseAdminClient";
 
 type SortField = "chip_id" | "collectible_id" | "created_at";
 
-export default function ChipTable({ chipLinks }: { chipLinks: ChipLink[] }) {
-  const [chips, setChips] = useState<ChipLink[]>(chipLinks);
+export default function ChipTable({
+  chipLinks,
+  onDelete,
+  onUpdate,
+}: {
+  chipLinks: ChipLink[];
+  onDelete: (id: number) => Promise<void>;
+  onUpdate: (id: number, chipLink: ChipLink) => Promise<void>;
+}) {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [selectedChip, setSelectedChip] = useState<ChipLink | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,19 +49,19 @@ export default function ChipTable({ chipLinks }: { chipLinks: ChipLink[] }) {
     setIsUpdateModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    setChips(chips.filter((chip) => chip.id !== id));
+  const handleDelete = async (id: number) => {
+    console.log("Delete chip:", id);
+    await onDelete(id);
   };
 
-  const handleUpdateSubmit = (updatedChip: ChipLink) => {
-    setChips(
-      chips.map((chip) => (chip.id === updatedChip.id ? updatedChip : chip))
-    );
+  const handleUpdateSubmit = async (updatedChip: ChipLink) => {
+    setSelectedChip(updatedChip);
+    await onUpdate(updatedChip.id, updatedChip);
     setIsUpdateModalOpen(false);
   };
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
+  const handleSearch = (searchQuery: string) => {
+    setSearchQuery(searchQuery);
   };
 
   const handleSort = (field: SortField) => {
@@ -61,7 +74,7 @@ export default function ChipTable({ chipLinks }: { chipLinks: ChipLink[] }) {
   };
 
   const filteredAndSortedChips = useMemo(() => {
-    return chips
+    return chipLinks
       .filter(
         (chip) =>
           chip.chip_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -75,32 +88,52 @@ export default function ChipTable({ chipLinks }: { chipLinks: ChipLink[] }) {
           return sortDirection === "asc" ? 1 : -1;
         return 0;
       });
-  }, [chips, searchQuery, sortField, sortDirection]);
+  }, [chipLinks, searchQuery, sortField, sortDirection]);
 
   return (
     <>
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="text-3xl font-bold text-gray-900">{chipLinks.length}</div>
+          <div className="text-3xl font-bold text-gray-900">
+            {chipLinks.length}
+          </div>
           <div className="text-sm text-gray-500">Total Chips Linked</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="text-3xl font-bold text-gray-900">
-            {new Set(filteredAndSortedChips.map(chip => chip.collectible_id)).size}
+            {new Set(chipLinks.map((chip) => chip.collectible_id)).size}
           </div>
           <div className="text-sm text-gray-500">Unique Collectibles</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="text-3xl font-bold text-gray-900">
-            {filteredAndSortedChips.filter(chip => 
-              new Date(chip.created_at).toDateString() === new Date().toDateString()
-            ).length}
+            {
+              chipLinks.filter(
+                (chip) =>
+                  new Date(chip.created_at).toDateString() ===
+                  new Date().toDateString()
+              ).length
+            }
           </div>
           <div className="text-sm text-gray-500">Added Today</div>
         </div>
       </div>
       <div className="mb-4">
-        <SearchBar onSearch={handleSearch} />
+        <form onSubmit={() => handleSearch} className="flex space-x-4 h-11">
+          <Input
+            type="text"
+            placeholder="Search chips . . ."
+            value={searchQuery}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setSearchQuery(e.target.value)
+            }
+            className="flex-grow max-w-[370px] px-5 text-base h-full"
+          />
+          <Button type="submit" className="text-base h-full">
+            Search
+            <Search className="w-5 h-5 ml-2" />
+          </Button>
+        </form>
       </div>
       <div className="overflow-x-auto rounded-lg border border-gray-200">
         <Table>
@@ -154,10 +187,12 @@ export default function ChipTable({ chipLinks }: { chipLinks: ChipLink[] }) {
                 <TableCell>{chip.id}</TableCell>
                 <TableCell>{chip.chip_id}</TableCell>
                 <TableCell>{chip.collectible_id}</TableCell>
-                <TableCell>{chip.created_at}</TableCell>
+                <TableCell>
+                  {new Date(chip.created_at).toLocaleString()}
+                </TableCell>
                 <TableCell>
                   <a
-                    href={`/collectible/${chip.collectible_id}`}
+                    href={`/mint/${chip.collectible_id}`}
                     className="text-indigo-600 hover:text-indigo-800 hover:underline transition-colors duration-200"
                   >
                     View Collectible

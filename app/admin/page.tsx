@@ -7,7 +7,14 @@ import { loginAdmin } from "./actions";
 import { Button } from "@/components/ui/button";
 import AddChipForm from "@/components/AddChipForm";
 import ChipTable from "@/components/ChipTable";
-import { ChipLink, createChipLink, getAllChipLinks, ChipLinkCreate } from "@/lib/supabaseAdminClient";
+import {
+  ChipLink,
+  createChipLink,
+  getAllChipLinks,
+  ChipLinkCreate,
+  deleteChipLink,
+  updateChipLink,
+} from "@/lib/supabaseAdminClient";
 
 enum Section {
   Library = "library",
@@ -50,10 +57,19 @@ export default function AdminDashboard() {
 
   const addChipLink = async (chipLink: ChipLinkCreate) => {
     const result = await createChipLink(chipLink);
-    console.log("result", result);
     if (result) {
       fetchChipLinks();
     }
+  };
+
+  const handleDeleteChipLink = async (id: number) => {
+    await deleteChipLink(id);
+    fetchChipLinks();
+  };
+
+  const handleUpdateChipLink = async (id: number, chipLink: ChipLink) => {
+    await updateChipLink(id, chipLink);
+    fetchChipLinks();
   };
 
   if (!isLoggedIn) {
@@ -100,7 +116,7 @@ export default function AdminDashboard() {
               onClick={() => setSelectedSection(Section.ChipManager)}
               className="text-white hover:text-gray-300"
             >
-              Chips Manager
+              Manager
             </Button>
           </div>
         </div>
@@ -133,7 +149,11 @@ export default function AdminDashboard() {
             Chip Collectible Manager 🔐
           </h1>
           <AddChipForm onAddChipLink={addChipLink} />
-          <ChipTable chipLinks={chipLinks} />
+          <ChipTable
+            chipLinks={chipLinks}
+            onDelete={handleDeleteChipLink}
+            onUpdate={handleUpdateChipLink}
+          />
         </div>
       )}
     </div>

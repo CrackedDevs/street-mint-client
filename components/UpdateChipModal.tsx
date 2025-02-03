@@ -10,12 +10,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ChipLink } from "@/lib/supabaseAdminClient";
+import { Loader2 } from "lucide-react";
 
 interface UpdateChipModalProps {
   isOpen: boolean;
   onClose: () => void;
   chip: ChipLink;
-  onUpdate: (updatedChip: ChipLink) => void;
+  onUpdate: (updatedChip: ChipLink) => Promise<void>;
 }
 
 export default function UpdateChipModal({
@@ -26,15 +27,19 @@ export default function UpdateChipModal({
 }: UpdateChipModalProps) {
   const [chipId, setChipId] = useState(chip.chip_id);
   const [collectibleId, setCollectibleId] = useState(chip.collectible_id);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setChipId(chip.chip_id);
     setCollectibleId(chip.collectible_id);
   }, [chip]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdate({ ...chip, chip_id: chipId, collectible_id: collectibleId });
+    setIsLoading(true);
+    await onUpdate({ ...chip, chip_id: chipId, collectible_id: collectibleId });
+    setIsLoading(false);
+    onClose();
   };
 
   return (
@@ -73,7 +78,13 @@ export default function UpdateChipModal({
               required
             />
           </div>
-          <Button type="submit">Update</Button>
+          <Button type="submit" className="w-full">
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              "Update"
+            )}
+          </Button>
         </form>
       </DialogContent>
     </Dialog>
