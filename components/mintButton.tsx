@@ -56,6 +56,7 @@ import { getSolPrice } from "@/lib/services/getSolPrice";
 import { MintStatus } from "./EditionInformation";
 import WaitlistModal from "./modals/PromotionalModal";
 import { Button } from "./ui/button";
+import { CtaPopUp } from "./CtaPopUp";
 
 interface MintButtonProps {
   collectible: Collectible;
@@ -99,6 +100,8 @@ export default function MintButton({
   const [deviceId, setDeviceId] = useState("");
   const [existingOrder, setExistingOrder] = useState<any | null>(null);
   const isFreeMint = collectible.price_usd === 0;
+  const ctaEnabled = collectible.cta_enable
+  const [showCtaPopUp, setShowCtaPopUp] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
   const [showDonationModal, setShowDonationModal] = useState(false);
   const [showAirdropModal, setShowAirdropModal] = useState(false);
@@ -452,6 +455,9 @@ export default function MintButton({
       return;
     }
     await handlePaymentAndMint();
+    if (ctaEnabled) {
+      setShowCtaPopUp(true);
+    }
     setIsMinting(false);
   };
 
@@ -662,6 +668,18 @@ export default function MintButton({
         showModal={showWaitlistModal}
         setShowModal={setShowWaitlistModal}
       />
+      {ctaEnabled && showCtaPopUp && (
+        <CtaPopUp
+          title={collectible.cta_title ?? ""}
+          description={collectible.cta_description ?? ""}
+          logoUrl={collectible.cta_logo_url ?? ""}
+          ctaText={collectible.cta_text ?? ""}
+          ctaLink={collectible.cta_link ?? ""}
+          hasEmailCapture={collectible.cta_has_email_capture ?? false}
+          isOpen={showCtaPopUp}
+          onClose={() => setShowCtaPopUp(false)}
+        />
+      )}
 
       {(transactionSignature || existingOrder?.status === "completed") &&
         renderCompletedMint()}

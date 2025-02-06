@@ -24,6 +24,7 @@ import {
 } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import withAuth from "@/app/dashboard/withAuth";
+import { Switch } from "@/components/ui/switch";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -345,6 +346,135 @@ function EditCollectiblePage() {
                   </Label>
                 </div>
               </div>
+
+              <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-lg font-semibold">
+                        Call to Action
+                      </Label>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Add a call to action to your collectible.
+                      </p>
+                    </div>
+
+                    <Switch
+                      id="call-to-action-toggle"
+                      checked={collectible.cta_enable}
+                      onCheckedChange={(checked) =>
+                        handleCollectibleChange("cta_enable", checked)
+                      }
+                      className="scale-125"
+                    />
+                  </div>
+                  {collectible.cta_enable && (
+                    <div className="space-y-4">
+                      <div>
+                        <Label
+                          htmlFor="call-to-action-title"
+                          className="text-lg font-semibold"
+                        >
+                          Title
+                          <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id="call-to-action-title"
+                          value={collectible.cta_title ?? ""}
+                          required
+                          onChange={(e) =>
+                            handleCollectibleChange("cta_title", e.target.value)
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label
+                          htmlFor="call-to-action-description"
+                          className="text-lg font-semibold"
+                        >
+                          Description
+                          <span className="text-destructive">*</span>
+                        </Label>
+                        <Textarea
+                          id="call-to-action-description"
+                          required
+                          value={collectible.cta_description ?? ""}
+                          onChange={(e) =>
+                            handleCollectibleChange(
+                              "cta_description",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label
+                          htmlFor="call-to-action-logo-url"
+                          className="text-lg font-semibold"
+                        >
+                          Logo URL
+                        </Label>
+                        <Input
+                          id="call-to-action-logo-url"
+                          value={collectible.cta_logo_url ?? ""}
+                          onChange={(e) =>
+                            handleCollectibleChange(
+                              "cta_logo_url",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label
+                          htmlFor="call-to-action-cta-text"
+                          className="text-lg font-semibold"
+                        >
+                          CTA Text
+                        </Label>
+                        <Input
+                          id="call-to-action-cta-text"
+                          value={collectible.cta_text ?? ""}
+                          onChange={(e) =>
+                            handleCollectibleChange("cta_text", e.target.value)
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label
+                          htmlFor="call-to-action-cta-link"
+                          className="text-lg font-semibold"
+                        >
+                          CTA Link
+                        </Label>
+                        <Input
+                          id="call-to-action-cta-link"
+                          value={collectible.cta_link ?? ""}
+                          onChange={(e) =>
+                            handleCollectibleChange("cta_link", e.target.value)
+                          }
+                        />
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <Label
+                          htmlFor="call-to-action-has-email-capture"
+                          className="text-lg font-semibold"
+                        >
+                          Has Email Capture
+                        </Label>
+                        <Switch
+                          id="call-to-action-has-email-capture"
+                          checked={collectible.cta_has_email_capture}
+                          onCheckedChange={() =>
+                            handleCollectibleChange(
+                              "cta_has_email_capture",
+                              !collectible.cta_has_email_capture
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
 
               <Button
                 type="submit"
