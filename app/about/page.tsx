@@ -29,8 +29,8 @@ export default function StreetMintPage() {
       <div className="max-w-4xl mx-auto px-4 py-12">
         <Section title="Welcome">
           <p>
-            You've discovered a Street Mint station, your gateway to owning a
-            unique piece of the urban landscape! We're revolutionising street
+            You&apos;ve discovered a Street Mint station, your gateway to owning a
+            unique piece of the urban landscape! We&apos;re revolutionising street
             art by turning murals into digital collectibles that you can hunt,
             collect, own and trade.
           </p>
@@ -47,11 +47,11 @@ export default function StreetMintPage() {
             collectibles of the amazing street art you see around you. We
             believe in empowering artists, supporting local communities and
             making art collecting accessible to everyone. But we also believe in
-            the power of experience and being in the moment. That's why we've
+            the power of experience and being in the moment. That&apos;s why we&apos;ve
             designed our platform to be truly exclusive and location-based.
           </p>
           <p className="mt-4">
-            <strong>Here's the catch:</strong> You can ONLY claim this digital
+            <strong>Here&apos;s the catch:</strong> You can ONLY claim this digital
             collectible by tapping the Mint Station in person, you cannot access
             it online or share the link with others. The only other way to
             acquire it is by buying it from a seller on a secondary marketplace
@@ -60,19 +60,19 @@ export default function StreetMintPage() {
         </Section>
 
         <Section title="How Does it Work?">
-          <p>It's as easy as 1, 2, 3!</p>
+          <p>It&apos;s as easy as 1, 2, 3!</p>
           <ol className="list-decimal list-inside mt-4 space-y-2">
             <li>
-              <strong>Tap & Claim:</strong> Simply tap your phone on the "X"
+              <strong>Tap & Claim:</strong> Simply tap your phone on the &quot;X&quot;
               located on this Mint Station.
             </li>
             <li>
-              <strong>Enter Details:</strong> You'll be prompted to enter your
+              <strong>Enter Details:</strong> You&apos;ll be prompted to enter your
               email address (and payment information if all the free editions
               have been claimed).
             </li>
             <li>
-              <strong>Own Your Art:</strong> That's it! Your unique digital
+              <strong>Own Your Art:</strong> That&apos;s it! Your unique digital
               collectible will be delivered straight to your email inbox. You
               can view it, share it, or even sell it on secondary art
               marketplaces.
@@ -118,7 +118,7 @@ export default function StreetMintPage() {
         <Section title="Get Involved!">
           <p>
             Are you an artist, gallery, local council, or street art enthusiast?
-            We'd love to hear from you! Join us in bringing Street Mint to your
+            We&apos;d love to hear from you! Join us in bringing Street Mint to your
             city and transforming the way we experience and collect art.
           </p>
           <Button className="mt-4">Contact Us</Button>
@@ -132,7 +132,8 @@ export default function StreetMintPage() {
               opportunities.
             </li>
             <li>
-              Create the world's largest decentralized art gallery, open 24/7
+              <strong>World&apos;s Largest Collection:</strong> Create the
+              world&apos;s largest decentralized art gallery, open 24/7
               and accessible to everyone.
             </li>
             <li>Bring exposure to street artists and their incredible work.</li>
@@ -190,7 +191,7 @@ export default function StreetMintPage() {
             </li>
             <li>
               <strong>Gasless Minting:</strong> Eliminate blockchain transaction
-              fees to create the world's most user friendly art collecting
+              fees to create the world&apos;s most user friendly art collecting
               experience.
             </li>
             <li>
@@ -286,7 +287,7 @@ export default function StreetMintPage() {
             <li>
               <strong>Earn Ongoing Royalties:</strong> Enjoy a continuous
               revenue stream from secondary market sales of the digital
-              collectibles. Even after the initial mints sell out, you'll
+              collectibles. Even after the initial mints sell out, you&apos;ll
               continue to earn royalties every time the digital asset changes
               hands.
             </li>
@@ -296,7 +297,7 @@ export default function StreetMintPage() {
         <Section title="Get Involved!">
           <p>
             Are you an artist, gallery, local council, or street art enthusiast?
-            We'd love to hear from you! Join us in bringing Street Mint to your
+            We&apos;d love to hear from you! Join us in bringing Street Mint to your
             city and transforming the way we experience and collect art.
           </p>
           <Button className="mt-4">Contact Us</Button>
