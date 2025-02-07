@@ -11,7 +11,6 @@ import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
 import EditionInformation from "@/components/EditionInformation";
 import { getSolPrice } from "@/lib/services/getSolPrice";
-import { useEffect, useState } from "react";
 import { checkAuthStatus } from "@/lib/ixkioAuth";
 
 export default async function NFTPage({
@@ -19,8 +18,6 @@ export default async function NFTPage({
 }: {
   searchParams: { x: string; n: string; e: string };
 }) {
-  const [authStatus, setAuthStatus] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   console.log(searchParams);
 
