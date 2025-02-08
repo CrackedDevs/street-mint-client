@@ -16,6 +16,15 @@ const supabaseAdmin = createClient<Database>(supabaseUrl!, supabaseServiceRoleKe
     },
 });
 
+export type ChipLink = {
+    id: number;
+    chip_id: string;
+    collectible_id: number;
+    active: boolean;
+    created_at: string;
+}
+
+export type ChipLinkCreate = Omit<ChipLink, "id" | "created_at">;
 
 export async function getSupabaseAdmin() {
     return supabaseAdmin;
@@ -61,6 +70,94 @@ export async function recordNfcTap(rnd: string): Promise<boolean> {
     console.log("data", data);
     if (error) {
         console.error('Error recording NFC tap:', error);
+        return false;
+    }
+    return true;
+}
+
+export async function getAllChipLinks() {
+    console.log("getAllChipLinks");
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { data, error } : { data: ChipLink[] | null, error: any } = await supabaseAdmin
+        .from('chip_links')
+        .select(`id, chip_id, collectible_id, active, created_at`)
+        .order('created_at', { ascending: false });
+    if (error) {
+        console.error('Error getting all chip links:', error);
+        return null;
+    }
+    return data;
+}
+
+export async function getChipLinkByChipId(chipId: string) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { data, error } : { data: ChipLink | null, error: any } = await supabaseAdmin
+        .from('chip_links')
+        .select(`id, chip_id, collectible_id, active, created_at`)
+        .eq('chip_id', chipId)
+        .single();
+    if (error) {
+        console.error('Error getting all chip links:', error);
+        return null;
+    }
+    return data;
+}
+
+export async function getChipLinkByCollectibleId(collectibleId: number) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { data, error } : { data: ChipLink | null, error: any } = await supabaseAdmin
+        .from('chip_links')
+        .select(`id, chip_id, collectible_id, active, created_at`)
+        .eq('collectible_id', collectibleId)
+        .single();
+
+    if (error) {
+        console.error('Error getting chip link by collectible id:', error);
+        return null;
+    }
+    return data;
+}
+
+export async function createChipLink(chipLink: ChipLinkCreate): Promise<boolean> {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { error }: { error: any } = await supabaseAdmin
+        .from('chip_links')
+        .insert({
+            chip_id: chipLink.chip_id,
+            collectible_id: chipLink.collectible_id,
+            active: chipLink.active,
+        });
+
+    if (error) {
+        console.error('Error creating chip link:', error);
+        return false;
+    }
+    return true;
+}
+
+export async function updateChipLink(id: number, chipLink: ChipLink) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { data, error }: { data: ChipLink | null, error: any } = await supabaseAdmin
+        .from('chip_links')
+        .update({
+            chip_id: chipLink.chip_id,
+            collectible_id: chipLink.collectible_id,
+            active: chipLink.active,
+        })
+        .eq('id', id);
+
+    if (error) {
+        console.error('Error updating chip link:', error);
+        return null;
+    }
+    return data;
+}
+
+export async function deleteChipLink(id: number) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { error }: { error: any } = await supabaseAdmin.from('chip_links').delete().eq('id', id);
+    if (error) {
+        console.error('Error deleting chip link:', error);
         return false;
     }
     return true;
