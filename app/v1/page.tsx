@@ -1,15 +1,11 @@
 import Image from "next/image";
 import {
-  getCollectionById,
-  getArtistById,
-  fetchCollectibleById,
   QuantityType,
-  getCompletedOrdersCount,
 } from "@/lib/supabaseClient";
 import Gallery from "@/components/gallery";
 import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
-import EditionInformation from "@/components/EditionInformation-Old";
+import EditionInformation from "@/components/EditionInformation";
 import { checkAuthStatus } from "@/lib/ixkioAuth";
 
 export default async function NFTPage({
