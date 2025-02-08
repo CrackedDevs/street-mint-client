@@ -53,7 +53,7 @@ import Image from "next/image";
 import CheckInboxModal from "./modals/ShowMailSentModal";
 import { getSupabaseAdmin, recordNfcTap } from "@/lib/supabaseAdminClient";
 import { getSolPrice } from "@/lib/services/getSolPrice";
-import { MintStatus } from "./EditionInformation";
+import { MintStatus } from "./EditionInformation-Old";
 import WaitlistModal from "./modals/PromotionalModal";
 import { Button } from "./ui/button";
 

@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Collectible, Collection, QuantityType } from "@/lib/supabaseClient";
-import MintButton from "@/components/mintButton";
+import MintButton from "@/components/mintButton-old";
 import SparklesText from "@/components/magicui/sparkles-text";
 import AnimatedShinyText from "@/components/magicui/animated-shiny-text";
 import { cn } from "@/lib/utils";

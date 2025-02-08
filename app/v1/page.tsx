@@ -9,8 +9,7 @@ import {
 import Gallery from "@/components/gallery";
 import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
-import EditionInformation from "@/components/EditionInformation";
-import { getSolPrice } from "@/lib/services/getSolPrice";
+import EditionInformation from "@/components/EditionInformation-Old";
 import { checkAuthStatus } from "@/lib/ixkioAuth";
 
 export default async function NFTPage({
@@ -68,7 +67,6 @@ export default async function NFTPage({
 
   const isIRLtapped = data.isIRLtapped;
   const scanCount = data.scanCount;
-
 
     return (
       <div className="min-h-screen bg-white text-black">
