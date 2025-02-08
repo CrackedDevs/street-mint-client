@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Collectible, Collection, QuantityType } from "@/lib/supabaseClient";
-import MintButton from "@/components/mintButton-old";
+import MintButton from "@/components/mintButton";
 import SparklesText from "@/components/magicui/sparkles-text";
 import AnimatedShinyText from "@/components/magicui/animated-shiny-text";
 import { cn } from "@/lib/utils";
@@ -27,7 +27,9 @@ const EditionInformation = ({
   soldCount,
   isIRLSmint,
   isIRLtapped,
-  randomNumber,
+  x,
+  n,
+  e,
 }: {
   collection: Collection;
   collectible: Collectible;
@@ -36,7 +38,9 @@ const EditionInformation = ({
   soldCount: number;
   isIRLtapped: boolean;
   isIRLSmint?: boolean;
-  randomNumber: string | null;
+  x: string;
+  n: string;
+  e: string;
 }) => {
   const [mintingStatus, setMintingStatus] = useState<MintStatus>("loading");
   const [timeLeft, setTimeLeft] = useState<string>("");
@@ -144,7 +148,9 @@ const EditionInformation = ({
       </CardContent>
       <CardFooter className="flex flex-col md:flex-row md:justify-between md:items-center space-y-2 md:space-y-0 md:space-x-4">
         <MintButton
-          randomNumber={randomNumber}
+          x={x}
+          n={n}
+          e={e}
           isIRLtapped={
             process.env.NEXT_PUBLIC_NODE_ENV === "development"
               ? true

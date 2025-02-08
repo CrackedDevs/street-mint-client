@@ -36,22 +36,6 @@ export default async function NFTPage({
     );
   }
 
-  //   const data = await getNFTData(params.id, searchParams.rnd, searchParams.sign);
-
-  //   if (!data) {
-  //     return (
-  //       <div className="flex justify-center items-center h-screen">
-  //         <Image
-  //           src="/logo.svg"
-  //           alt="Street mint logo"
-  //           width={250}
-  //           height={100}
-  //           className="h-20 w-auto animate-pulse"
-  //         />
-  //       </div>
-  //     );
-  //   }
-
     const {
       collectible,
       collection,
@@ -105,7 +89,9 @@ export default async function NFTPage({
               <ArtistInfoComponent artist={artist} />
               {/* Edition Information Section */}
               <EditionInformation
-                randomNumber={"89898"}
+                x={searchParams.x}
+                n={searchParams.n}
+                e={searchParams.e}
                 soldCount={soldCount}
                 isIRLtapped={isIRLtapped}
                 collection={{

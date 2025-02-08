@@ -75,6 +75,20 @@ export async function recordNfcTap(rnd: string): Promise<boolean> {
     return true;
 }
 
+export async function recordChipTap(x: string, n: string, e: string): Promise<boolean> {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin
+        .from('chip_taps')
+        .insert({ x, n, e, server_auth: false });
+
+    console.log("data", data);
+    if (error) {
+        console.error('Error recording Chip tap:', error);
+        return false;
+    }
+    return true;
+}
+
 export async function getAllChipLinks() {
     console.log("getAllChipLinks");
     const supabaseAdmin = await getSupabaseAdmin();
@@ -97,7 +111,7 @@ export async function getChipLinkByChipId(chipId: string) {
         .eq('chip_id', chipId)
         .single();
     if (error) {
-        console.error('Error getting all chip links:', error);
+        console.error('Error getting chip link by chip id:', error);
         return null;
     }
     return data;
