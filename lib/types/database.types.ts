@@ -86,6 +86,33 @@ export type Database = {
           },
         ]
       }
+      chip_taps: {
+        Row: {
+          created_at: string
+          e: string
+          id: number
+          n: string
+          server_auth: boolean
+          x: string
+        }
+        Insert: {
+          created_at?: string
+          e: string
+          id?: number
+          n: string
+          server_auth?: boolean
+          x: string
+        }
+        Update: {
+          created_at?: string
+          e?: string
+          id?: number
+          n?: string
+          server_auth?: boolean
+          x?: string
+        }
+        Relationships: []
+      }
       collectibles: {
         Row: {
           airdrop_eligibility_index: number | null
