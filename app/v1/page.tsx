@@ -107,6 +107,9 @@ export default async function NFTPage({
                   ...collectible,
                   quantity_type: collectible.quantity_type as QuantityType,
                   whitelist: collectible.whitelist || false,
+                  cta_enable: collectible.cta_enable || false,  
+                  cta_has_email_capture: collectible.cta_has_email_capture || false,  
+                  cta_email_list: collectible.cta_email_list || [],
                 }}
                 remainingQuantity={remainingQuantity}
                 artistWalletAddress={artist.wallet_address}
