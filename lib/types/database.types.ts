@@ -80,11 +80,38 @@ export type Database = {
           {
             foreignKeyName: "chip_links_collectible_id_fkey"
             columns: ["collectible_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "collectibles"
             referencedColumns: ["id"]
           },
         ]
+      }
+      chip_taps: {
+        Row: {
+          created_at: string
+          e: string
+          id: number
+          n: string
+          server_auth: boolean
+          x: string
+        }
+        Insert: {
+          created_at?: string
+          e: string
+          id?: number
+          n: string
+          server_auth?: boolean
+          x: string
+        }
+        Update: {
+          created_at?: string
+          e?: string
+          id?: number
+          n?: string
+          server_auth?: boolean
+          x?: string
+        }
+        Relationships: []
       }
       collectibles: {
         Row: {
@@ -92,6 +119,13 @@ export type Database = {
           chain: string | null
           collection_id: number
           created_at: string
+          cta_description: string | null
+          cta_enable: boolean | null
+          cta_has_email_capture: boolean | null
+          cta_link: string | null
+          cta_logo_url: string | null
+          cta_text: string | null
+          cta_title: string | null
           description: string
           gallery_urls: string[]
           id: number
@@ -113,6 +147,13 @@ export type Database = {
           chain?: string | null
           collection_id: number
           created_at?: string
+          cta_description?: string | null
+          cta_enable?: boolean | null
+          cta_has_email_capture?: boolean | null
+          cta_link?: string | null
+          cta_logo_url?: string | null
+          cta_text?: string | null
+          cta_title?: string | null
           description: string
           gallery_urls: string[]
           id?: number
@@ -134,6 +175,13 @@ export type Database = {
           chain?: string | null
           collection_id?: number
           created_at?: string
+          cta_description?: string | null
+          cta_enable?: boolean | null
+          cta_has_email_capture?: boolean | null
+          cta_link?: string | null
+          cta_logo_url?: string | null
+          cta_text?: string | null
+          cta_title?: string | null
           description?: string
           gallery_urls?: string[]
           id?: number

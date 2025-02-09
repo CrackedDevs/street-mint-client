@@ -51,7 +51,7 @@ import {
 } from "./ui/dialog";
 import Image from "next/image";
 import CheckInboxModal from "./modals/ShowMailSentModal";
-import { getSupabaseAdmin, recordChipTap } from "@/lib/supabaseAdminClient";
+import { getSupabaseAdmin, recordNfcTap } from "@/lib/supabaseAdminClient";
 import { getSolPrice } from "@/lib/services/getSolPrice";
 import { MintStatus } from "./EditionInformation-Old";
 import WaitlistModal from "./modals/PromotionalModal";
@@ -63,9 +63,7 @@ interface MintButtonProps {
   artistWalletAddress: string;
   isIRLtapped: boolean;
   mintStatus: MintStatus;
-  x: string;
-  n: string;
-  e: string;
+  randomNumber: string | null;
 }
 
 const wallets = [
@@ -80,9 +78,7 @@ export default function MintButton({
   artistWalletAddress,
   isIRLtapped,
   mintStatus,
-  x,
-  n,
-  e,
+  randomNumber,
 }: MintButtonProps) {
   const {
     connected,
@@ -266,8 +262,8 @@ export default function MintButton({
     }
     setIsMinting(true);
     setError(null);
-    if (collectible.price_usd > 0 && x && n && e) {
-      const recordSuccess = await recordChipTap(x, n, e);
+    if (collectible.price_usd > 0 && randomNumber) {
+      const recordSuccess = await recordNfcTap(randomNumber);
       if (!recordSuccess) {
         return;
       }

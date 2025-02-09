@@ -1,16 +1,11 @@
 import Image from "next/image";
 import {
-  getCollectionById,
-  getArtistById,
-  fetchCollectibleById,
   QuantityType,
-  getCompletedOrdersCount,
 } from "@/lib/supabaseClient";
 import Gallery from "@/components/gallery";
 import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
 import EditionInformation from "@/components/EditionInformation";
-import { getSolPrice } from "@/lib/services/getSolPrice";
 import { checkAuthStatus } from "@/lib/ixkioAuth";
 
 export default async function NFTPage({
@@ -41,22 +36,6 @@ export default async function NFTPage({
     );
   }
 
-  //   const data = await getNFTData(params.id, searchParams.rnd, searchParams.sign);
-
-  //   if (!data) {
-  //     return (
-  //       <div className="flex justify-center items-center h-screen">
-  //         <Image
-  //           src="/logo.svg"
-  //           alt="Street mint logo"
-  //           width={250}
-  //           height={100}
-  //           className="h-20 w-auto animate-pulse"
-  //         />
-  //       </div>
-  //     );
-  //   }
-
     const {
       collectible,
       collection,
@@ -68,7 +47,6 @@ export default async function NFTPage({
 
   const isIRLtapped = data.isIRLtapped;
   const scanCount = data.scanCount;
-
 
     return (
       <div className="min-h-screen bg-white text-black">
@@ -111,7 +89,9 @@ export default async function NFTPage({
               <ArtistInfoComponent artist={artist} />
               {/* Edition Information Section */}
               <EditionInformation
-                randomNumber={"89898"}
+                x={searchParams.x}
+                n={searchParams.n}
+                e={searchParams.e}
                 soldCount={soldCount}
                 isIRLtapped={isIRLtapped}
                 collection={{

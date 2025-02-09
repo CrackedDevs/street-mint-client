@@ -9,7 +9,7 @@ import {
 import Gallery from "@/components/gallery";
 import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
-import EditionInformation from "@/components/EditionInformation";
+import EditionInformation from "@/components/EditionInformation-Old";
 import { getSolPrice } from "@/lib/services/getSolPrice";
 import { recordNfcTap, verifyNfcSignature } from "@/lib/supabaseAdminClient";
 

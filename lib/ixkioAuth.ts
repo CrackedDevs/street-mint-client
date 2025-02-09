@@ -1,37 +1,64 @@
 import { getChipLinkByChipId } from "./supabaseAdminClient";
 import { fetchCollectibleById, getArtistById, getCollectionById, getCompletedOrdersCount } from "./supabaseClient";
 import { getSolPrice } from "@/lib/services/getSolPrice";
+import axios from "axios";
+const AUTH_API_URL = "https://api.ixkio.com/v1/t";
 
 // We will only get pass once for a {x, n, e} and that will be in the following function
 // After this, we won't be able to get pass again
 // Note: Do not use this function for anything else than checking auth status
 export const checkAuthStatus = async (x: string, n: string, e: string) => {
+  try {
+
     let isIRLtapped = false;
+    const AUTH_INSTANCE_URL = `${AUTH_API_URL}?x=${x}&n=${n}&e=${e}`;
+    let resultData;
+
     const collectibleData = await getCollectibleData(x, n);
     if (!collectibleData) return null;
 
-    // const response = await fetch(`https://api.ixkio.com/v1/auth/status?x=${x}&n=${n}&e=${e}`)
-    // const data = await response.json()
+    const response = await axios.get(AUTH_INSTANCE_URL, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+    });
+
+    if (response.status !== 200) {
+        return null;
+    }
+
+    const data : {
+      UID: string;
+      xuid: string;
+      response: string;
+    } = response.data;
+
+    console.log("ixkio auth data", data);
     
-    if (parseInt(x) % 10 === 0 && parseInt(n) % 10 === 0 && parseInt(e) % 10 === 0) {
+    if (data && data.xuid === x && data.response.toLowerCase() === "pass") {
         isIRLtapped = true;
-        const data = {
+        resultData = {
             status: "pass",
             collectibleData,
             scanCount: e,
             authenticated: true,
             isIRLtapped
-        }
-        return data
+        };
     }
-    const data = {
+    else {
+      resultData = {
         status: "fail",
         collectibleData,
         scanCount: e,
         authenticated: false,
         isIRLtapped
-    }
-    return data
+    };
+  }
+    return resultData
+  } catch (error) {
+    console.error("Error checking auth status", error);
+    return null;
+  }
 }
 // Note: Do not use the above function for anything else than checking auth status
 
