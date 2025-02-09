@@ -47,6 +47,7 @@ function CreateCollectiblePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { userProfile } = useUserProfile();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [newCtaLogoImage, setNewCtaLogoImage] = useState<File | null>(null);
 
   const [collectible, setCollectible] = useState<Collectible>({
     id: NumericUUID(),
@@ -72,6 +73,7 @@ function CreateCollectiblePage() {
     cta_text: "",
     cta_link: "",
     cta_has_email_capture: false,
+    cta_email_list: [],
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -146,6 +148,21 @@ function CreateCollectiblePage() {
     setGalleryImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleCtaLogoImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const file = e.target.files[0];
+      if (file.size <= MAX_FILE_SIZE) {
+        setNewCtaLogoImage(file);
+      } else {
+        toast({
+          title: "Error",
+          description: "File size must be less than 10MB",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!publicKey) {
@@ -197,12 +214,17 @@ function CreateCollectiblePage() {
         })
       );
 
+      const uploadedCtaLogoUrl = newCtaLogoImage
+        ? await uploadFileToPinata(newCtaLogoImage)
+        : null;
+
       const newCollectible: Collectible = {
         ...collectible,
         primary_image_url: primaryImageUrl,
         gallery_urls: uploadedGalleryUrls.filter(Boolean),
         id: NumericUUID(),
         price_usd: isFreeMint ? 0 : collectible.price_usd,
+        cta_logo_url: uploadedCtaLogoUrl,
       };
 
       const createdCollectible = await createCollectible(
@@ -701,17 +723,28 @@ function CreateCollectiblePage() {
                           htmlFor="call-to-action-logo-url"
                           className="text-lg font-semibold"
                         >
-                          Logo URL
+                          Logo
                         </Label>
+                        <Label
+                          htmlFor="call-to-action-logo-url"
+                          className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/50 transition-colors"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <UploadIcon className="w-6 h-6 text-muted-foreground" />
+                            <span className="text-base font-medium text-muted-foreground">
+                              {newCtaLogoImage
+                                ? newCtaLogoImage.name
+                                : "Add Logo"}
+                            </span>
+                          </div>
+                        </Label>
+
                         <Input
                           id="call-to-action-logo-url"
-                          value={collectible.cta_logo_url ?? ""}
-                          onChange={(e) =>
-                            handleCollectibleChange(
-                              "cta_logo_url",
-                              e.target.value
-                            )
-                          }
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCtaLogoImageChange}
+                          className="sr-only"
                         />
                       </div>
                       <div>

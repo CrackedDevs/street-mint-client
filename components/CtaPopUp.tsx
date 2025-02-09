@@ -3,6 +3,8 @@ import { useReward } from "react-rewards";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
+import { Collectible, updateCollectible } from "@/lib/supabaseClient";
+import { toast } from "@/hooks/use-toast";
 
 interface CtaPopUpProps {
   isOpen: boolean;
@@ -15,7 +17,8 @@ interface CtaPopUpProps {
   ctaLink?: string;
   hasEmailCapture?: boolean;
   hasTextCapture?: boolean;
-  onSubmit?: (data: { email?: string; text?: string }) => void;
+  collectible: Collectible;
+  // onSubmit?: (data: { email?: string; text?: string }) => void;
 }
 
 function CtaPopUp({
@@ -29,8 +32,9 @@ function CtaPopUp({
   ctaLink,
   hasEmailCapture = false,
   hasTextCapture = false,
-  onSubmit,
-}: CtaPopUpProps) {
+  collectible,
+}: // onSubmit,
+CtaPopUpProps) {
   const [email, setEmail] = useState("");
   const [text, setText] = useState("");
   const { reward: confettiReward, isAnimating } = useReward(
@@ -41,15 +45,29 @@ function CtaPopUp({
       spread: 70,
     }
   );
-  const router = useRouter();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (onSubmit) {
-      onSubmit({
-        email: hasEmailCapture ? email : undefined,
-        text: hasTextCapture ? text : undefined,
-      });
+    if (hasEmailCapture) {
+      const updatedCollectible: Collectible = {
+        ...collectible,
+        cta_email_list: [...(collectible.cta_email_list || []), email],
+      };
+      const success = await updateCollectible(updatedCollectible);
+      if (success) {
+        toast({
+          title: "Email added to waitlist",
+        });
+      } else {
+        toast({
+          title: "Failed to add email to waitlist",
+        });
+      }
+    }
+
+    if (hasTextCapture) {
+      console.log(text);
     }
 
     confettiReward();
@@ -58,6 +76,11 @@ function CtaPopUp({
       // Wait for confetti animation before redirect
       setTimeout(() => {
         window.open(ctaLink, "_blank");
+        onClose();
+      }, 1000);
+    } else {
+      setTimeout(() => {
+        onClose();
       }, 1000);
     }
   };

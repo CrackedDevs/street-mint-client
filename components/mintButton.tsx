@@ -684,6 +684,7 @@ export default function MintButton({
           hasEmailCapture={collectible.cta_has_email_capture ?? false}
           isOpen={showCtaPopUp}
           onClose={() => setShowCtaPopUp(false)}
+          collectible={collectible}
         />
       )}
       <SuccessPopup
