@@ -48,6 +48,8 @@ function EditCollectiblePage() {
           ...fetchedCollectible,
           quantity_type: fetchedCollectible.quantity_type as QuantityType,
           whitelist: fetchedCollectible.whitelist || false,
+          cta_enable: fetchedCollectible.cta_enable || false,
+          cta_has_email_capture: fetchedCollectible.cta_has_email_capture || false,
         });
       } else {
         toast({
