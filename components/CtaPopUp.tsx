@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
-import { useReward } from 'react-rewards';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useState, useRef } from "react";
+import { useReward } from "react-rewards";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { Button } from "./ui/button";
 
 interface CtaPopUpProps {
   isOpen: boolean;
@@ -23,33 +24,40 @@ function CtaPopUp({
   title,
   description,
   logoUrl,
-  logoAlt = 'Logo',
+  logoAlt = "Logo",
   ctaText,
   ctaLink,
   hasEmailCapture = false,
   hasTextCapture = false,
   onSubmit,
 }: CtaPopUpProps) {
-  const [email, setEmail] = useState('');
-  const [text, setText] = useState('');
-  const { reward: confettiReward, isAnimating } = useReward('rewardId', 'confetti', {
-    elementCount: 100,
-    spread: 70,
-  });
-const router = useRouter()
+  const [email, setEmail] = useState("");
+  const [text, setText] = useState("");
+  const { reward: confettiReward, isAnimating } = useReward(
+    "rewardId",
+    "confetti",
+    {
+      elementCount: 100,
+      spread: 70,
+    }
+  );
+  const router = useRouter();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (onSubmit) {
-      onSubmit({ email: hasEmailCapture ? email : undefined, text: hasTextCapture ? text : undefined });
+      onSubmit({
+        email: hasEmailCapture ? email : undefined,
+        text: hasTextCapture ? text : undefined,
+      });
     }
-    
+
     confettiReward();
-    
+
     if (ctaLink) {
       // Wait for confetti animation before redirect
       setTimeout(() => {
-        window.open(ctaLink, '_blank');
+        window.open(ctaLink, "_blank");
       }, 1000);
     }
   };
@@ -102,7 +110,7 @@ const router = useRouter()
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none text-black"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2  focus:outline-none text-black"
               required
             />
           )}
@@ -113,21 +121,24 @@ const router = useRouter()
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Enter your text"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2  focus:outline-none"
               required
             />
           )}
 
           {/* CTA Button with Reward */}
           <div className="flex justify-center">
-            <button
+            <Button
               type="submit"
               disabled={isAnimating}
-              className="relative rounded-lg bg-blue-600 px-6 py-2 text-white transition-all hover:bg-blue-700 disabled:opacity-50"
+              className="relative rounded-lg  px-6 py-2 text-white transition-all  disabled:opacity-50"
             >
-              <span id="rewardId" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
+              <span
+                id="rewardId"
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+              />
               {ctaText}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
