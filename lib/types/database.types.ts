@@ -120,12 +120,14 @@ export type Database = {
           collection_id: number
           created_at: string
           cta_description: string | null
-          cta_email_list: string[] | null
+          cta_email_list: Json[] | null
           cta_enable: boolean | null
           cta_has_email_capture: boolean | null
+          cta_has_text_capture: boolean | null
           cta_link: string | null
           cta_logo_url: string | null
           cta_text: string | null
+          cta_text_list: Json[] | null
           cta_title: string | null
           description: string
           gallery_urls: string[]
@@ -149,12 +151,14 @@ export type Database = {
           collection_id: number
           created_at?: string
           cta_description?: string | null
-          cta_email_list?: string[] | null
+          cta_email_list?: Json[] | null
           cta_enable?: boolean | null
           cta_has_email_capture?: boolean | null
+          cta_has_text_capture?: boolean | null
           cta_link?: string | null
           cta_logo_url?: string | null
           cta_text?: string | null
+          cta_text_list?: Json[] | null
           cta_title?: string | null
           description: string
           gallery_urls: string[]
@@ -178,12 +182,14 @@ export type Database = {
           collection_id?: number
           created_at?: string
           cta_description?: string | null
-          cta_email_list?: string[] | null
+          cta_email_list?: Json[] | null
           cta_enable?: boolean | null
           cta_has_email_capture?: boolean | null
+          cta_has_text_capture?: boolean | null
           cta_link?: string | null
           cta_logo_url?: string | null
           cta_text?: string | null
+          cta_text_list?: Json[] | null
           cta_title?: string | null
           description?: string
           gallery_urls?: string[]

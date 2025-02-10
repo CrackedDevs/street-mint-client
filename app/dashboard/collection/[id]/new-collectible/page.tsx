@@ -74,6 +74,8 @@ function CreateCollectiblePage() {
     cta_link: "",
     cta_has_email_capture: false,
     cta_email_list: [],
+    cta_has_text_capture: false,
+    cta_text_list: [],
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -791,6 +793,24 @@ function CreateCollectiblePage() {
                             handleCollectibleChange(
                               "cta_has_email_capture",
                               !collectible.cta_has_email_capture
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <Label
+                          htmlFor="call-to-action-has-text-capture"
+                          className="text-lg font-semibold"
+                        >
+                          Has Text Capture
+                        </Label>
+                        <Switch
+                          id="call-to-action-has-text-capture"
+                          checked={collectible.cta_has_text_capture}
+                          onCheckedChange={() =>
+                            handleCollectibleChange(
+                              "cta_has_text_capture",
+                              !collectible.cta_has_text_capture
                             )
                           }
                         />
