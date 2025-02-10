@@ -9,14 +9,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChipLink } from "@/lib/supabaseAdminClient";
+import { ChipLink, ChipLinkDetailed } from "@/lib/supabaseAdminClient";
 import { Loader2 } from "lucide-react";
 
 interface UpdateChipModalProps {
   isOpen: boolean;
   onClose: () => void;
-  chip: ChipLink;
-  onUpdate: (updatedChip: ChipLink) => Promise<void>;
+  chip: ChipLinkDetailed;
+  onUpdate: (updatedChip: ChipLinkDetailed) => Promise<void>;
 }
 
 export default function UpdateChipModal({
@@ -37,7 +37,7 @@ export default function UpdateChipModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    await onUpdate({ ...chip, chip_id: chipId, collectible_id: collectibleId });
+    await onUpdate({ ...chip, chip_id: chipId, collectible_id: collectibleId, metadata: chip.metadata });
     setIsLoading(false);
     onClose();
   };

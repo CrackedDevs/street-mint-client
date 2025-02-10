@@ -1,9 +1,10 @@
 'use server'
 
 import { createClient } from "@supabase/supabase-js";
-import { createFetch } from "./supabaseClient";
+import { createFetch, fetchCollectibleById, getCollectionById, getArtistById } from "./supabaseClient";
 import { Database } from "./types/database.types";
 import { isSignatureValid } from "./nfcVerificationHellper";
+
 
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -22,6 +23,17 @@ export type ChipLink = {
     collectible_id: number;
     active: boolean;
     created_at: string;
+}
+
+export type ChipLinkDetailed = ChipLink & {
+    metadata: {
+    artist: string;
+    location: string;
+    location_note: string;
+    collection_id: number;
+    collectible_name: string;
+    collectible_description: string;
+    }
 }
 
 export type ChipLinkCreate = Omit<ChipLink, "id" | "created_at">;
@@ -96,11 +108,70 @@ export async function getAllChipLinks() {
         .from('chip_links')
         .select(`id, chip_id, collectible_id, active, created_at`)
         .order('created_at', { ascending: false });
-    if (error) {
-        console.error('Error getting all chip links:', error);
-        return null;
-    }
-    return data;
+    
+
+
+        // const allCollectibles : CollectibleDetailed[] = (await Promise.all(data.map(async (collectible) => {
+        //     const collection = await getCollectionById(collectible.collection_id);
+        //     if (!collection) {
+        //         console.error("Error fetching collection:", collection);
+        //         return null;
+        //     }
+        //     const artist = await getArtistById(collection.artist);
+        //     if (!artist) {
+        //         console.error("Error fetching artist:", artist);
+        //         return null;
+        //     }
+        //     return {
+        //         ...collectible,
+        //         collection,
+        //         artist
+        //     } as CollectibleDetailed;
+        // }))).filter((item): item is CollectibleDetailed => item !== null);
+
+        if (error) {
+            console.error('Error getting all chip links:', error);
+            return null;
+        }
+
+        if (!data) {
+            console.error('No data found');
+            return [];
+        }
+    
+    const allChipLinks : ChipLinkDetailed[] = (await Promise.all(data.map(async (chipLink) => {
+        const collectible = await fetchCollectibleById(chipLink.collectible_id);
+        if (!collectible) {
+            console.error("Error fetching collectible:", collectible);
+            return null;
+        }
+
+        const collection = await getCollectionById(collectible.collection_id);
+        if (!collection) {
+            console.error("Error fetching collection:", collection);
+            return null;
+        }
+
+        const artist = await getArtistById(collection.artist);
+        if (!artist) {
+            console.error("Error fetching artist:", artist);
+            return null;
+        }
+
+        return {
+            ...chipLink,
+            metadata: {
+                collectible_name: collectible.name,
+                collectible_description: collectible.description,
+                artist: artist.username,
+                location: collectible.location,
+                location_note: collectible.location_note,
+                collection_id: collectible.collection_id,
+            }
+        } as ChipLinkDetailed;
+    }))).filter((item): item is ChipLinkDetailed => item !== null);
+
+    return allChipLinks;
 }
 
 export async function getChipLinkByChipId(chipId: string) {

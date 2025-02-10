@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/table";
 import UpdateChipModal from "./UpdateChipModal";
 import { Input } from "@/components/ui/input";
-import { ChipLink } from "@/lib/supabaseAdminClient";
+import { ChipLink, ChipLinkDetailed } from "@/lib/supabaseAdminClient";
 
 type SortField = "chip_id" | "collectible_id" | "created_at";
 
@@ -34,17 +34,17 @@ export default function ChipTable({
   onDelete,
   onUpdate,
 }: {
-  chipLinks: ChipLink[];
+  chipLinks: ChipLinkDetailed[];
   onDelete: (id: number) => Promise<void>;
   onUpdate: (id: number, chipLink: ChipLink) => Promise<void>;
 }) {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [selectedChip, setSelectedChip] = useState<ChipLink | null>(null);
+  const [selectedChip, setSelectedChip] = useState<ChipLinkDetailed | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("chip_id");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-  const handleUpdate = (chip: ChipLink) => {
+  const handleUpdate = (chip: ChipLinkDetailed) => {
     setSelectedChip(chip);
     setIsUpdateModalOpen(true);
   };
@@ -54,9 +54,15 @@ export default function ChipTable({
     await onDelete(id);
   };
 
-  const handleUpdateSubmit = async (updatedChip: ChipLink) => {
+  const handleUpdateSubmit = async (updatedChip: ChipLinkDetailed) => {
     setSelectedChip(updatedChip);
-    await onUpdate(updatedChip.id, updatedChip);
+    await onUpdate(updatedChip.id, {
+      id: updatedChip.id,
+      chip_id: updatedChip.chip_id,
+      collectible_id: updatedChip.collectible_id,
+      active: updatedChip.active,
+      created_at: updatedChip.created_at,
+    });
     setIsUpdateModalOpen(false);
   };
 
