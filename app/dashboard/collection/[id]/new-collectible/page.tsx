@@ -47,6 +47,7 @@ function CreateCollectiblePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { userProfile } = useUserProfile();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [newCtaLogoImage, setNewCtaLogoImage] = useState<File | null>(null);
 
   const [collectible, setCollectible] = useState<Collectible>({
     id: NumericUUID(),
@@ -65,6 +66,14 @@ function CreateCollectiblePage() {
     mint_end_date: "",
     airdrop_eligibility_index: null,
     whitelist: false,
+    cta_enable: false,
+    cta_title: "",
+    cta_description: "",
+    cta_logo_url: "",
+    cta_text: "",
+    cta_link: "",
+    cta_has_email_capture: false,
+    cta_email_list: [],
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -139,6 +148,21 @@ function CreateCollectiblePage() {
     setGalleryImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleCtaLogoImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const file = e.target.files[0];
+      if (file.size <= MAX_FILE_SIZE) {
+        setNewCtaLogoImage(file);
+      } else {
+        toast({
+          title: "Error",
+          description: "File size must be less than 10MB",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!publicKey) {
@@ -190,12 +214,17 @@ function CreateCollectiblePage() {
         })
       );
 
+      const uploadedCtaLogoUrl = newCtaLogoImage
+        ? await uploadFileToPinata(newCtaLogoImage)
+        : null;
+
       const newCollectible: Collectible = {
         ...collectible,
         primary_image_url: primaryImageUrl,
         gallery_urls: uploadedGalleryUrls.filter(Boolean),
         id: NumericUUID(),
         price_usd: isFreeMint ? 0 : collectible.price_usd,
+        cta_logo_url: uploadedCtaLogoUrl,
       };
 
       const createdCollectible = await createCollectible(
@@ -628,6 +657,146 @@ function CreateCollectiblePage() {
                       </div>
                     ))}
                   </div>
+                </div>
+
+                <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-lg font-semibold">
+                        Call to Action
+                      </Label>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Add a call to action to your collectible.
+                      </p>
+                    </div>
+
+                    <Switch
+                      id="call-to-action-toggle"
+                      checked={collectible.cta_enable}
+                      onCheckedChange={(checked) =>
+                        handleCollectibleChange("cta_enable", checked)
+                      }
+                      className="scale-125"
+                    />
+                  </div>
+                  {collectible.cta_enable && (
+                    <div className="space-y-4">
+                      <div>
+                        <Label
+                          htmlFor="call-to-action-title"
+                          className="text-lg font-semibold"
+                        >
+                          Title
+                          <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id="call-to-action-title"
+                          value={collectible.cta_title ?? ""}
+                          required
+                          onChange={(e) =>
+                            handleCollectibleChange("cta_title", e.target.value)
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label
+                          htmlFor="call-to-action-description"
+                          className="text-lg font-semibold"
+                        >
+                          Description
+                          <span className="text-destructive">*</span>
+                        </Label>
+                        <Textarea
+                          id="call-to-action-description"
+                          required
+                          value={collectible.cta_description ?? ""}
+                          onChange={(e) =>
+                            handleCollectibleChange(
+                              "cta_description",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label
+                          htmlFor="call-to-action-logo-url"
+                          className="text-lg font-semibold"
+                        >
+                          Logo
+                        </Label>
+                        <Label
+                          htmlFor="call-to-action-logo-url"
+                          className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/50 transition-colors"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <UploadIcon className="w-6 h-6 text-muted-foreground" />
+                            <span className="text-base font-medium text-muted-foreground">
+                              {newCtaLogoImage
+                                ? newCtaLogoImage.name
+                                : "Add Logo"}
+                            </span>
+                          </div>
+                        </Label>
+
+                        <Input
+                          id="call-to-action-logo-url"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCtaLogoImageChange}
+                          className="sr-only"
+                        />
+                      </div>
+                      <div>
+                        <Label
+                          htmlFor="call-to-action-cta-text"
+                          className="text-lg font-semibold"
+                        >
+                          CTA Text
+                        </Label>
+                        <Input
+                          id="call-to-action-cta-text"
+                          value={collectible.cta_text ?? ""}
+                          onChange={(e) =>
+                            handleCollectibleChange("cta_text", e.target.value)
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label
+                          htmlFor="call-to-action-cta-link"
+                          className="text-lg font-semibold"
+                        >
+                          CTA Link
+                        </Label>
+                        <Input
+                          id="call-to-action-cta-link"
+                          value={collectible.cta_link ?? ""}
+                          onChange={(e) =>
+                            handleCollectibleChange("cta_link", e.target.value)
+                          }
+                        />
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <Label
+                          htmlFor="call-to-action-has-email-capture"
+                          className="text-lg font-semibold"
+                        >
+                          Has Email Capture
+                        </Label>
+                        <Switch
+                          id="call-to-action-has-email-capture"
+                          checked={collectible.cta_has_email_capture}
+                          onCheckedChange={() =>
+                            handleCollectibleChange(
+                              "cta_has_email_capture",
+                              !collectible.cta_has_email_capture
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

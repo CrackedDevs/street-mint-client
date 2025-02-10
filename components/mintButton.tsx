@@ -39,12 +39,11 @@ import { v4 as uuidv4 } from "uuid";
 import { shortenAddress } from "@/lib/shortenAddress";
 import ShowAirdropModal from "./modals/ShowAirdropModal";
 import ShowDonationModal from "./modals/ShowDonationModal";
-import { ExternalLink, Unplug } from "lucide-react";
+import { Unplug } from "lucide-react";
 import { Wallet } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -56,6 +55,8 @@ import { getSolPrice } from "@/lib/services/getSolPrice";
 import { MintStatus } from "./EditionInformation-Old";
 import WaitlistModal from "./modals/PromotionalModal";
 import { Button } from "./ui/button";
+import { CtaPopUp } from "./CtaPopUp";
+import SuccessPopup from "./modals/SuccessPopup";
 
 interface MintButtonProps {
   collectible: Collectible;
@@ -103,6 +104,8 @@ export default function MintButton({
   const [deviceId, setDeviceId] = useState("");
   const [existingOrder, setExistingOrder] = useState<any | null>(null);
   const isFreeMint = collectible.price_usd === 0;
+  const ctaEnabled = collectible.cta_enable;
+  const [showCtaPopUp, setShowCtaPopUp] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
   const [showDonationModal, setShowDonationModal] = useState(false);
   const [showAirdropModal, setShowAirdropModal] = useState(false);
@@ -111,6 +114,7 @@ export default function MintButton({
   const [showMailSentModal, setShowMailSentModal] = useState(false);
   const connection = new Connection(process.env.NEXT_PUBLIC_RPC_URL!);
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
+  const [showSuccessPopUp, setShowSuccessPopUp] = useState(false);
 
   const { getData } = useVisitorData(
     { extendedResult: true },
@@ -366,6 +370,8 @@ export default function MintButton({
         });
         if (isEmail) {
           setShowMailSentModal(true);
+        } else {
+          setShowSuccessPopUp(true);
         }
         setIsEligible(false);
         if (isAirdropEligible) {
@@ -456,6 +462,12 @@ export default function MintButton({
       return;
     }
     await handlePaymentAndMint();
+    if (ctaEnabled) {
+      setTimeout(() => {
+        setShowSuccessPopUp(false);
+        setShowCtaPopUp(true);
+      }, 2000);
+    }
     setIsMinting(false);
   };
 
@@ -666,7 +678,23 @@ export default function MintButton({
         showModal={showWaitlistModal}
         setShowModal={setShowWaitlistModal}
       />
-
+      {ctaEnabled && showCtaPopUp && (
+        <CtaPopUp
+          title={collectible.cta_title ?? ""}
+          description={collectible.cta_description ?? ""}
+          logoUrl={collectible.cta_logo_url ?? ""}
+          ctaText={collectible.cta_text ?? ""}
+          ctaLink={collectible.cta_link ?? ""}
+          hasEmailCapture={collectible.cta_has_email_capture ?? false}
+          isOpen={showCtaPopUp}
+          onClose={() => setShowCtaPopUp(false)}
+          collectible={collectible}
+        />
+      )}
+      <SuccessPopup
+        isOpen={showSuccessPopUp}
+        onClose={() => setShowSuccessPopUp(false)}
+      />
       {(transactionSignature || existingOrder?.status === "completed") &&
         renderCompletedMint()}
       {mintStatus === "ongoing" && (

@@ -120,6 +120,7 @@ export type Database = {
           collection_id: number
           created_at: string
           cta_description: string | null
+          cta_email_list: string[] | null
           cta_enable: boolean | null
           cta_has_email_capture: boolean | null
           cta_link: string | null
@@ -148,6 +149,7 @@ export type Database = {
           collection_id: number
           created_at?: string
           cta_description?: string | null
+          cta_email_list?: string[] | null
           cta_enable?: boolean | null
           cta_has_email_capture?: boolean | null
           cta_link?: string | null
@@ -176,6 +178,7 @@ export type Database = {
           collection_id?: number
           created_at?: string
           cta_description?: string | null
+          cta_email_list?: string[] | null
           cta_enable?: boolean | null
           cta_has_email_capture?: boolean | null
           cta_link?: string | null
