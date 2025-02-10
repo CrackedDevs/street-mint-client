@@ -51,7 +51,14 @@ function EditCollectiblePage() {
           cta_enable: fetchedCollectible.cta_enable || false,
           cta_has_email_capture:
             fetchedCollectible.cta_has_email_capture || false,
-          cta_email_list: fetchedCollectible.cta_email_list || [],
+          cta_email_list: (fetchedCollectible.cta_email_list || []) as {
+            [key: string]: string;
+          }[],
+          cta_has_text_capture:
+            fetchedCollectible.cta_has_text_capture || false,
+          cta_text_list: (fetchedCollectible.cta_text_list || []) as {
+            [key: string]: string;
+          }[],
         });
       } else {
         toast({
@@ -110,9 +117,9 @@ function EditCollectiblePage() {
   };
 
   const handleCtaLogoImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files ) {
+    if (e.target.files) {
       const file = e.target.files[0];
-      if(file.size <= MAX_FILE_SIZE) {
+      if (file.size <= MAX_FILE_SIZE) {
         setNewCtaLogoImage(file);
       } else {
         toast({
@@ -150,9 +157,9 @@ function EditCollectiblePage() {
         })
       );
 
-      const uploadedCtaLogoUrl = newCtaLogoImage 
-        ? await uploadFileToPinata(newCtaLogoImage) 
-        : collectible.cta_logo_url; 
+      const uploadedCtaLogoUrl = newCtaLogoImage
+        ? await uploadFileToPinata(newCtaLogoImage)
+        : collectible.cta_logo_url;
 
       const updatedCollectible: Collectible = {
         ...collectible,
@@ -502,6 +509,24 @@ function EditCollectiblePage() {
                           handleCollectibleChange(
                             "cta_has_email_capture",
                             !collectible.cta_has_email_capture
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <Label
+                        htmlFor="call-to-action-has-text-capture"
+                        className="text-lg font-semibold"
+                      >
+                        Has Text Capture
+                      </Label>
+                      <Switch
+                        id="call-to-action-has-text-capture"
+                        checked={collectible.cta_has_text_capture}
+                        onCheckedChange={() =>
+                          handleCollectibleChange(
+                            "cta_has_text_capture",
+                            !collectible.cta_has_text_capture
                           )
                         }
                       />

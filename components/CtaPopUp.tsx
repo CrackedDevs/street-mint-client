@@ -11,13 +11,14 @@ interface CtaPopUpProps {
   onClose: () => void;
   title: string;
   description: string;
-  logoUrl?: string;
+  logoUrl: string;
   logoAlt?: string;
   ctaText: string;
-  ctaLink?: string;
-  hasEmailCapture?: boolean;
-  hasTextCapture?: boolean;
+  ctaLink: string;
+  hasEmailCapture: boolean;
+  hasTextCapture: boolean;
   collectible: Collectible;
+  publicKey: string;
   // onSubmit?: (data: { email?: string; text?: string }) => void;
 }
 
@@ -33,6 +34,7 @@ function CtaPopUp({
   hasEmailCapture = false,
   hasTextCapture = false,
   collectible,
+  publicKey,
 }: // onSubmit,
 CtaPopUpProps) {
   const [email, setEmail] = useState("");
@@ -49,25 +51,44 @@ CtaPopUpProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    let updatedCollectible: Collectible = { ...collectible };
+
     if (hasEmailCapture) {
-      const updatedCollectible: Collectible = {
-        ...collectible,
-        cta_email_list: [...(collectible.cta_email_list || []), email],
+      updatedCollectible = {
+        ...updatedCollectible,
+        cta_email_list: [...(collectible.cta_email_list || []), { [publicKey]: email }],
       };
-      const success = await updateCollectible(updatedCollectible);
-      if (success) {
-        toast({
-          title: "Email added to waitlist",
-        });
-      } else {
-        toast({
-          title: "Failed to add email to waitlist",
-        });
-      }
+    }
+    
+    if (hasTextCapture) {
+      updatedCollectible = {
+        ...updatedCollectible,
+        cta_text_list: [
+          ...(collectible.cta_text_list || []),
+          { [publicKey]: text },
+        ],
+      };
     }
 
-    if (hasTextCapture) {
-      console.log(text);
+    const success = await updateCollectible(updatedCollectible);
+    if (success) {
+      if (hasEmailCapture && hasTextCapture) {
+        toast({
+          title: "Email and text added to list",
+        });
+      } else if (hasEmailCapture) {
+        toast({
+          title: "Email added to list",
+        });
+      } else if (hasTextCapture) {
+        toast({
+          title: "Text added to list",
+        });
+      }
+    } else {
+      toast({
+        title: "Failed to update list",
+      });
     }
 
     confettiReward();
@@ -144,7 +165,7 @@ CtaPopUpProps) {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Enter your text"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2  focus:outline-none"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2  focus:outline-none text-black"
               required
             />
           )}

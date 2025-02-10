@@ -172,7 +172,14 @@ export default async function NFTPage({
                 whitelist: collectible.whitelist || false,
                 cta_enable: collectible.cta_enable || false,
                 cta_has_email_capture: collectible.cta_has_email_capture || false,
-                cta_email_list: collectible.cta_email_list || [],
+                cta_email_list: (collectible.cta_email_list || []) as {
+                  [key: string]: string;
+                }[],
+                cta_has_text_capture:
+                  collectible.cta_has_text_capture || false,
+                cta_text_list: (collectible.cta_text_list || []) as {
+                  [key: string]: string;
+                }[],
               }}
               remainingQuantity={remainingQuantity}
               artistWalletAddress={artist.wallet_address}

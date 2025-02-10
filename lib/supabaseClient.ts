@@ -52,7 +52,9 @@ export type Collectible = {
     cta_text: string | null;
     cta_link: string | null;
     cta_has_email_capture: boolean;
-    cta_email_list: string[];
+    cta_has_text_capture: boolean;
+    cta_email_list: { [key: string]: string }[];
+    cta_text_list: { [key: string]: string }[];
 };
 
 interface Order {
@@ -482,7 +484,9 @@ export const fetchAllCollectibles = async (offset: number = 0, limit: number = 1
             cta_text,
             cta_link,
             cta_has_email_capture,
-            cta_email_list
+            cta_has_text_capture,
+            cta_email_list,
+            cta_text_list
         `)
         .range(offset, offset + limit - 1)
         .order('created_at', { ascending: false });

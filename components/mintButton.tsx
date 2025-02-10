@@ -686,9 +686,11 @@ export default function MintButton({
           ctaText={collectible.cta_text ?? ""}
           ctaLink={collectible.cta_link ?? ""}
           hasEmailCapture={collectible.cta_has_email_capture ?? false}
+          hasTextCapture={collectible.cta_has_text_capture ?? false}
           isOpen={showCtaPopUp}
           onClose={() => setShowCtaPopUp(false)}
           collectible={collectible}
+          publicKey={publicKey?.toString() ?? ""}
         />
       )}
       <SuccessPopup
