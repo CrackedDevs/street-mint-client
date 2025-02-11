@@ -14,6 +14,7 @@ import {
   ChipLinkCreate,
   deleteChipLink,
   updateChipLink,
+  ChipLinkDetailed,
 } from "@/lib/supabaseAdminClient";
 
 enum Section {
@@ -28,7 +29,7 @@ export default function AdminDashboard() {
   const [selectedSection, setSelectedSection] = useState<Section>(
     Section.ChipManager
   );
-  const [chipLinks, setChipLinks] = useState<ChipLink[]>([]);
+  const [chipLinks, setChipLinks] = useState<ChipLinkDetailed[]>([]);
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

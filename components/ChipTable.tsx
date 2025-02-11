@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/table";
 import UpdateChipModal from "./UpdateChipModal";
 import { Input } from "@/components/ui/input";
-import { ChipLink } from "@/lib/supabaseAdminClient";
+import { ChipLink, ChipLinkDetailed } from "@/lib/supabaseAdminClient";
 
 type SortField = "chip_id" | "collectible_id" | "created_at";
 
@@ -34,17 +34,19 @@ export default function ChipTable({
   onDelete,
   onUpdate,
 }: {
-  chipLinks: ChipLink[];
+  chipLinks: ChipLinkDetailed[];
   onDelete: (id: number) => Promise<void>;
   onUpdate: (id: number, chipLink: ChipLink) => Promise<void>;
 }) {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [selectedChip, setSelectedChip] = useState<ChipLink | null>(null);
+  const [selectedChip, setSelectedChip] = useState<ChipLinkDetailed | null>(
+    null
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("chip_id");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-  const handleUpdate = (chip: ChipLink) => {
+  const handleUpdate = (chip: ChipLinkDetailed) => {
     setSelectedChip(chip);
     setIsUpdateModalOpen(true);
   };
@@ -54,14 +56,16 @@ export default function ChipTable({
     await onDelete(id);
   };
 
-  const handleUpdateSubmit = async (updatedChip: ChipLink) => {
+  const handleUpdateSubmit = async (updatedChip: ChipLinkDetailed) => {
     setSelectedChip(updatedChip);
-    await onUpdate(updatedChip.id, updatedChip);
+    await onUpdate(updatedChip.id, {
+      id: updatedChip.id,
+      chip_id: updatedChip.chip_id,
+      collectible_id: updatedChip.collectible_id,
+      active: updatedChip.active,
+      created_at: updatedChip.created_at,
+    });
     setIsUpdateModalOpen(false);
-  };
-
-  const handleSearch = (searchQuery: string) => {
-    setSearchQuery(searchQuery);
   };
 
   const handleSort = (field: SortField) => {
@@ -79,7 +83,25 @@ export default function ChipTable({
         (chip) =>
           chip.chip_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
           chip.collectible_id.toString().includes(searchQuery.toLowerCase()) ||
-          chip.created_at.toLowerCase().includes(searchQuery.toLowerCase())
+          chip.created_at.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          chip.metadata.artist
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          chip.metadata.collectible_name
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          chip.metadata.location
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          chip.metadata.location_note
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          chip.metadata.collectible_description
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          chip.metadata.collection_id
+            .toString()
+            .includes(searchQuery.toLowerCase())
       )
       .sort((a, b) => {
         if (a[sortField] < b[sortField])
@@ -119,7 +141,7 @@ export default function ChipTable({
         </div>
       </div>
       <div className="mb-4">
-        <form onSubmit={() => handleSearch} className="flex space-x-4 h-11">
+        <form className="flex space-x-4 h-11">
           <Input
             type="text"
             placeholder="Search chips . . ."
@@ -127,19 +149,14 @@ export default function ChipTable({
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setSearchQuery(e.target.value)
             }
-            className="flex-grow max-w-[370px] px-5 text-base h-full"
+            className="flex-grow max-w-[380px] px-5 text-base h-full"
           />
-          <Button type="submit" className="text-base h-full">
-            Search
-            <Search className="w-5 h-5 ml-2" />
-          </Button>
         </form>
       </div>
       <div className="overflow-x-auto rounded-lg border border-gray-200">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold text-gray-600">ID</TableHead>
               <TableHead className="font-semibold text-gray-600">
                 <Button
                   variant="ghost"
@@ -150,7 +167,7 @@ export default function ChipTable({
                   <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               </TableHead>
-              <TableHead className="font-semibold text-gray-600">
+              <TableHead className="font-semibold text-gray-600 py-3">
                 <Button
                   variant="ghost"
                   onClick={() => handleSort("collectible_id")}
@@ -161,14 +178,16 @@ export default function ChipTable({
                 </Button>
               </TableHead>
               <TableHead className="font-semibold text-gray-600">
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("created_at")}
-                  className="font-semibold"
-                >
-                  Date and Time
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
+                Artist
+              </TableHead>
+              <TableHead className="font-semibold text-gray-600">
+                Collectible Name
+              </TableHead>
+              <TableHead className="font-semibold text-gray-600">
+                Location
+              </TableHead>
+              <TableHead className="font-semibold text-gray-600">
+                Location Note
               </TableHead>
               <TableHead className="font-semibold text-gray-600">
                 Collectible Link
@@ -184,15 +203,26 @@ export default function ChipTable({
                 key={chip.id}
                 className="hover:bg-gray-50 transition-colors duration-200"
               >
-                <TableCell>{chip.id}</TableCell>
                 <TableCell>{chip.chip_id}</TableCell>
                 <TableCell>{chip.collectible_id}</TableCell>
+                <TableCell>{chip.metadata.artist}</TableCell>
+                <TableCell>{chip.metadata.collectible_name}</TableCell>
                 <TableCell>
-                  {new Date(chip.created_at).toLocaleString()}
+                  <a
+                    href={chip.metadata.location}
+                    target="_blank"
+                    className="text-indigo-600 hover:text-indigo-800 hover:underline transition-colors duration-200"
+                  >
+                    View Location
+                  </a>
+                </TableCell>
+                <TableCell>
+                  {chip.metadata.location_note.slice(0, 30)}
                 </TableCell>
                 <TableCell>
                   <a
                     href={`/mint/${chip.collectible_id}`}
+                    target="_blank"
                     className="text-indigo-600 hover:text-indigo-800 hover:underline transition-colors duration-200"
                   >
                     View Collectible
