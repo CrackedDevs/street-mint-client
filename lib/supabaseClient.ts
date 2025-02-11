@@ -45,6 +45,16 @@ export type Collectible = {
     mint_end_date: string | null;
     airdrop_eligibility_index: number | null;
     whitelist: boolean;
+    cta_enable: boolean;
+    cta_title: string | null;
+    cta_description: string | null;
+    cta_logo_url: string | null;
+    cta_text: string | null;
+    cta_link: string | null;
+    cta_has_email_capture: boolean;
+    cta_has_text_capture: boolean;
+    cta_email_list: { [key: string]: string }[];
+    cta_text_list: { [key: string]: string }[];
 };
 
 interface Order {
@@ -466,7 +476,17 @@ export const fetchAllCollectibles = async (offset: number = 0, limit: number = 1
             airdrop_eligibility_index,
             whitelist,
             collection_id,
-            created_at
+            created_at,
+            cta_enable,
+            cta_title,
+            cta_description,
+            cta_logo_url,
+            cta_text,
+            cta_link,
+            cta_has_email_capture,
+            cta_has_text_capture,
+            cta_email_list,
+            cta_text_list
         `)
         .range(offset, offset + limit - 1)
         .order('created_at', { ascending: false });
