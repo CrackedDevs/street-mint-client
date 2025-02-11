@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from "@supabase/supabase-js";
-import { createFetch, fetchCollectibleById, getCollectionById, getArtistById } from "./supabaseClient";
+import { createFetch, fetchCollectibleById, getCollectionById, getArtistById, Collectible } from "./supabaseClient";
 import { Database } from "./types/database.types";
 import { isSignatureValid } from "./nfcVerificationHellper";
 
@@ -108,26 +108,6 @@ export async function getAllChipLinks() {
         .from('chip_links')
         .select(`id, chip_id, collectible_id, active, created_at`)
         .order('created_at', { ascending: false });
-    
-
-
-        // const allCollectibles : CollectibleDetailed[] = (await Promise.all(data.map(async (collectible) => {
-        //     const collection = await getCollectionById(collectible.collection_id);
-        //     if (!collection) {
-        //         console.error("Error fetching collection:", collection);
-        //         return null;
-        //     }
-        //     const artist = await getArtistById(collection.artist);
-        //     if (!artist) {
-        //         console.error("Error fetching artist:", artist);
-        //         return null;
-        //     }
-        //     return {
-        //         ...collectible,
-        //         collection,
-        //         artist
-        //     } as CollectibleDetailed;
-        // }))).filter((item): item is CollectibleDetailed => item !== null);
 
         if (error) {
             console.error('Error getting all chip links:', error);
