@@ -56,10 +56,13 @@ CtaPopUpProps) {
     if (hasEmailCapture) {
       updatedCollectible = {
         ...updatedCollectible,
-        cta_email_list: [...(collectible.cta_email_list || []), { [publicKey]: email }],
+        cta_email_list: [
+          ...(collectible.cta_email_list || []),
+          { [publicKey]: email },
+        ],
       };
     }
-    
+
     if (hasTextCapture) {
       updatedCollectible = {
         ...updatedCollectible,
@@ -96,7 +99,10 @@ CtaPopUpProps) {
     if (ctaLink) {
       // Wait for confetti animation before redirect
       setTimeout(() => {
-        window.open(ctaLink, "_blank");
+        window.open(
+          ctaLink.includes("http") ? ctaLink : `https://${ctaLink}`,
+          "_blank"
+        );
         onClose();
       }, 1000);
     } else {

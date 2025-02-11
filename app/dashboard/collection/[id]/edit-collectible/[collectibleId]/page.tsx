@@ -490,6 +490,7 @@ function EditCollectiblePage() {
                       <Input
                         id="call-to-action-cta-link"
                         value={collectible.cta_link ?? ""}
+                        placeholder="https://streetmint.xyz"
                         onChange={(e) =>
                           handleCollectibleChange("cta_link", e.target.value)
                         }
