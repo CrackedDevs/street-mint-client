@@ -28,7 +28,6 @@ export enum QuantityType {
     Limited = "limited",
 }
 
-
 export type Collectible = {
     id: number;
     name: string;
@@ -46,6 +45,16 @@ export type Collectible = {
     mint_end_date: string | null;
     airdrop_eligibility_index: number | null;
     whitelist: boolean;
+    cta_enable: boolean;
+    cta_title: string | null;
+    cta_description: string | null;
+    cta_logo_url: string | null;
+    cta_text: string | null;
+    cta_link: string | null;
+    cta_has_email_capture: boolean;
+    cta_has_text_capture: boolean;
+    cta_email_list: { [key: string]: string }[];
+    cta_text_list: { [key: string]: string }[];
 };
 
 interface Order {
@@ -62,7 +71,6 @@ interface Order {
     device_id: string;
     // Add other fields as necessary
 }
-
 
 export type PopulatedCollection = {
     id: number;
@@ -84,6 +92,11 @@ export type Artist = {
     wallet_address: string;
 };
 
+export type CollectibleDetailed = Collectible & {
+    collection: Collection;
+    artist: Artist;
+}
+
 export type ArtistWithoutWallet = Omit<Artist, 'wallet_address'>;
 
 export const createFetch =
@@ -102,6 +115,8 @@ export const supabase = createClient<Database>(supabaseUrl!, supabaseAnonKey!, {
         }),
     },
 },);
+
+
 
 const getAuthenticatedUser = async (): Promise<{ user: User | null; error: AuthError | null }> => {
     const {
@@ -440,6 +455,76 @@ export const fetchCollectiblesByCollectionId = async (collectionId: number) => {
     return data;
 };
 
+export const fetchAllCollectibles = async (offset: number = 0, limit: number = 10) => {
+    const { data, error } = await supabase
+        .from("collectibles")
+        .select(`
+            id,
+            name,
+            description,
+            primary_image_url,
+            quantity_type,
+            quantity,
+            price_usd,
+            location,
+            location_note,
+            gallery_urls,
+            metadata_uri,
+            nfc_public_key,
+            mint_start_date,
+            mint_end_date,
+            airdrop_eligibility_index,
+            whitelist,
+            collection_id,
+            created_at,
+            cta_enable,
+            cta_title,
+            cta_description,
+            cta_logo_url,
+            cta_text,
+            cta_link,
+            cta_has_email_capture,
+            cta_has_text_capture,
+            cta_email_list,
+            cta_text_list
+        `)
+        .range(offset, offset + limit - 1)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error("Error fetching all collectibles:", error);
+        return null;
+    }
+
+    const allCollectibles : CollectibleDetailed[] = (await Promise.all(data.map(async (collectible) => {
+        const collection = await getCollectionById(collectible.collection_id);
+        if (!collection) {
+            console.error("Error fetching collection:", collection);
+            return null;
+        }
+        const artist = await getArtistById(collection.artist);
+        if (!artist) {
+            console.error("Error fetching artist:", artist);
+            return null;
+        }
+        return {
+            ...collectible,
+            collection,
+            artist
+        } as CollectibleDetailed;
+    }))).filter((item): item is CollectibleDetailed => item !== null);
+
+    const { count } = await supabase
+        .from("collectibles")
+        .select("id", { count: 'exact', head: true }) as { count: number | null };
+
+    return {
+        collectibles: allCollectibles,
+        total: count || 0,
+        hasMore: offset + limit < (count || 0)
+    };
+};
+
 export async function checkMintEligibility(walletAddress: string, collectibleId: number, deviceId: string): Promise<{ eligible: boolean; reason?: string, isAirdropEligible?: boolean }> {
     try {
         // Check if the NFT is still available and get its details
@@ -591,45 +676,6 @@ export async function getExistingOrder(walletAddress: string, collectibleId: num
     }
 }
 
-export async function verifyNfcSignature(rnd: string, sign: string, pubKey: string): Promise<boolean> {
-    if (!rnd || !sign || !pubKey) {
-        return false;
-    }
-    const isValid = await isSignatureValid(rnd, sign, pubKey);
-    if (!isValid) {
-        console.log("NFC signature is not valid");
-        return false;
-    }
-
-    const { data, error } = await supabase
-        .from('nfc_taps')
-        .select('id')
-        .eq('random_number', rnd)
-        .single();
-
-    if (error && error.code !== 'PGRST116') {
-        console.error('Error checking NFC tap:', error);
-        return false
-    }
-    if (data) {
-        console.log("NFC tap already recorded");
-        return false;
-    }
-
-    return true;
-}
-
-export async function recordNfcTap(rnd: string): Promise<boolean> {
-    const { error: insertError } = await supabase
-        .from('nfc_taps')
-        .insert({ random_number: rnd });
-
-    if (insertError) {
-        console.error('Error recording NFC tap:', insertError);
-        return false;
-    }
-    return true;
-}
 
 
 export async function getCompletedOrdersCount(collectibleId: number): Promise<number> {

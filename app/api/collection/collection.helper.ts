@@ -102,24 +102,24 @@ export async function mintNFTWithBubbleGumTree(
 
   while (retries < maxRetries) {
     try {
-      console.time(`Minting NFT - Attempt ${retries + 1}`); // Start timer for minting
+      console.time(`Minting NFT - Attempt ${retries + 1}`);
       console.log(`Attempt ${retries + 1} to mint NFT`);
       const merkleTree = publicKey(merkleTreePublicKey);
       const leafOwner = publicKey(minterAddress);
       const collectionMintPubkey = publicKey(collectionMintPublicKey);
 
-      console.time("Fetch Collection Asset"); // Start timer for fetching collection asset
+      console.time("Fetch Collection Asset");
       const collectionAsset = await fetchDigitalAsset(
         umi,
         collectionMintPubkey
       );
-      console.timeEnd("Fetch Collection Asset"); // End timer for fetching collection asset
+      console.timeEnd("Fetch Collection Asset");
       console.log(
         "Collection mint fetched:",
         collectionAsset.publicKey.toString()
       );
 
-      console.time("Mint to Collection"); // Start timer for minting to collection
+      console.time("Mint to Collection");
       const transaction = await mintToCollectionV1(umi, {
         leafOwner: leafOwner,
         merkleTree,
@@ -134,39 +134,64 @@ export async function mintNFTWithBubbleGumTree(
           ],
         },
       });
-      console.timeEnd("Mint to Collection"); // End timer for minting to collection
-      console.time("Send and Confirm");
+      console.timeEnd("Mint to Collection");
+
+      console.time(`Send and Confirm - Attempt ${retries + 1}`);
+
+      // Get fresh blockhash before each attempt
+      const blockhash = await umi.rpc.getLatestBlockhash();
+
       mintTx = await transaction.sendAndConfirm(umi, {
         send: {
           skipPreflight: true,
+          maxRetries: 3,
         },
         confirm: {
           commitment: "confirmed",
+          strategy: {
+            type: "blockhash",
+            blockhash: blockhash.blockhash,
+            lastValidBlockHeight: blockhash.lastValidBlockHeight,
+          },
         },
       });
-      console.timeEnd("Send and Confirm"); // End timer for sending and confirming
-      console.timeEnd(`Minting NFT - Attempt ${retries + 1}`); // End timer for minting
+
+      console.timeEnd(`Send and Confirm - Attempt ${retries + 1}`);
+      console.timeEnd(`Minting NFT - Attempt ${retries + 1}`);
 
       console.log("NFT minted successfully");
-      break; // Exit the retry loop if minting is successful
+      break;
     } catch (error: any) {
       console.error(`Error minting NFT (attempt ${retries + 1}):`, error);
-      retries++;
-      if (retries >= maxRetries) {
-        throw new Error(
-          `Failed to mint NFT after ${maxRetries} attempts: ${error.message}`
-        );
+
+      // Check if error is related to blockhash expiry
+      if (
+        error.message?.includes("block height exceeded") ||
+        error.message?.includes("blockhash not found") ||
+        error.message?.includes("Blockhash not found")
+      ) {
+        console.log("Blockhash expired, retrying with new blockhash...");
+        retries++;
+        if (retries >= maxRetries) {
+          throw new Error(
+            `Failed to mint NFT after ${maxRetries} attempts: ${error.message}`
+          );
+        }
+        // Wait longer between retries
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        continue;
       }
-      // Wait for a short time before retrying
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // For other errors, throw immediately
+      throw error;
     }
   }
+
   if (!mintTx) {
     throw new Error("Minting failed");
   }
 
   const signatureBase58 = bs58.encode(mintTx.signature);
-
   return { signature: signatureBase58 };
 }
 

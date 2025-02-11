@@ -54,12 +54,81 @@ export type Database = {
         }
         Relationships: []
       }
+      chip_links: {
+        Row: {
+          active: boolean
+          chip_id: string
+          collectible_id: number
+          created_at: string
+          id: number
+        }
+        Insert: {
+          active?: boolean
+          chip_id: string
+          collectible_id: number
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          active?: boolean
+          chip_id?: string
+          collectible_id?: number
+          created_at?: string
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chip_links_collectible_id_fkey"
+            columns: ["collectible_id"]
+            isOneToOne: false
+            referencedRelation: "collectibles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chip_taps: {
+        Row: {
+          created_at: string
+          e: string
+          id: number
+          n: string
+          server_auth: boolean
+          x: string
+        }
+        Insert: {
+          created_at?: string
+          e: string
+          id?: number
+          n: string
+          server_auth?: boolean
+          x: string
+        }
+        Update: {
+          created_at?: string
+          e?: string
+          id?: number
+          n?: string
+          server_auth?: boolean
+          x?: string
+        }
+        Relationships: []
+      }
       collectibles: {
         Row: {
           airdrop_eligibility_index: number | null
           chain: string | null
           collection_id: number
           created_at: string
+          cta_description: string | null
+          cta_email_list: Json[] | null
+          cta_enable: boolean | null
+          cta_has_email_capture: boolean | null
+          cta_has_text_capture: boolean | null
+          cta_link: string | null
+          cta_logo_url: string | null
+          cta_text: string | null
+          cta_text_list: Json[] | null
+          cta_title: string | null
           description: string
           gallery_urls: string[]
           id: number
@@ -81,6 +150,16 @@ export type Database = {
           chain?: string | null
           collection_id: number
           created_at?: string
+          cta_description?: string | null
+          cta_email_list?: Json[] | null
+          cta_enable?: boolean | null
+          cta_has_email_capture?: boolean | null
+          cta_has_text_capture?: boolean | null
+          cta_link?: string | null
+          cta_logo_url?: string | null
+          cta_text?: string | null
+          cta_text_list?: Json[] | null
+          cta_title?: string | null
           description: string
           gallery_urls: string[]
           id?: number
@@ -102,6 +181,16 @@ export type Database = {
           chain?: string | null
           collection_id?: number
           created_at?: string
+          cta_description?: string | null
+          cta_email_list?: Json[] | null
+          cta_enable?: boolean | null
+          cta_has_email_capture?: boolean | null
+          cta_has_text_capture?: boolean | null
+          cta_link?: string | null
+          cta_logo_url?: string | null
+          cta_text?: string | null
+          cta_text_list?: Json[] | null
+          cta_title?: string | null
           description?: string
           gallery_urls?: string[]
           id?: number
@@ -362,4 +451,19 @@ export type Enums<
   ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
     ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never

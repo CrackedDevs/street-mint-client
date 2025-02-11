@@ -1,17 +1,57 @@
-import { useState } from "react";
-import { Menu, X, Wallet, ShoppingBag, ChevronRight, Cpu } from "lucide-react";
+"use client";
+import {
+  CollectibleDetailed,
+  fetchAllCollectibles,
+} from "@/lib/supabaseClient";
+import { Wallet, ShoppingBag, ChevronRight, Cpu } from "lucide-react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import CollectibleMegaCard from "@/components/collectibleMegaCard";
+import Link from "next/link";
 
 export default function LandingPage() {
+  const [collectibles, setCollectibles] = useState<CollectibleDetailed[]>([]);
+
+  // Check if we're on irls.xyz domain
+  const isIrlsDomain =
+    typeof window !== "undefined" &&
+    window.location.hostname === "www.irls.xyz";
+  console.log(
+    "isIrlsDomain",
+    typeof window !== "undefined" && window.location.hostname
+  );
+  const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
+
+  useEffect(() => {
+    async function fetchCollectibles() {
+      try {
+        const response = await fetchAllCollectibles(0, 10);
+        if (!response) {
+          throw new Error("Failed to fetch collectibles data");
+        }
+
+        const { collectibles: newCollectibles, hasMore: moreAvailable } =
+          response;
+
+        setCollectibles(newCollectibles);
+      } catch (error) {
+        console.error("Error in fetchCollections:", error);
+      }
+    }
+
+    fetchCollectibles();
+  }, []);
+
   return (
     <div className="bg-white">
       <header className="absolute inset-x-0 top-0 z-50">
         <nav className="flex justify-center p-6 lg:px-8" aria-label="Global">
           <a href="#" className="-m-1.5 p-1.5">
-            <span className="sr-only">Street Mint</span>
+            <span className="sr-only">{BRAND_NAME}</span>
             <Image
-              src="/logo.svg"
-              alt="Street mint logo"
+              src={isIrlsDomain ? "/irlLogo.svg" : "/logo.svg"}
+              alt={isIrlsDomain ? "IRLS logo" : "Street mint logo"}
               width={250}
               height={100}
               className="h-10 w-auto"
@@ -58,7 +98,7 @@ export default function LandingPage() {
               Everything you need to create and share digital collectibles
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              Street Mint combines the power of Solana blockchain with NFC
+              {BRAND_NAME} combines the power of Solana blockchain with NFC
               technology to bring your digital collectibles into the physical
               world.
             </p>
@@ -110,6 +150,31 @@ export default function LandingPage() {
           </div>
         </div>
 
+        <div>
+          <h1 className="mx-auto mt-24 text-4xl font-bold text-black lg:text-center">
+            {BRAND_NAME} Showcase
+          </h1>
+          <div>
+            <div className="w-full max-w-[90vw] mx-auto space-y-16 py-8 relative">
+              {collectibles.map((collectible, index) => (
+                <CollectibleMegaCard
+                  key={collectible.id}
+                  collectible={collectible}
+                  index={index}
+                />
+              ))}
+
+              <div className="flex justify-center">
+                <Link href="/showcase">
+                  <Button className="w-54 py-2 px-4 text-lg h-12">
+                    See all collectibles →
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* How it works section */}
         <div className="mx-auto mt-32 max-w-7xl px-6 sm:mt-56 lg:px-8">
           <div className="mx-auto max-w-2xl lg:text-center">
@@ -117,7 +182,7 @@ export default function LandingPage() {
               Simple Process
             </h2>
             <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              How Street Mint Works
+              How {BRAND_NAME} Works
             </p>
           </div>
           <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
@@ -125,8 +190,7 @@ export default function LandingPage() {
               {[
                 {
                   title: "Create Your Collection",
-                  description:
-                    "Log in to Street Mint and create your unique NFT collection on the Solana blockchain.",
+                  description: `Log in to ${BRAND_NAME} and create your unique NFT collection on the Solana blockchain.`,
                 },
                 {
                   title: "Receive NFC Chips",
@@ -169,8 +233,8 @@ export default function LandingPage() {
               Ready to bring your digital collectibles to life?
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-600">
-              Join Street Mint today and start creating unforgettable
-              experiences with your NFTs and POAPs.
+              Join {BRAND_NAME} today and start creating unforgettable
+              experiences with your collectibles.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <a
@@ -210,7 +274,7 @@ export default function LandingPage() {
           )}
         </nav>
         <p className="mt-10 text-center text-xs leading-5 text-gray-500">
-          &copy; {new Date().getFullYear()} Street Mint, Inc. All rights
+          &copy; {new Date().getFullYear()} {BRAND_NAME}, Inc. All rights
           reserved.
         </p>
       </footer>

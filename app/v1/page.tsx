@@ -1,92 +1,23 @@
 import Image from "next/image";
-import {
-  getCollectionById,
-  getArtistById,
-  fetchCollectibleById,
-  QuantityType,
-  getCompletedOrdersCount,
-} from "@/lib/supabaseClient";
+import { QuantityType } from "@/lib/supabaseClient";
 import Gallery from "@/components/gallery";
 import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
-import EditionInformation from "@/components/EditionInformation-Old";
-import { getSolPrice } from "@/lib/services/getSolPrice";
-import { recordNfcTap, verifyNfcSignature } from "@/lib/supabaseAdminClient";
+import EditionInformation from "@/components/EditionInformation";
+import { checkAuthStatus } from "@/lib/ixkioAuth";
 
-async function getNFTData(id: string, rnd: string, sign: string) {
-  let isIRLtapped = false;
-  let solPriceInUSD = 0;
-
-  const collectible = await fetchCollectibleById(Number(id));
-  if (!collectible) return null;
-
-  // Only fetch SOL price if usdc_price is defined and greater than 0
-  if (collectible.price_usd && collectible.price_usd > 0) {
-    const solPrice = await getSolPrice();
-    if (!solPrice) {
-      return null;
-    }
-    solPriceInUSD = solPrice;
-  }
-
-  if (collectible.nfc_public_key) {
-    const isValid = await verifyNfcSignature(
-      rnd,
-      sign,
-      collectible.nfc_public_key
-    );
-    if (!isValid) {
-      console.log("Signature is not valid");
-      isIRLtapped = false;
-    } else {
-      isIRLtapped = true;
-    }
-  }
-
-  const collection = await getCollectionById(collectible.collection_id);
-  if (!collection) return null;
-
-  const artist = await getArtistById(collection.artist);
-  if (!artist) return null;
-
-  // Calculate NFT price in SOL
-  const priceInSOL = collectible.price_usd / solPriceInUSD;
-
-  // Calculate remaining quantity for limited editions
-  let remainingQuantity = null;
-  if (collectible.quantity_type === "limited") {
-    remainingQuantity = collectible.quantity;
-  }
-  const soldCount = await getCompletedOrdersCount(collectible.id);
-
-  if (collectible.price_usd == 0 && rnd && sign) {
-    const recordSuccess = await recordNfcTap(rnd);
-    if (!recordSuccess) {
-      return;
-    }
-  }
-
-  return {
-    collectible,
-    collection,
-    artist,
-    priceInSOL,
-    remainingQuantity,
-    isIRLtapped,
-    soldCount,
-    randomNumber: rnd,
-  };
-}
-
-// Convert to an async Server Component
 export default async function NFTPage({
-  params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams: { rnd: string; sign: string };
+  searchParams: { x: string; n: string; e: string };
 }) {
-  const data = await getNFTData(params.id, searchParams.rnd, searchParams.sign);
+  console.log(searchParams);
+
+  const data = await checkAuthStatus(
+    searchParams.x,
+    searchParams.n,
+    searchParams.e
+  );
 
   if (!data) {
     return (
@@ -109,9 +40,10 @@ export default async function NFTPage({
     priceInSOL,
     remainingQuantity,
     soldCount,
-    isIRLtapped,
-    randomNumber,
-  } = data;
+  } = data.collectibleData;
+
+  const isIRLtapped = data.isIRLtapped;
+  const scanCount = data.scanCount;
 
   return (
     <div className="min-h-screen bg-white text-black">
@@ -154,7 +86,9 @@ export default async function NFTPage({
             <ArtistInfoComponent artist={artist} />
             {/* Edition Information Section */}
             <EditionInformation
-              randomNumber={randomNumber}
+              x={searchParams.x}
+              n={searchParams.n}
+              e={searchParams.e}
               soldCount={soldCount}
               isIRLtapped={isIRLtapped}
               collection={{
@@ -171,12 +105,12 @@ export default async function NFTPage({
                 quantity_type: collectible.quantity_type as QuantityType,
                 whitelist: collectible.whitelist || false,
                 cta_enable: collectible.cta_enable || false,
-                cta_has_email_capture: collectible.cta_has_email_capture || false,
+                cta_has_email_capture:
+                  collectible.cta_has_email_capture || false,
                 cta_email_list: (collectible.cta_email_list || []) as {
                   [key: string]: string;
                 }[],
-                cta_has_text_capture:
-                  collectible.cta_has_text_capture || false,
+                cta_has_text_capture: collectible.cta_has_text_capture || false,
                 cta_text_list: (collectible.cta_text_list || []) as {
                   [key: string]: string;
                 }[],

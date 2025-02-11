@@ -13,6 +13,7 @@ export async function getSolPrice(): Promise<number | null> {
     }
 
     const data = await response.json();
+    console.log("Price Data from Mobula", data);
 
     if (data && data.data && data.data.price) {
       return Number(data.data.price.toFixed(2));

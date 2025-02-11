@@ -6,7 +6,8 @@ declare global {
     backpack: any;
   }
 }
-
+import { CtaPopUp } from "./CtaPopUp";
+import SuccessPopup from "./modals/SuccessPopup";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useEffect, useState } from "react";
@@ -44,19 +45,18 @@ import { Wallet } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
 import Image from "next/image";
 import CheckInboxModal from "./modals/ShowMailSentModal";
-import { getSupabaseAdmin, recordChipTap } from "@/lib/supabaseAdminClient";
+import { getSupabaseAdmin, recordNfcTap } from "@/lib/supabaseAdminClient";
 import { getSolPrice } from "@/lib/services/getSolPrice";
 import { MintStatus } from "./EditionInformation-Old";
 import WaitlistModal from "./modals/PromotionalModal";
 import { Button } from "./ui/button";
-import { CtaPopUp } from "./CtaPopUp";
-import SuccessPopup from "./modals/SuccessPopup";
 
 interface MintButtonProps {
   collectible: Collectible;
@@ -64,9 +64,7 @@ interface MintButtonProps {
   artistWalletAddress: string;
   isIRLtapped: boolean;
   mintStatus: MintStatus;
-  x: string;
-  n: string;
-  e: string;
+  randomNumber: string | null;
 }
 
 const wallets = [
@@ -81,9 +79,7 @@ export default function MintButton({
   artistWalletAddress,
   isIRLtapped,
   mintStatus,
-  x,
-  n,
-  e,
+  randomNumber,
 }: MintButtonProps) {
   const {
     connected,
@@ -115,7 +111,6 @@ export default function MintButton({
   const connection = new Connection(process.env.NEXT_PUBLIC_RPC_URL!);
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
   const [showSuccessPopUp, setShowSuccessPopUp] = useState(false);
-
   const { getData } = useVisitorData(
     { extendedResult: true },
     { immediate: true }
@@ -270,8 +265,8 @@ export default function MintButton({
     }
     setIsMinting(true);
     setError(null);
-    if (collectible.price_usd > 0 && x && n && e) {
-      const recordSuccess = await recordChipTap(x, n, e);
+    if (collectible.price_usd > 0 && randomNumber) {
+      const recordSuccess = await recordNfcTap(randomNumber);
       if (!recordSuccess) {
         return;
       }
