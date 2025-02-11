@@ -42,7 +42,6 @@ const DashboardPage = () => {
     <>
       <div className="h-full flex items-center justify-center bg-gradient-to-br from-white to-gray-100 relative overflow-hidden sm:mx-0 mx-2">
         <RetroGrid />
-
         <div className="w-full flex flex-col items-center justify-center">
           {profileNotComplete ? (
             <Page />
