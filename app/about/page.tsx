@@ -10,9 +10,9 @@ export default function StreetMintPage() {
   return (
     <div className="min-h-screen bg-gray-100">
       <div
-        className="bg-cover bg-center h-96"
+        className="bg-cover bg-center h-[34rem]"
         style={{
-          backgroundImage: "url('/banner-image.jpeg')",
+          backgroundImage: "url('/banner-image.jpg')",
         }}
       >
         <div className="h-full bg-black bg-opacity-50 flex items-center justify-center">
