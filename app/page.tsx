@@ -75,7 +75,7 @@ export default function LandingPage() {
                 </p>
                 <div className="mt-10 flex items-center justify-center gap-x-6">
                   <Link
-                    href="/about"
+                    href="/faq"
                     className="text-sm font-semibold leading-6 text-gray-900"
                   >
                     Learn more <span aria-hidden="true">→</span>
@@ -244,7 +244,7 @@ export default function LandingPage() {
                 Get started
               </a>
               <Link
-                href="/about"
+                href="/faq"
                 className="text-sm font-semibold leading-6 text-gray-900"
               >
                 Learn more <span aria-hidden="true">→</span>
