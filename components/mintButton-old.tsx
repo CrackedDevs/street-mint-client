@@ -694,7 +694,7 @@ export default function MintButton({
       />
       {(transactionSignature || existingOrder?.status === "completed") &&
         renderCompletedMint()}
-      {mintStatus === "ongoing" && (
+      {mintStatus === "ongoing" && !(transactionSignature || existingOrder?.status === "completed") && (
         <div className="flex flex-col items-center justify-center w-full">
           <div className="flex flex-col items-center justify-center w-full">
             {isFreeMint ? (
