@@ -74,12 +74,12 @@ export default function LandingPage() {
                   on Solana with the power of NFC technology.
                 </p>
                 <div className="mt-10 flex items-center justify-center gap-x-6">
-                  <a
-                    href="#"
+                  <Link
+                    href="/contact-us"
                     className="text-sm font-semibold leading-6 text-gray-900"
                   >
                     Learn more <span aria-hidden="true">→</span>
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -243,12 +243,12 @@ export default function LandingPage() {
               >
                 Get started
               </a>
-              <a
-                href="#"
+              <Link
+                href="/contact-us"
                 className="text-sm font-semibold leading-6 text-gray-900"
               >
                 Learn more <span aria-hidden="true">→</span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>
