@@ -41,7 +41,7 @@ export default function TipLinkEmailTemplate({
             margin: "0 auto 20px",
           }}
         />
-        <h1
+        <h2
           style={{
             color: "#4a4a4a",
             textAlign: "center",
@@ -49,7 +49,7 @@ export default function TipLinkEmailTemplate({
           }}
         >
           Congratulations! Your IRL Collectible is ready to be claimed 🎉
-        </h1>
+        </h2>
         <img
           src={nftImageUrl}
           alt="Your NFT"
