@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import FAQAccordion from "@/components/faq-accordion";
 import { Button } from "@/components/ui/button";
 import type React from "react";
+import Link from "next/link";
 
 export default function StreetMintPage() {
   return (
@@ -11,7 +12,7 @@ export default function StreetMintPage() {
       <div
         className="bg-cover bg-center h-96"
         style={{
-          backgroundImage: "url('/placeholder.svg?height=1080&width=1920')",
+          backgroundImage: "url('/banner-image.jpeg')",
         }}
       >
         <div className="h-full bg-black bg-opacity-50 flex items-center justify-center">
@@ -121,7 +122,9 @@ export default function StreetMintPage() {
             We&apos;d love to hear from you! Join us in bringing Street Mint to your
             city and transforming the way we experience and collect art.
           </p>
-          <Button className="mt-4">Contact Us</Button>
+          <Link href="/contact-us">
+            <Button className="mt-4">Contact Us</Button>
+          </Link>
         </Section>
 
         <Section title="About Us">
@@ -300,7 +303,9 @@ export default function StreetMintPage() {
             We&apos;d love to hear from you! Join us in bringing Street Mint to your
             city and transforming the way we experience and collect art.
           </p>
-          <Button className="mt-4">Contact Us</Button>
+          <Link href="/contact-us">
+            <Button className="mt-4">Contact Us</Button>
+          </Link>
         </Section>
       </div>
     </div>

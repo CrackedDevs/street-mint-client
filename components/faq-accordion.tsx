@@ -48,7 +48,7 @@ const faqs = [
 
 export default function FAQAccordion() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pt-2">
       {faqs.map((faq, index) => (
         <FAQItem key={index} question={faq.question} answer={faq.answer} />
       ))}
@@ -60,7 +60,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="border border-gray-300 rounded-lg overflow-hidden">
       <button
         className="flex justify-between items-center w-full text-left p-4 focus:outline-none"
         onClick={() => setIsOpen(!isOpen)}
