@@ -36,7 +36,7 @@ export default function StreetMintPage() {
               alt="Street Mint" 
               width={200} 
               height={200} 
-              className="h-28 md:h-48" 
+              className="h-20 md:h-48" 
             />
             <span className="text-white text-3xl md:text-5xl font-bold">X</span>
             <Image 
