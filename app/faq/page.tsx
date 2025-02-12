@@ -91,12 +91,12 @@ export default function StreetMintPage() {
               located on this Mint Station.
             </li>
             <li>
-              <strong>Enter Details:</strong> You&apos;'ll be prompted to enter
+              <strong>Enter Details:</strong> You&apos;ll be prompted to enter
               your email address (and payment information if all the free
               editions have been claimed - we accept credit card and Solana).
             </li>
             <li>
-              <strong>Own Your Art:</strong> That&apos;'s it! Your unique
+              <strong>Own Your Art:</strong> That&apos;s it! Your unique
               digital collectible will be delivered straight to your email
               inbox. You can view it, share it, or even sell it on secondary art
               marketplaces.
