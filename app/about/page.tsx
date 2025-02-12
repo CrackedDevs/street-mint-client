@@ -48,8 +48,7 @@ export default function StreetMintPage() {
             collectibles of the amazing street art you see around you. We
             believe in empowering artists, supporting local communities and
             making art collecting accessible to everyone. But we also believe in
-            the power of experience and being in the moment. That&apos;s why we&apos;ve
-            designed our platform to be truly exclusive and location-based.
+            the power of experience and being in the moment. That&apos;s why we&apos;ve designed our platform to be truly experiential and location-based.
           </p>
           <p className="mt-4">
             <strong>Here&apos;s the catch:</strong> You can ONLY claim this digital
