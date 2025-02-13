@@ -39,6 +39,7 @@ function CtaPopUp({
 CtaPopUpProps) {
   const [email, setEmail] = useState("");
   const [text, setText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { reward: confettiReward, isAnimating } = useReward(
     "rewardId",
     "confetti",
@@ -50,7 +51,7 @@ CtaPopUpProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    setIsLoading(true);
     let updatedCollectible: Collectible = { ...collectible };
 
     if (hasEmailCapture) {
@@ -108,6 +109,8 @@ CtaPopUpProps) {
         onClose();
       }, 1000);
     }
+
+    setIsLoading(false);
   };
 
   if (!isOpen) return null;
@@ -178,7 +181,7 @@ CtaPopUpProps) {
           <div className="flex justify-center">
             <Button
               type="submit"
-              disabled={isAnimating}
+              disabled={isLoading}
               className="relative rounded-lg  px-6 py-2 text-white transition-all  disabled:opacity-50"
             >
               <span
