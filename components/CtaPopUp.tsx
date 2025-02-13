@@ -98,13 +98,11 @@ CtaPopUpProps) {
 
     if (ctaLink) {
       // Wait for confetti animation before redirect
-      setTimeout(() => {
-        window.open(
-          ctaLink.includes("http") ? ctaLink : `https://${ctaLink}`,
-          "_blank"
-        );
-        onClose();
-      }, 1000);
+      window.open(
+        ctaLink.includes("http") ? ctaLink : `https://${ctaLink}`,
+        "_blank"
+      );
+      onClose();
     } else {
       setTimeout(() => {
         onClose();
