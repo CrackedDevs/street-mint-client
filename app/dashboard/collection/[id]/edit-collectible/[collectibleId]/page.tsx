@@ -410,6 +410,7 @@ function EditCollectiblePage() {
                       </Label>
                       <Input
                         id="call-to-action-title"
+                        placeholder="Join our newsletter"
                         value={collectible.cta_title ?? ""}
                         required
                         onChange={(e) =>
@@ -428,6 +429,7 @@ function EditCollectiblePage() {
                       <Textarea
                         id="call-to-action-description"
                         required
+                        placeholder="Join our newsletter to get exclusive updates and early access to new drops."
                         value={collectible.cta_description ?? ""}
                         onChange={(e) =>
                           handleCollectibleChange(
@@ -470,10 +472,11 @@ function EditCollectiblePage() {
                         htmlFor="call-to-action-cta-text"
                         className="text-lg font-semibold"
                       >
-                        CTA Text
+                        CTA Button Text
                       </Label>
                       <Input
                         id="call-to-action-cta-text"
+                        placeholder="Signup"
                         value={collectible.cta_text ?? ""}
                         onChange={(e) =>
                           handleCollectibleChange("cta_text", e.target.value)
