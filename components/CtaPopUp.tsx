@@ -53,6 +53,15 @@ CtaPopUpProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    if (ctaLink) {
+      // Wait for confetti animation before redirect
+      window.open(
+        ctaLink.includes("http") ? ctaLink : `https://${ctaLink}`,
+        "_blank"
+      );
+    }
+
     let updatedCollectible: Collectible = { ...collectible };
 
     if (hasEmailCapture) {
@@ -96,8 +105,6 @@ CtaPopUpProps) {
         });
       }
     }
-
-    confettiReward();
 
     onClose();
 
@@ -169,24 +176,16 @@ CtaPopUpProps) {
           )}
 
           {/* CTA Button with Reward */}
-
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="relative rounded-lg flex justify-center w-full  px-6 py-2 text-white transition-all  disabled:opacity-50"
-          >
-            <Link
-              href={ctaLink.includes("http") ? ctaLink : `https://${ctaLink}`}
-              target="_blank"
-              className=" cursor-pointer"
+          <div className="flex justify-center">
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="relative rounded-lg  px-6 py-2 text-white transition-all  disabled:opacity-50"
             >
-              <span
-                id="rewardId"
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-              />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
               {ctaText}
-            </Link>
-          </Button>
+            </Button>
+          </div>
         </form>
       </div>
     </div>
