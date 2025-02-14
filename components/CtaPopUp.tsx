@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Collectible, updateCollectible } from "@/lib/supabaseClient";
 import { toast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 interface CtaPopUpProps {
   isOpen: boolean;
@@ -97,18 +98,7 @@ CtaPopUpProps) {
 
     confettiReward();
 
-    if (ctaLink) {
-      // Wait for confetti animation before redirect
-      window.open(
-        ctaLink.includes("http") ? ctaLink : `https://${ctaLink}`,
-        "_blank"
-      );
-      onClose();
-    } else {
-      setTimeout(() => {
-        onClose();
-      }, 1000);
-    }
+    onClose();
 
     setIsLoading(false);
   };
@@ -178,19 +168,24 @@ CtaPopUpProps) {
           )}
 
           {/* CTA Button with Reward */}
-          <div className="flex justify-center">
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="relative rounded-lg  px-6 py-2 text-white transition-all  disabled:opacity-50"
+
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="relative rounded-lg flex justify-center w-full  px-6 py-2 text-white transition-all  disabled:opacity-50"
+          >
+            <Link
+              href={ctaLink.includes("http") ? ctaLink : `https://${ctaLink}`}
+              target="_blank"
+              className=" cursor-pointer"
             >
               <span
                 id="rewardId"
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
               />
               {ctaText}
-            </Button>
-          </div>
+            </Link>
+          </Button>
         </form>
       </div>
     </div>
