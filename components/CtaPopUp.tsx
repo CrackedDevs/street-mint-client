@@ -74,26 +74,27 @@ CtaPopUpProps) {
         ],
       };
     }
-
-    const success = await updateCollectible(updatedCollectible);
-    if (success) {
-      if (hasEmailCapture && hasTextCapture) {
+    if (hasEmailCapture || hasTextCapture) {
+      const success = await updateCollectible(updatedCollectible);
+      if (success) {
+        if (hasEmailCapture && hasTextCapture) {
+          toast({
+            title: "Email and text added to list",
+          });
+        } else if (hasEmailCapture) {
+          toast({
+            title: "Email added to list",
+          });
+        } else if (hasTextCapture) {
+          toast({
+            title: "Text added to list",
+          });
+        }
+      } else {
         toast({
-          title: "Email and text added to list",
-        });
-      } else if (hasEmailCapture) {
-        toast({
-          title: "Email added to list",
-        });
-      } else if (hasTextCapture) {
-        toast({
-          title: "Text added to list",
+          title: "Failed to update list",
         });
       }
-    } else {
-      toast({
-        title: "Failed to update list",
-      });
     }
 
     confettiReward();
