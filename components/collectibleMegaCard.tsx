@@ -217,7 +217,7 @@ export default function CollectibleMegaCard({
                 </Link>
               )}
 
-              <Link href={`/mint/${collectible.id}`} className="w-full">
+              {/* <Link href={`/mint/${collectible.id}`} className="w-full">
                 <Button
                   className="w-full text-lg md:text-xl py-7 md:py-7 rounded-lg"
                   size="lg"
@@ -225,7 +225,7 @@ export default function CollectibleMegaCard({
                   More Info
                   <ChevronRight className="ml-2 h-5 w-5 md:h-6 md:w-6" />
                 </Button>
-              </Link>
+              </Link> */}
             </div>
           </div>
         </CardContent>
