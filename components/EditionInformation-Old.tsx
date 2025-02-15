@@ -87,6 +87,14 @@ const EditionInformation = ({
               collectible.quantity_type as QuantityType
             )}
           </Badge>
+          {collectible.is_light_version === true && (
+            <Badge
+              variant="outline"
+              className="border-green-500 text-black text-sm rounded-xl bg-green-500"
+            >
+              IRLS Light
+            </Badge>
+          )}
           {collectible.quantity_type === QuantityType.Limited &&
             remainingQuantity !== null && (
               <span className="text-sm font-medium">
