@@ -130,9 +130,10 @@ function Component() {
                     {collectible.description}
                   </p>
                   <div className="flex justify-between items-center mb-4">
-                    <Badge
-                      variant="secondary"
-                      className="text-xs font-semibold"
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant="secondary"
+                        className="text-xs font-semibold"
                     >
                       {collectible.quantity_type === "limited"
                         ? `Limited (${collectible.quantity})`
@@ -140,12 +141,28 @@ function Component() {
                         ? "1 of 1"
                         : "Open Edition"}
                     </Badge>
+                    <Badge
+                      variant="secondary"
+                      className="text-xs font-semibold"
+                    >
+                      {collectible.is_light_version === true
+                        ? "IRLS Light"
+                        : "IRLS Standard"}
+                    </Badge>
+
+                    </div>
+                    
                     <span className="text-lg font-bold text-gray-900">
                       {collectible.price_usd > 0
                         ? `$${collectible.price_usd}`
                         : "Free"}
                     </span>
                   </div>
+
+                  <div className="flex justify-between items-center mb-4">
+
+                  </div>
+
                   {collectible.gallery_urls &&
                     collectible.gallery_urls.length > 0 && (
                       <div className="mb-4">
