@@ -132,6 +132,7 @@ export type Database = {
           description: string
           gallery_urls: string[]
           id: number
+          is_light_version: boolean
           location: string | null
           location_note: string | null
           metadata_uri: string | null
@@ -163,6 +164,7 @@ export type Database = {
           description: string
           gallery_urls: string[]
           id?: number
+          is_light_version?: boolean
           location?: string | null
           location_note?: string | null
           metadata_uri?: string | null
@@ -194,6 +196,7 @@ export type Database = {
           description?: string
           gallery_urls?: string[]
           id?: number
+          is_light_version?: boolean
           location?: string | null
           location_note?: string | null
           metadata_uri?: string | null
