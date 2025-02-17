@@ -180,7 +180,7 @@ export default function CollectibleMegaCard({
                       timeLeft ? (
                         <div>
                           <span className="text-lg font-medium">
-                            Starts in: ${timeLeft}
+                            Starts in: {timeLeft}
                           </span>
                         </div>
                       ) : (

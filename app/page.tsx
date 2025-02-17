@@ -129,13 +129,65 @@ export default function LandingPage() {
           </h1>
           <div>
             <div className="w-full max-w-[90vw] mx-auto space-y-16 py-8 relative">
-              {collectibles.map((collectible, index) => (
-                <CollectibleMegaCard
-                  key={collectible.id}
-                  collectible={collectible}
-                  index={index}
-                />
-              ))}
+              <div className="flex flex-col gap-4">
+                <h1 className="text-2xl font-bold">Live</h1>
+                {collectibles
+                  .filter((collectible) => {
+                    const now = new Date().getTime();
+                    const startDate = new Date(
+                      collectible.mint_start_date!
+                    ).getTime();
+                    const endDate = new Date(
+                      collectible.mint_end_date!
+                    ).getTime();
+                    return startDate <= now && endDate >= now;
+                  })
+                  .map((collectible, index) => (
+                    <CollectibleMegaCard
+                      key={collectible.id}
+                      collectible={collectible}
+                      index={index}
+                    />
+                  ))}
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <h1 className="text-2xl font-bold">Upcoming</h1>
+                {collectibles
+                  .filter((collectible) => {
+                    const now = new Date().getTime();
+                    const startDate = new Date(
+                      collectible.mint_start_date!
+                    ).getTime();
+                    return startDate > now;
+                  })
+                  .map((collectible, index) => (
+                    <CollectibleMegaCard
+                      key={collectible.id}
+                      collectible={collectible}
+                      index={index}
+                    />
+                  ))}
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <h1 className="text-2xl font-bold">Ended</h1>
+                {collectibles
+                  .filter((collectible) => {
+                    const now = new Date().getTime();
+                    const endDate = new Date(
+                      collectible.mint_end_date!
+                    ).getTime();
+                    return now > endDate;
+                  })
+                  .map((collectible, index) => (
+                    <CollectibleMegaCard
+                      key={collectible.id}
+                      collectible={collectible}
+                      index={index}
+                    />
+                  ))}
+              </div>
 
               <div className="flex justify-center">
                 <Link href="/showcase">
