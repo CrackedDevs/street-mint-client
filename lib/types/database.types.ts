@@ -119,6 +119,7 @@ export type Database = {
           chain: string | null
           collection_id: number
           created_at: string
+          creator_royalty_array: Json | null
           cta_description: string | null
           cta_email_list: Json[] | null
           cta_enable: boolean | null
@@ -151,6 +152,7 @@ export type Database = {
           chain?: string | null
           collection_id: number
           created_at?: string
+          creator_royalty_array?: Json | null
           cta_description?: string | null
           cta_email_list?: Json[] | null
           cta_enable?: boolean | null
@@ -183,6 +185,7 @@ export type Database = {
           chain?: string | null
           collection_id?: number
           created_at?: string
+          creator_royalty_array?: Json | null
           cta_description?: string | null
           cta_email_list?: Json[] | null
           cta_enable?: boolean | null

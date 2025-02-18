@@ -31,20 +31,20 @@ export default function StreetMintPage() {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="flex items-center justify-center space-x-8 md:space-x-24"
           >
-            <Image 
-              src="/logo-white.svg" 
-              alt="Street Mint" 
-              width={200} 
-              height={200} 
-              className="h-20 md:h-48" 
+            <Image
+              src="/logo-white.svg"
+              alt="Street Mint"
+              width={200}
+              height={200}
+              className="h-20 md:h-48"
             />
             <span className="text-white text-3xl md:text-5xl font-bold">X</span>
-            <Image 
-              src="/otz-logo-transparent.png" 
-              alt="OTZ" 
-              width={144} 
-              height={144} 
-              className="h-24 md:h-32 translate-x-2 md:translate-x-5" 
+            <Image
+              src="/otz-logo-transparent.png"
+              alt="OTZ"
+              width={144}
+              height={144}
+              className="h-24 md:h-32 translate-x-2 md:translate-x-5"
             />
           </motion.div>
         </div>
@@ -71,7 +71,9 @@ export default function StreetMintPage() {
             collectibles of the amazing street art you see around you. We
             believe in empowering artists, supporting local communities and
             making art collecting accessible to everyone. But we also believe in
-            the power of experience and being in the moment. That&apos;s why we&apos;ve designed our platform to be truly experiential and location-based.
+            the power of experience and being in the moment. That&apos;s why
+            we&apos;ve designed our platform to be truly experiential and
+            location-based.
           </p>
           <p className="mt-4">
             <strong>Here&apos;s the catch:</strong> You can ONLY claim this
@@ -96,9 +98,9 @@ export default function StreetMintPage() {
               editions have been claimed - we accept credit card and Solana).
             </li>
             <li>
-              <strong>Own Your Art:</strong> That&apos;s it! Your unique
-              digital collectible will be delivered straight to your email
-              inbox. You can view it, share it, or even sell it on secondary art
+              <strong>Own Your Art:</strong> That&apos;s it! Your unique digital
+              collectible will be delivered straight to your email inbox. You
+              can view it, share it, or even sell it on secondary art
               marketplaces.
             </li>
           </ol>
@@ -222,7 +224,8 @@ export default function StreetMintPage() {
             </li>
             <li>
               <strong>Fiat and Crypto Payments:</strong> Cater to a wider
-              audience by accepting both traditional credit card payments and cryptocurrencies.
+              audience by accepting both traditional credit card payments and
+              cryptocurrencies.
             </li>
           </ul>
 

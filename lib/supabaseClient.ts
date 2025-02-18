@@ -35,6 +35,7 @@ export type Collectible = {
     primary_image_url: string;
     quantity_type: QuantityType;
     quantity: number | null;
+    creator_royalty_array?: { creator_wallet_address: string; royalty_percentage: number; name: string; }[] | null;
     price_usd: number;
     location: string | null;
     location_note: string | null;

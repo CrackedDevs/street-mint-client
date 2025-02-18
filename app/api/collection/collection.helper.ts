@@ -6,6 +6,7 @@ import {
   signerIdentity,
   publicKey,
   percentAmount,
+  PublicKey,
 } from "@metaplex-foundation/umi";
 
 import {
@@ -35,6 +36,12 @@ function initializeUmi(endpoint: string, privateKey: string): Umi {
   const signer = createSignerFromKeypair(umi, keypair);
   umi.use(signerIdentity(signer));
   return umi;
+}
+
+export interface CreatorRoyalty {
+  creator_wallet_address: string;
+  royalty_percentage: number;
+  name: string;
 }
 
 function privateKeyToUint8Array(privateKeyString: string): Uint8Array {
@@ -94,6 +101,7 @@ export async function mintNFTWithBubbleGumTree(
   minterAddress: string,
   name: string,
   metadata_uri: string,
+  creatorRoyaltyArray: CreatorRoyalty[],
   maxRetries = 3
 ): Promise<{ signature: string }> {
   const umi = initializeUmi(process.env.RPC_URL!, process.env.PRIVATE_KEY!);
@@ -119,6 +127,44 @@ export async function mintNFTWithBubbleGumTree(
         collectionAsset.publicKey.toString()
       );
 
+      let creators: { address: PublicKey; verified: boolean; share: number }[] =
+        [];
+      let totalRoyaltyPercentage = 0;
+
+      if (creatorRoyaltyArray && creatorRoyaltyArray.length > 0) {
+        // Calculate total royalty percentage first
+        totalRoyaltyPercentage = creatorRoyaltyArray.reduce(
+          (sum, creator) =>
+            sum +
+            Math.max(0, Math.min(100, Number(creator.royalty_percentage))),
+          0
+        );
+
+        // Map creators with proportional shares
+        creators = creatorRoyaltyArray.map((creator) => {
+          const royaltyPercent = Math.max(
+            0,
+            Math.min(100, Number(creator.royalty_percentage))
+          );
+
+          // Calculate proportional share based on royalty percentage
+          // Example: If creator has 30% royalty and total royalties are 60%,
+          // their share would be (30/60)*100 = 50% of the total creator share.
+          // If total royalties are 0%, all shares will be 0
+
+          const share =
+            totalRoyaltyPercentage > 0
+              ? Math.round((royaltyPercent / totalRoyaltyPercentage) * 100)
+              : 0;
+
+          return {
+            address: publicKey(creator.creator_wallet_address),
+            verified: false,
+            share,
+          };
+        });
+      }
+
       console.time("Mint to Collection");
       const transaction = await mintToCollectionV1(umi, {
         leafOwner: leafOwner,
@@ -127,11 +173,9 @@ export async function mintNFTWithBubbleGumTree(
         metadata: {
           name: name,
           uri: metadata_uri,
-          sellerFeeBasisPoints: 0,
-          collection: { key: collectionMintPubkey, verified: true },
-          creators: [
-            { address: umi.identity.publicKey, verified: true, share: 100 },
-          ],
+          sellerFeeBasisPoints: totalRoyaltyPercentage * 100, // Convert percentage to basis points (1% = 100 basis points)
+          collection: { key: collectionMintPubkey, verified: false },
+          creators: creators,
         },
       });
       console.timeEnd("Mint to Collection");

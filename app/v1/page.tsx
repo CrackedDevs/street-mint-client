@@ -102,6 +102,13 @@ export default async function NFTPage({
               }}
               collectible={{
                 ...collectible,
+                creator_royalty_array: collectible.creator_royalty_array as
+                  | {
+                      creator_wallet_address: string;
+                      royalty_percentage: number;
+                      name: string;
+                    }[]
+                  | null,
                 quantity_type: collectible.quantity_type as QuantityType,
                 whitelist: collectible.whitelist || false,
                 cta_enable: collectible.cta_enable || false,

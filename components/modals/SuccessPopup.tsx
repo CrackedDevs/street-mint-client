@@ -1,8 +1,4 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { PartyPopper } from "lucide-react";
@@ -14,7 +10,7 @@ interface SuccessPopupProps {
 
 export default function SuccessPopup({ isOpen, onClose }: SuccessPopupProps) {
   if (!isOpen) return null;
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
@@ -47,7 +43,8 @@ export default function SuccessPopup({ isOpen, onClose }: SuccessPopupProps) {
           </DialogTitle>
 
           <p className="text-lg mb-6">
-            Your Collectible has been successfully minted! You&apos;re now the proud owner of this unique piece. 🎉
+            Your Collectible has been successfully minted! You&apos;re now the
+            proud owner of this unique piece. 🎉
           </p>
 
           <Button
@@ -60,4 +57,4 @@ export default function SuccessPopup({ isOpen, onClose }: SuccessPopupProps) {
       </DialogContent>
     </Dialog>
   );
-} 
+}
