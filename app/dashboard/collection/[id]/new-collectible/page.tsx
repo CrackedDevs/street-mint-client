@@ -972,8 +972,8 @@ function CreateCollectiblePage() {
 
                   {collectible.creator_royalty_array?.length === 0 && (
                     <p className="text-center text-muted-foreground py-4">
-                      No creators added. Click "Add Creator" to add creator
-                      royalties.
+                      No creators added. Click &apos;Add Creator&apos; to add
+                      creator royalties.
                     </p>
                   )}
                 </div>

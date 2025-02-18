@@ -56,7 +56,8 @@ function EditCollectiblePage() {
           quantity_type: fetchedCollectible.quantity_type as QuantityType,
           whitelist: fetchedCollectible.whitelist || false,
           cta_enable: fetchedCollectible.cta_enable || false,
-          creator_royalty_array: (fetchedCollectible.creator_royalty_array || []) as unknown as CreatorRoyalty[],
+          creator_royalty_array: (fetchedCollectible.creator_royalty_array ||
+            []) as unknown as CreatorRoyalty[],
           cta_has_email_capture:
             fetchedCollectible.cta_has_email_capture || false,
           cta_email_list: (fetchedCollectible.cta_email_list || []) as {
@@ -693,8 +694,8 @@ function EditCollectiblePage() {
 
                 {collectible.creator_royalty_array?.length === 0 && (
                   <p className="text-center text-muted-foreground py-4">
-                    No creators added. Click "Add Creator" to add creator
-                    royalties.
+                    No creators added. Click &apos;Add Creator&apos; to add
+                    creator royalties.
                   </p>
                 )}
               </div>

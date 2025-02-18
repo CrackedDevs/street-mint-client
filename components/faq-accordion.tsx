@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { ChevronDown } from "lucide-react"
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown } from "lucide-react";
 
 const faqs = [
   {
@@ -12,7 +12,8 @@ const faqs = [
   },
   {
     question: "What is Solana?",
-    answer: "Solana is a fast and efficient blockchain platform that powers our digital collectibles.",
+    answer:
+      "Solana is a fast and efficient blockchain platform that powers our digital collectibles.",
   },
   {
     question: "Do I need a crypto wallet?",
@@ -44,7 +45,7 @@ const faqs = [
     answer:
       "OTZ Gallery is a leading curator of contemporary and street art in London. They have partnered with Street Mint to bring you this exciting collection of NFTs, showcasing the work of renowned artists and transforming Shoreditch into a digital art gallery. Learn more about OTZ Gallery and their mission at https://outsidethezonegallery.com/.",
   },
-]
+];
 
 export default function FAQAccordion() {
   return (
@@ -53,11 +54,11 @@ export default function FAQAccordion() {
         <FAQItem key={index} question={faq.question} answer={faq.answer} />
       ))}
     </div>
-  )
+  );
 }
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="border border-gray-300 rounded-lg overflow-hidden">
@@ -66,7 +67,10 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="text-lg font-semibold text-gray-800">{question}</span>
-        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.3 }}
+        >
           <ChevronDown className="w-5 h-5 text-gray-500" />
         </motion.div>
       </button>
@@ -85,6 +89,5 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
         )}
       </AnimatePresence>
     </div>
-  )
+  );
 }
-

@@ -694,38 +694,39 @@ export default function MintButton({
       />
       {(transactionSignature || existingOrder?.status === "completed") &&
         renderCompletedMint()}
-      {mintStatus === "ongoing" && !(transactionSignature || existingOrder?.status === "completed") && (
-        <div className="flex flex-col items-center justify-center w-full">
+      {mintStatus === "ongoing" &&
+        !(transactionSignature || existingOrder?.status === "completed") && (
           <div className="flex flex-col items-center justify-center w-full">
-            {isFreeMint ? (
-              <div className="w-full flex mt-2 gap-4 flex-col items-center justify-center">
-                <Input
-                  type="text"
-                  placeholder="Enter your Email, Wallet or .SOL address"
-                  value={walletAddress}
-                  onChange={(e) => setWalletAddress(e.target.value)}
-                  className="w-full h-12 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
-                />
-                {existingOrder?.status !== "completed" &&
-                  walletAddress &&
-                  renderMintButton()}
-              </div>
-            ) : (
-              <div className="w-full mt-4 flex flex-col items-center justify-center">
-                {renderWalletButton()}
-                <div className="hidden">
-                  <WalletMultiButton />
+            <div className="flex flex-col items-center justify-center w-full">
+              {isFreeMint ? (
+                <div className="w-full flex mt-2 gap-4 flex-col items-center justify-center">
+                  <Input
+                    type="text"
+                    placeholder="Enter your Email, Wallet or .SOL address"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    className="w-full h-12 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
+                  />
+                  {existingOrder?.status !== "completed" &&
+                    walletAddress &&
+                    renderMintButton()}
                 </div>
-                {existingOrder?.status !== "completed" &&
-                  walletAddress &&
-                  renderMintButton()}
-              </div>
-            )}
-          </div>
+              ) : (
+                <div className="w-full mt-4 flex flex-col items-center justify-center">
+                  {renderWalletButton()}
+                  <div className="hidden">
+                    <WalletMultiButton />
+                  </div>
+                  {existingOrder?.status !== "completed" &&
+                    walletAddress &&
+                    renderMintButton()}
+                </div>
+              )}
+            </div>
 
-          {error && <p className="text-red-500 mt-2">{error}</p>}
-        </div>
-      )}
+            {error && <p className="text-red-500 mt-2">{error}</p>}
+          </div>
+        )}
     </div>
   );
 }

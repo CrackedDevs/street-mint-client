@@ -151,7 +151,7 @@ export async function mintNFTWithBubbleGumTree(
           // Example: If creator has 30% royalty and total royalties are 60%,
           // their share would be (30/60)*100 = 50% of the total creator share.
           // If total royalties are 0%, all shares will be 0
-          
+
           const share =
             totalRoyaltyPercentage > 0
               ? Math.round((royaltyPercent / totalRoyaltyPercentage) * 100)

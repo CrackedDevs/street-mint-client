@@ -127,9 +127,7 @@ export async function POST(req: Request, res: NextApiResponse) {
     // Fetch order
     const { data: order, error: fetchError } = await supabase
       .from("orders")
-      .select(
-        "*, collectibles(name, metadata_uri, creator_royalty_array)"
-      )
+      .select("*, collectibles(name, metadata_uri, creator_royalty_array)")
       .eq("id", orderId)
       .single();
     console.timeEnd("Fetch Order Duration"); // End timing order fetch
