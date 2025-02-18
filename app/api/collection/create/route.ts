@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import {
   createBubbleGumTree,
-  mintNFTWithBubbleGumTree,
 } from "../collection.helper";
 
 export async function POST(request: Request) {

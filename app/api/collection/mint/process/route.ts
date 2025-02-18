@@ -9,6 +9,7 @@ import {
 } from "@solana/web3.js";
 import { supabase } from "@/lib/supabaseClient";
 import {
+  CreatorRoyalty,
   mintNFTWithBubbleGumTree,
   resolveSolDomain,
 } from "../../collection.helper";
@@ -126,13 +127,15 @@ export async function POST(req: Request, res: NextApiResponse) {
     // Fetch order
     const { data: order, error: fetchError } = await supabase
       .from("orders")
-      .select("*, collectibles(name, metadata_uri)")
+      .select(
+        "*, collectibles(name, metadata_uri, creator_royalty_array)"
+      )
       .eq("id", orderId)
       .single();
     console.timeEnd("Fetch Order Duration"); // End timing order fetch
 
     if (!order) {
-      throw new Error("Invalid Tansaction");
+      throw new Error("Invalid Transaction");
     }
 
     if (order.status == "completed") {
@@ -235,7 +238,8 @@ export async function POST(req: Request, res: NextApiResponse) {
         ? tipLinkWalletAddress
         : resolvedWalletAddress,
       order.collectibles.name,
-      order.collectibles.metadata_uri
+      order.collectibles.metadata_uri,
+      order.collectibles.creator_royalty_array as unknown as CreatorRoyalty[]
     );
     console.timeEnd("Mint NFT Duration"); // End timing NFT minting
 

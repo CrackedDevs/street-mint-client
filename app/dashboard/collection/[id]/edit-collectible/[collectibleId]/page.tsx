@@ -14,6 +14,8 @@ import {
   UploadIcon,
   TrashIcon,
   CalendarIcon,
+  PlusCircleIcon,
+  XCircleIcon,
 } from "lucide-react";
 import {
   Collectible,
@@ -28,6 +30,12 @@ import { Switch } from "@/components/ui/switch";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+interface CreatorRoyalty {
+  creator_wallet_address: string;
+  royalty_percentage: number;
+  name: string;
+}
+
 function EditCollectiblePage() {
   const router = useRouter();
   const { id: collectionId, collectibleId } = useParams();
@@ -39,7 +47,6 @@ function EditCollectiblePage() {
   useEffect(() => {
     // Fetch the collectible data
     const fetchCollectible = async () => {
-      // Implement this function in your supabaseClient
       const fetchedCollectible = await fetchCollectibleById(
         Number(collectibleId)
       );
@@ -49,6 +56,7 @@ function EditCollectiblePage() {
           quantity_type: fetchedCollectible.quantity_type as QuantityType,
           whitelist: fetchedCollectible.whitelist || false,
           cta_enable: fetchedCollectible.cta_enable || false,
+          creator_royalty_array: (fetchedCollectible.creator_royalty_array || []) as unknown as CreatorRoyalty[],
           cta_has_email_capture:
             fetchedCollectible.cta_has_email_capture || false,
           cta_email_list: (fetchedCollectible.cta_email_list || []) as {
@@ -129,6 +137,58 @@ function EditCollectiblePage() {
         });
       }
     }
+  };
+
+  const handleAddCreator = () => {
+    const newCreator: CreatorRoyalty = {
+      creator_wallet_address: "",
+      royalty_percentage: 0,
+      name: "",
+    };
+
+    setCollectible((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        creator_royalty_array: [
+          ...(prev.creator_royalty_array || []),
+          newCreator,
+        ],
+      };
+    });
+  };
+
+  const handleRemoveCreator = (index: number) => {
+    setCollectible((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        creator_royalty_array:
+          prev.creator_royalty_array?.filter((_, i) => i !== index) || [],
+      };
+    });
+  };
+
+  const handleCreatorChange = (
+    index: number,
+    field: keyof CreatorRoyalty,
+    value: string | number
+  ) => {
+    setCollectible((prev) => {
+      if (!prev) return prev;
+      const updatedCreators = [...(prev.creator_royalty_array || [])];
+      updatedCreators[index] = {
+        ...updatedCreators[index],
+        [field]:
+          field === "royalty_percentage"
+            ? Math.min(100, Math.max(0, Number(value)))
+            : value,
+      };
+      return {
+        ...prev,
+        creator_royalty_array: updatedCreators,
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -536,6 +596,106 @@ function EditCollectiblePage() {
                       />
                     </div>
                   </div>
+                )}
+              </div>
+
+              <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-lg font-semibold">
+                      Creator Royalties
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Add creators and their royalty percentages
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddCreator}
+                    className="flex items-center gap-2"
+                  >
+                    <PlusCircleIcon className="h-4 w-4" />
+                    Add Creator
+                  </Button>
+                </div>
+
+                {collectible.creator_royalty_array?.map((creator, index) => (
+                  <div
+                    key={index}
+                    className="space-y-4 bg-background/50 p-4 rounded-lg relative"
+                  >
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={() => handleRemoveCreator(index)}
+                    >
+                      <XCircleIcon className="h-4 w-4 text-destructive" />
+                    </Button>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`creator-name-${index}`}>
+                        Creator Name
+                      </Label>
+                      <Input
+                        id={`creator-name-${index}`}
+                        value={creator.name}
+                        onChange={(e) =>
+                          handleCreatorChange(index, "name", e.target.value)
+                        }
+                        placeholder="Enter creator name"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`creator-wallet-${index}`}>
+                        Wallet Address
+                      </Label>
+                      <Input
+                        id={`creator-wallet-${index}`}
+                        value={creator.creator_wallet_address}
+                        onChange={(e) =>
+                          handleCreatorChange(
+                            index,
+                            "creator_wallet_address",
+                            e.target.value.trim()
+                          )
+                        }
+                        placeholder="Enter wallet address"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`creator-royalty-${index}`}>
+                        Royalty Percentage
+                      </Label>
+                      <Input
+                        id={`creator-royalty-${index}`}
+                        type="text"
+                        value={creator.royalty_percentage}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (/^\d*\.?\d*$/.test(value)) {
+                            handleCreatorChange(
+                              index,
+                              "royalty_percentage",
+                              Number(value)
+                            );
+                          }
+                        }}
+                        placeholder="Enter percentage (0-100)"
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                {collectible.creator_royalty_array?.length === 0 && (
+                  <p className="text-center text-muted-foreground py-4">
+                    No creators added. Click "Add Creator" to add creator
+                    royalties.
+                  </p>
                 )}
               </div>
 
