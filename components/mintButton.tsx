@@ -265,6 +265,8 @@ export default function MintButton({
     console.log("isEmail", isEmail);
     console.log("addressToUse", addressToUse);
 
+    let newOrderId = null;
+
     if (!addressToUse || !isEligible) {
       return;
     }
@@ -297,12 +299,15 @@ export default function MintButton({
       let priceInSol = 0;
       const { orderId, isFree, tipLinkWalletAddress, tipLinkUrl } =
         await initResponse.json();
+
+      newOrderId = orderId;
+
       setTipLinkUrl(tipLinkUrl);
       if (!isFree && publicKey) {
         // Step 2: Create payment transaction (only for paid mints)
         const solPrice = await getSolPrice();
         if (!solPrice) {
-          return;
+          throw new Error("Failed to get SOL price");
         }
         const solPriceUSD = solPrice;
         priceInSol = collectible.price_usd / solPriceUSD;
@@ -378,9 +383,6 @@ export default function MintButton({
           setShowAirdropModal(true);
           updateOrderAirdropStatus(orderId, true);
         }
-        if (collectible.id === 2980058898) {
-          setShowWaitlistModal(true);
-        }
         localStorage.setItem("lastMintInput", addressToUse);
         setWalletAddress("");
       } else {
@@ -396,16 +398,21 @@ export default function MintButton({
         variant: "destructive",
       });
       // Set the order status as failed
-      if (existingOrder && existingOrder.id) {
-        const supabaseAdmin = await getSupabaseAdmin();
+      if (newOrderId) {
         try {
-          const { error } = await supabaseAdmin
-            .from("orders")
-            .update({ status: "failed" })
-            .eq("id", existingOrder.id);
+          const response = await fetch("/api/orders/update-status", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              orderId: newOrderId,
+              status: "failed",
+            }),
+          });
 
-          if (error) {
-            console.error("Failed to update order status:", error);
+          if (!response.ok) {
+            console.error("Failed to update order status");
           }
         } catch (updateError) {
           console.error("Error updating order status:", updateError);
