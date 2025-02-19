@@ -473,7 +473,7 @@ export default function MintButton({
       setTimeout(() => {
         setShowSuccessPopUp(false);
         setShowCtaPopUp(true);
-      }, 2000);
+      }, 5000);
     }
     setIsMinting(false);
   };
@@ -702,7 +702,10 @@ export default function MintButton({
       )}
       <SuccessPopup
         isOpen={showSuccessPopUp}
-        onClose={() => setShowSuccessPopUp(false)}
+        onClose={() => {
+          setShowSuccessPopUp(false);
+          setShowCtaPopUp(true);
+        }}
       />
       {(transactionSignature || existingOrder?.status === "completed") &&
         renderCompletedMint()}
