@@ -50,7 +50,7 @@ import {
 } from "./ui/dialog";
 import Image from "next/image";
 import CheckInboxModal from "./modals/ShowMailSentModal";
-import { getSupabaseAdmin, recordChipTap } from "@/lib/supabaseAdminClient";
+import { getSupabaseAdmin, recordPaidChipTap } from "@/lib/supabaseAdminClient";
 import { getSolPrice } from "@/lib/services/getSolPrice";
 import { MintStatus } from "./EditionInformation-Old";
 import WaitlistModal from "./modals/PromotionalModal";
@@ -273,7 +273,7 @@ export default function MintButton({
     setIsMinting(true);
     setError(null);
     if (collectible.price_usd > 0 && x && n && e) {
-      const recordSuccess = await recordChipTap(x, n, e);
+      const recordSuccess = await recordPaidChipTap(x, n, e);
       if (!recordSuccess) {
         return;
       }
@@ -345,6 +345,12 @@ export default function MintButton({
         );
       }
 
+      const chipTapData = {
+        x,
+        n,
+        e
+      }
+
       const processResponse = await fetch("/api/collection/mint/process", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -355,6 +361,8 @@ export default function MintButton({
           priceInSol,
           isEmail,
           nftImageUrl: collectible.primary_image_url,
+          collectibleId: collectible.id,
+          chipTapData: chipTapData
         }),
       });
 

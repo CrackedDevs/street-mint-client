@@ -93,6 +93,7 @@ export type Database = {
           id: number
           n: string
           server_auth: boolean
+          used: number
           x: string
         }
         Insert: {
@@ -101,6 +102,7 @@ export type Database = {
           id?: number
           n: string
           server_auth?: boolean
+          used?: number
           x: string
         }
         Update: {
@@ -109,6 +111,31 @@ export type Database = {
           id?: number
           n?: string
           server_auth?: boolean
+          used?: number
+          x?: string
+        }
+        Relationships: []
+      }
+      chip_taps_paid: {
+        Row: {
+          created_at: string
+          e: string
+          id: number
+          n: string
+          x: string
+        }
+        Insert: {
+          created_at?: string
+          e: string
+          id?: number
+          n: string
+          x: string
+        }
+        Update: {
+          created_at?: string
+          e?: string
+          id?: number
+          n?: string
           x?: string
         }
         Relationships: []
@@ -131,6 +158,7 @@ export type Database = {
           cta_text_list: Json[] | null
           cta_title: string | null
           description: string
+          enable_card_payments: boolean | null
           gallery_urls: string[]
           id: number
           is_light_version: boolean
@@ -164,6 +192,7 @@ export type Database = {
           cta_text_list?: Json[] | null
           cta_title?: string | null
           description: string
+          enable_card_payments?: boolean | null
           gallery_urls: string[]
           id?: number
           is_light_version?: boolean
@@ -197,6 +226,7 @@ export type Database = {
           cta_text_list?: Json[] | null
           cta_title?: string | null
           description?: string
+          enable_card_payments?: boolean | null
           gallery_urls?: string[]
           id?: number
           is_light_version?: boolean

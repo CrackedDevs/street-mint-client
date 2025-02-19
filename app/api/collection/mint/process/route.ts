@@ -14,7 +14,7 @@ import {
   resolveSolDomain,
 } from "../../collection.helper";
 import { NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabaseAdminClient";
+import { getChipTap, getSupabaseAdmin, recordChipTapServerAuth } from "@/lib/supabaseAdminClient";
 import TipLinkEmailTemplate from "@/components/email/tiplink-template";
 import { resend } from "@/lib/resendMailer";
 
@@ -107,6 +107,8 @@ export async function POST(req: Request, res: NextApiResponse) {
     tipLinkWalletAddress,
     isEmail,
     nftImageUrl,
+    collectibleId,
+    chipTapData
   } = await req.json();
 
   console.time("Initial Checks Duration"); // Start timing initial checks
@@ -120,9 +122,20 @@ export async function POST(req: Request, res: NextApiResponse) {
       { status: 400 }
     );
   }
-  console.timeEnd("Initial Checks Duration"); // End timing initial checks
+  if (!chipTapData) {
+    return NextResponse.json(
+      { success: false, error: "Chip tap data not found" },
+      { status: 400 }
+    );
+  }
 
   try {
+    const chipTapDataFromDb = await getChipTap(chipTapData.x, chipTapData.n, chipTapData.e);
+
+    if (chipTapDataFromDb && chipTapDataFromDb.server_auth == true) {
+      throw new Error("Chip tap already exists or used");
+    }
+
     console.time("Fetch Order Duration"); // Start timing order fetch
     // Fetch order
     const { data: order, error: fetchError } = await supabase
@@ -152,6 +165,33 @@ export async function POST(req: Request, res: NextApiResponse) {
       }
     }
     console.log("Resolved Wallet Address:", resolvedWalletAddress);
+
+    const supabaseAdmin = await getSupabaseAdmin();
+
+    await new Promise(resolve => setTimeout(resolve, 600));
+
+    const { count, error: countError } = await supabaseAdmin
+    .from('orders')
+    .select('id', { count: 'exact', head: true })
+    .eq('collectible_id', collectibleId)
+    .eq('wallet_address', resolvedWalletAddress)
+    .in('status', ['completed', 'pending']);
+
+    if (countError) {
+      throw new Error("Failed to get count of existing orders");
+    }
+
+    console.log("Count of existing orders for collectible of address ", resolvedWalletAddress, " is ", count);
+
+    const recordSuccess = await recordChipTapServerAuth(chipTapData.x, chipTapData.n, chipTapData.e);
+
+    if (!recordSuccess) {
+      throw new Error("Failed to record chip tap because it was already used or tried to use it more than once");
+    }
+
+    if (count && count > 1) {
+      throw new Error("More than one order found for this collectible and address which is pending or completed");
+    }
 
     // For paid mints, verify and send transaction
     if (order.price_usd && order.price_usd > 0) {
@@ -246,7 +286,6 @@ export async function POST(req: Request, res: NextApiResponse) {
       throw new Error("Failed to mint NFT");
     }
     // Update order status
-    const supabaseAdmin = await getSupabaseAdmin();
     const { error: updateError } = await supabaseAdmin
       .from("orders")
       .update({

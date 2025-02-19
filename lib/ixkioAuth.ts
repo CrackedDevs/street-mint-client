@@ -1,5 +1,6 @@
 import { getChipLinkByChipId } from "./supabaseAdminClient";
 import { fetchCollectibleById, getArtistById, getCollectionById, getCompletedOrdersCount } from "./supabaseClient";
+import { recordChipTap } from "./supabaseAdminClient";
 import { getSolPrice } from "@/lib/services/getSolPrice";
 import axios from "axios";
 const AUTH_API_URL = "https://api.ixkio.com/v1/t";
@@ -10,7 +11,6 @@ const AUTH_API_URL = "https://api.ixkio.com/v1/t";
 export const checkAuthStatus = async (x: string, n: string, e: string) => {
   let collectibleData;
   let resultData;
-  let response;
   let isIRLtapped = false;
 
   try {
@@ -19,14 +19,14 @@ export const checkAuthStatus = async (x: string, n: string, e: string) => {
     collectibleData = await getCollectibleData(x, n);
     if (!collectibleData) return null;
 
-    response = await axios.get(AUTH_INSTANCE_URL, {
+    const response = await axios.get(AUTH_INSTANCE_URL, {
         headers: {
             "Content-Type": "application/json",
         },
     });
 
     if (response.status !== 200) {
-        return null;
+        throw new Error("Failed to authenticate with ixkio");
     }
 
     const data : {
@@ -37,8 +37,13 @@ export const checkAuthStatus = async (x: string, n: string, e: string) => {
 
     console.log("ixkio auth data", data);
     
-    if (data && data.xuid === x && data.response.toLowerCase() === "pass") {
-        isIRLtapped = true; // Only set to true here
+    if (data && data.xuid === x && data.response && data.response.toLowerCase() === "pass") {
+      const recordSuccess = await recordChipTap(x, n, e);
+      console.log("recordSuccess", recordSuccess);
+      if (!recordSuccess) {
+        throw new Error("Failed to record chip tap");
+      }
+        isIRLtapped = true; // Only set to true here, since we are using the chip tap for authentication
         resultData = {
             status: "pass",
             collectibleData,
@@ -51,7 +56,7 @@ export const checkAuthStatus = async (x: string, n: string, e: string) => {
       resultData = {
         status: "fail",
         collectibleData,
-        scanCount: e,
+        scanCount: 0,
         authenticated: false,
         isIRLtapped
     };

@@ -347,6 +347,7 @@ export default function MintButton({
           priceInSol,
           isEmail,
           nftImageUrl: collectible.primary_image_url,
+          collectibleId: collectible.id,
         }),
       });
 
