@@ -261,6 +261,87 @@ export type Database = {
           },
         ]
       }
+      light_orders: {
+        Row: {
+          airdrop_won: boolean
+          collectible_id: number | null
+          collection_id: number | null
+          created_at: string | null
+          device_id: string | null
+          email: string
+          email_sent: boolean | null
+          id: string
+          max_supply: number | null
+          mint_address: string | null
+          mint_signature: string | null
+          nft_type: string | null
+          price_sol: number | null
+          price_usd: number | null
+          quantity: number | null
+          status: string | null
+          tiplink_url: string | null
+          transaction_signature: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          airdrop_won?: boolean
+          collectible_id?: number | null
+          collection_id?: number | null
+          created_at?: string | null
+          device_id?: string | null
+          email: string
+          email_sent?: boolean | null
+          id?: string
+          max_supply?: number | null
+          mint_address?: string | null
+          mint_signature?: string | null
+          nft_type?: string | null
+          price_sol?: number | null
+          price_usd?: number | null
+          quantity?: number | null
+          status?: string | null
+          tiplink_url?: string | null
+          transaction_signature?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          airdrop_won?: boolean
+          collectible_id?: number | null
+          collection_id?: number | null
+          created_at?: string | null
+          device_id?: string | null
+          email?: string
+          email_sent?: boolean | null
+          id?: string
+          max_supply?: number | null
+          mint_address?: string | null
+          mint_signature?: string | null
+          nft_type?: string | null
+          price_sol?: number | null
+          price_usd?: number | null
+          quantity?: number | null
+          status?: string | null
+          tiplink_url?: string | null
+          transaction_signature?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "light_orders_collectible_id_fkey"
+            columns: ["collectible_id"]
+            isOneToOne: false
+            referencedRelation: "collectibles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "light_orders_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nfc_taps: {
         Row: {
           created_at: string | null

@@ -9,7 +9,7 @@ declare global {
 
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import {
   PublicKey,
@@ -24,10 +24,12 @@ import {
 import WhiteBgShimmerButton from "./magicui/whiteBg-shimmer-button";
 import {
   checkMintEligibility,
+  checkClaimEligibilityForLight,
   Collectible,
   Collection,
   getExistingOrder,
   updateOrderAirdropStatus,
+  getExistingLightOrder,
 } from "@/lib/supabaseClient";
 import { Input } from "./ui/input";
 import confetti from "canvas-confetti";
@@ -101,6 +103,9 @@ export default function MintButton({
   const [transactionSignature, setTransactionSignature] = useState<
     string | null
   >(null);
+  const [lightOrderSignature, setLightOrderSignature] = useState<string | null>(
+    null
+  );
   const [deviceId, setDeviceId] = useState("");
   const [existingOrder, setExistingOrder] = useState<any | null>(null);
   const isFreeMint = collectible.price_usd === 0;
@@ -115,6 +120,7 @@ export default function MintButton({
   const connection = new Connection(process.env.NEXT_PUBLIC_RPC_URL!);
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
   const [showSuccessPopUp, setShowSuccessPopUp] = useState(false);
+  const [emailAddressForLight, setEmailAddressForLight] = useState("");
 
   const { getData } = useVisitorData(
     { extendedResult: true },
@@ -181,6 +187,63 @@ export default function MintButton({
     fetchDeviceId();
   }, []);
 
+  async function checkEligibilityForLightAndExistingOrder() {
+    console.log("checkEligibilityForLightAndExistingOrder");
+    console.log("emailAddressForLight", emailAddressForLight);
+    const emailAddressToCheck = emailAddressForLight;
+
+    console.log("emailAddressToCheck", emailAddressToCheck);
+
+    if (!deviceId) {
+      const device = await fetchDeviceId();
+      setDeviceId(device);
+    }
+
+    if (emailAddressToCheck && deviceId) {
+      setIsLoading(true);
+      try {
+        const {
+          eligible,
+          reason,
+          isAirdropEligible: airdropEligible,
+        } = await checkClaimEligibilityForLight(
+          emailAddressToCheck,
+          collectible.id,
+          deviceId
+        );
+        setIsEligible(eligible);
+        setIsAirdropEligible(airdropEligible || false);
+        setIsLoading(false);
+        if (!eligible) {
+          setError(reason || "You are not eligible to claim this NFT.");
+        } else {
+          setError(null);
+        }
+
+        const order = await getExistingLightOrder(
+          emailAddressToCheck,
+          collectible.id
+        );
+        setExistingOrder(order);
+        if (order) {
+          setTransactionSignature(order.mint_signature); // change this to the signature of the claim
+        }
+      } catch (error) {
+        console.error(
+          "Error checking eligibility or existing light order:",
+          error
+        );
+        setError("Failed to check claim eligibility.");
+        setIsEligible(false);
+        setIsLoading(false);
+      }
+    } else {
+      setIsLoading(false);
+      setIsEligible(false);
+      setExistingOrder(null);
+    }
+  }
+
   async function checkEligibilityAndExistingOrder() {
     if (connected) {
       setWalletAddress(publicKey?.toString() || "");
@@ -232,8 +295,26 @@ export default function MintButton({
     }
   }
 
+  // Add debounced check functions
+  const debouncedCheckEligibility = useCallback(
+    debounce(() => {
+      if (collectible.is_light_version) {
+        console.log("checkEligibilityForLightAndExistingOrder");
+        checkEligibilityForLightAndExistingOrder();
+      } else {
+        console.log("checkEligibilityAndExistingOrder");
+        checkEligibilityAndExistingOrder();
+      }
+    }, 500),
+    [collectible.is_light_version, checkEligibilityForLightAndExistingOrder, checkEligibilityAndExistingOrder]
+  );
+
+  // Update the useEffects to use the debounced function
   useEffect(() => {
-    checkEligibilityAndExistingOrder();
+    debouncedCheckEligibility();
+    
+    // Cleanup function to cancel pending debounced calls
+    return () => debouncedCheckEligibility.cancel();
   }, [
     connected,
     publicKey,
@@ -241,7 +322,25 @@ export default function MintButton({
     deviceId,
     collectible.id,
     isFreeMint,
+    emailAddressForLight,
   ]);
+
+  // Add debounce utility function
+  function debounce<T extends (...args: any[]) => any>(
+    func: T,
+    wait: number
+  ) {
+    let timeout: NodeJS.Timeout;
+    
+    const debounced = (...args: Parameters<T>) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+
+    debounced.cancel = () => clearTimeout(timeout);
+    
+    return debounced;
+  }
 
   useEffect(() => {
     if (connected && publicKey && collectible.price_usd === 0) {
@@ -256,6 +355,96 @@ export default function MintButton({
       setWalletAddress(lastMintInput || "");
     }
   }, []);
+
+  const handleLightClaim = async () => {
+    const emailAddressToUse = emailAddressForLight;
+    const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
+      (emailAddressToUse || "").trim()
+    );
+    console.log("isEmail", isEmail);
+
+    if (!isEmail || !isEligible) {
+      return;
+    }
+    setIsMinting(true);
+    setError(null);
+    if (collectible.price_usd > 0 && x && n && e) {
+      const recordSuccess = await recordChipTap(x, n, e);
+      if (!recordSuccess) {
+        return;
+      }
+    }
+    try {
+      const initClaimResponse = await fetch("/api/collection/claim/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          collectibleId: collectible.id,
+          email: emailAddressToUse,
+          deviceId: deviceId,
+          collectionId: collection.id,
+        }),
+      });
+
+      if (!initClaimResponse.ok) {
+        const errorData = await initClaimResponse.json();
+        throw new Error(errorData.error || "Failed to initiate claiming");
+      }
+
+      const { orderId, success, lightOrderSignature } =
+        await initClaimResponse.json();
+      if (success) {
+        setLightOrderSignature(lightOrderSignature);
+        TriggerConfetti();
+        setExistingOrder({ id: orderId, status: "completed" });
+        toast({
+          title:
+            "✅ Collectible Claimed Successfully! Please check your inbox, your Collectible awaits you!",
+        });
+        setShowSuccessPopUp(true); // change this
+        setIsEligible(false);
+        if (isAirdropEligible) {
+          setShowAirdropModal(true);
+          updateOrderAirdropStatus(orderId, true);
+        }
+        if (collectible.id === 2980058898) {
+          setShowWaitlistModal(true);
+        }
+        localStorage.setItem("lastMintInputLight", emailAddressToUse);
+        setEmailAddressForLight("");
+      } else {
+        throw new Error("Claiming process failed");
+      }
+    } catch (error: any) {
+      console.error("Error claiming NFT:", error);
+      toast({
+        title: "Something went wrong while claiming your collectible ",
+        description:
+          error.message ||
+          "An unexpected error occurred. Please try again later.",
+        variant: "destructive",
+      });
+      // Set the order status as failed
+      if (existingOrder && existingOrder.id) {
+        const supabaseAdmin = await getSupabaseAdmin();
+        try {
+          const { error } = await supabaseAdmin
+            .from("light_orders")
+            .update({ status: "failed" })
+            .eq("id", existingOrder.id);
+
+          if (error) {
+            console.error("Failed to update light order status:", error);
+          }
+        } catch (updateError) {
+          console.error("Error updating light order status:", updateError);
+        }
+      }
+      setError("An unexpected error occurred");
+    } finally {
+      setIsMinting(false);
+    }
+  };
 
   const handlePaymentAndMint = async () => {
     const addressToUse = isFreeMint ? walletAddress : publicKey?.toString();
@@ -477,6 +666,7 @@ export default function MintButton({
     if (isMinting) return "PROCESSING...";
     if (isLoading) return "Checking Eligibility...";
     if (!isEligible) return "NOT ELIGIBLE";
+    if (isEligible && collectible.is_light_version) return "CLAIM NOW";
     if (isEligible) return "MINT NOW";
     return "LOADING...";
   };
@@ -616,21 +806,36 @@ export default function MintButton({
     );
   };
 
-  const renderMintButton = () => (
-    <WhiteBgShimmerButton
-      borderRadius="9999px"
-      className="w-full my-4 text-black hover:bg-gray-800 h-[40px] rounded font-bold"
-      onClick={handleMintClick}
-      disabled={
-        isMinting ||
-        !isEligible ||
-        existingOrder?.status === "completed" ||
-        isLoading
-      }
-    >
-      {getButtonText()}
-    </WhiteBgShimmerButton>
-  );
+  const renderMintButton = () =>
+    collectible.is_light_version ? (
+      <WhiteBgShimmerButton
+        borderRadius="9999px"
+        className="w-full my-4 text-black hover:bg-gray-800 h-[40px] rounded font-bold"
+        onClick={handleLightClaim}
+        disabled={
+          isMinting ||
+          !isEligible ||
+          existingOrder?.status === "completed" ||
+          isLoading
+        }
+      >
+        {getButtonText()}
+      </WhiteBgShimmerButton>
+    ) : (
+      <WhiteBgShimmerButton
+        borderRadius="9999px"
+        className="w-full my-4 text-black hover:bg-gray-800 h-[40px] rounded font-bold"
+        onClick={handleMintClick}
+        disabled={
+          isMinting ||
+          !isEligible ||
+          existingOrder?.status === "completed" ||
+          isLoading
+        }
+      >
+        {getButtonText()}
+      </WhiteBgShimmerButton>
+    );
 
   const renderCompletedMint = () => (
     <div className="flex flex-col items-center my-3 w-full">
@@ -699,38 +904,52 @@ export default function MintButton({
       />
       {(transactionSignature || existingOrder?.status === "completed") &&
         renderCompletedMint()}
-      {mintStatus === "ongoing" && (
-        <div className="flex flex-col items-center justify-center w-full">
+      {mintStatus === "ongoing" &&
+        !(transactionSignature || existingOrder?.status === "completed") && (
           <div className="flex flex-col items-center justify-center w-full">
-            {isFreeMint ? (
-              <div className="w-full flex mt-2 gap-4 flex-col items-center justify-center">
-                <Input
-                  type="text"
-                  placeholder="Enter your Email, Wallet or .SOL address"
-                  value={walletAddress}
-                  onChange={(e) => setWalletAddress(e.target.value)}
-                  className="w-full h-12 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
-                />
-                {existingOrder?.status !== "completed" &&
-                  walletAddress &&
-                  renderMintButton()}
-              </div>
-            ) : (
-              <div className="w-full mt-4 flex flex-col items-center justify-center">
-                {renderWalletButton()}
-                <div className="hidden">
-                  <WalletMultiButton />
+            <div className="flex flex-col items-center justify-center w-full">
+              {collectible.is_light_version ? (
+                <div>
+                  <Input
+                    type="email"
+                    placeholder="Enter your Email"
+                    value={emailAddressForLight}
+                    onChange={(e) => setEmailAddressForLight(e.target.value)}
+                    className="w-full h-12 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
+                  />
+                  {existingOrder?.status !== "completed" &&
+                    walletAddress &&
+                    renderMintButton()}
                 </div>
-                {existingOrder?.status !== "completed" &&
-                  walletAddress &&
-                  renderMintButton()}
-              </div>
-            )}
-          </div>
+              ) : isFreeMint ? (
+                <div className="w-full flex mt-2 gap-4 flex-col items-center justify-center">
+                  <Input
+                    type="text"
+                    placeholder="Enter your Email, Wallet or .SOL address"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    className="w-full h-12 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
+                  />
+                  {existingOrder?.status !== "completed" &&
+                    walletAddress &&
+                    renderMintButton()}
+                </div>
+              ) : (
+                <div className="w-full mt-4 flex flex-col items-center justify-center">
+                  {renderWalletButton()}
+                  <div className="hidden">
+                    <WalletMultiButton />
+                  </div>
+                  {existingOrder?.status !== "completed" &&
+                    walletAddress &&
+                    renderMintButton()}
+                </div>
+              )}
+            </div>
 
-          {error && <p className="text-red-500 mt-2">{error}</p>}
-        </div>
-      )}
+            {error && <p className="text-red-500 mt-2">{error}</p>}
+          </div>
+        )}
     </div>
   );
 }

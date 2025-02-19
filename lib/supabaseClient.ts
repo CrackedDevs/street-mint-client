@@ -632,6 +632,100 @@ export async function checkMintEligibility(walletAddress: string, collectibleId:
     }
 }
 
+export async function checkClaimEligibilityForLight(email: string, collectibleId: number, deviceId: string): Promise<{ eligible: boolean; reason?: string, isAirdropEligible?: boolean }> {
+    try {
+        const { data: collectible, error: collectibleError } = await supabase
+            .from('collectibles')
+            .select('quantity, quantity_type, mint_start_date, mint_end_date,airdrop_eligibility_index,is_light_version')
+            .eq('id', collectibleId)
+            .single();
+
+        if (collectibleError) throw collectibleError;
+        // Get the count of existing orders for this collectible
+        const { count, error: countError } = await supabase
+            .from('light_orders')
+            .select('id', { count: 'exact', head: true })
+            .eq('collectible_id', collectibleId)
+            .eq('status', 'pending');
+
+        console.log("Count of existing light orders for collectible ", collectibleId, " is ", count);
+
+        if (countError) throw countError;
+
+        // Check availability based on NFT type
+        if (collectible.quantity_type === 'single') {
+            if (count && count > 0) {
+                return { eligible: false, reason: 'This 1 of 1 collectible has already been minted.' };
+            }
+        } else if (collectible.quantity_type === 'limited') {
+            if (collectible.quantity && count && count >= collectible.quantity) {
+                return { eligible: false, reason: 'All editions of this limited NFT have been minted.' };
+            }
+        }
+
+        console.log("email121212", email);
+
+        // Check if the wallet has already minted this NFT
+        const { data: existingLightOrder, error: orderError } = await supabase
+            .from('light_orders')
+            .select('id, status')
+            .eq('email', email)
+            .eq('collectible_id', collectibleId)
+            .in('status', ['pending', 'completed'])
+            .single();
+
+        if (orderError && orderError.code !== 'PGRST116') throw orderError; // PGRST116 means no rows returned
+
+        console.log("existingLightOrder", existingLightOrder);
+
+        if (existingLightOrder) {
+            return { eligible: false, reason: 'You have already claimed this NFT via your email.' };
+        }
+
+        // Check if the device has been used to mint this NFT before
+        const { data: existingDeviceMint, error: deviceError } = await supabase
+            .from('light_orders')
+            .select('id, status')
+            .eq('device_id', deviceId)
+            .eq('collectible_id', collectibleId)
+            .in('status', ['pending', 'completed'])
+            .single();
+
+
+        if (deviceError && deviceError.code !== 'PGRST116') throw deviceError;
+        if (existingDeviceMint) {
+            console.log("Device has already been used to claim this NFT", { "deviceID": deviceId, "email": email, "collectibleId": collectibleId });
+            return { eligible: false, reason: 'This device has already been used to claim this NFT.' };
+        }
+
+        //CHECK FOR MINT START AND END DATE
+        const mintStartDateUTC = collectible.mint_start_date ? new Date(collectible.mint_start_date) : null;
+        const mintEndDateUTC = collectible.mint_end_date ? new Date(collectible.mint_end_date) : null;
+
+        const nowUTC = new Date();
+
+        // Check if minting has started
+        if (mintStartDateUTC && nowUTC < mintStartDateUTC) {
+            return { eligible: false, reason: 'Minting not started yet.' };
+        }
+
+        // Check if the minting period has ended
+        if (mintEndDateUTC && nowUTC > mintEndDateUTC) {
+            return { eligible: false, reason: 'Minting period has ended.' };
+        }
+
+        let isAirdropEligible = false;
+        if (collectible.airdrop_eligibility_index) {
+            isAirdropEligible = collectible.airdrop_eligibility_index === count! + 1;
+        }
+
+        // If all checks pass, the user is eligible to mint
+        return { eligible: true, isAirdropEligible };
+    } catch (error) {
+        return { eligible: false, reason: 'Error checking claim eligibility.' };
+    }
+}
+
 export async function updateOrderAirdropStatus(orderId: string, airdropWon: boolean) {
     try {
         const { data, error } = await supabase
@@ -663,6 +757,31 @@ export async function getExistingOrder(walletAddress: string, collectibleId: num
             .eq('wallet_address', walletAddress)
             .eq('collectible_id', collectibleId)
             .eq('status', 'completed')
+            .single();
+
+        if (error) {
+            if (error.code === 'PGRST116') {
+                // No order found
+                return null;
+            }
+            throw error;
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Error fetching existing order:", error);
+        throw error;
+    }
+}
+
+export async function getExistingLightOrder(email: string, collectibleId: number) {
+    try {
+        const { data, error } = await supabase
+            .from('light_orders')
+            .select('*')
+            .eq('email', email)
+            .eq('collectible_id', collectibleId)
+            .eq('status', 'pending')
             .single();
 
         if (error) {
