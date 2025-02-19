@@ -119,6 +119,7 @@ export type Database = {
           chain: string | null
           collection_id: number
           created_at: string
+          creator_royalty_array: Json | null
           cta_description: string | null
           cta_email_list: Json[] | null
           cta_enable: boolean | null
@@ -130,6 +131,7 @@ export type Database = {
           cta_text_list: Json[] | null
           cta_title: string | null
           description: string
+          enable_card_payments: boolean | null
           gallery_urls: string[]
           id: number
           is_light_version: boolean
@@ -151,6 +153,7 @@ export type Database = {
           chain?: string | null
           collection_id: number
           created_at?: string
+          creator_royalty_array?: Json | null
           cta_description?: string | null
           cta_email_list?: Json[] | null
           cta_enable?: boolean | null
@@ -162,6 +165,7 @@ export type Database = {
           cta_text_list?: Json[] | null
           cta_title?: string | null
           description: string
+          enable_card_payments?: boolean | null
           gallery_urls: string[]
           id?: number
           is_light_version?: boolean
@@ -183,6 +187,7 @@ export type Database = {
           chain?: string | null
           collection_id?: number
           created_at?: string
+          creator_royalty_array?: Json | null
           cta_description?: string | null
           cta_email_list?: Json[] | null
           cta_enable?: boolean | null
@@ -194,6 +199,7 @@ export type Database = {
           cta_text_list?: Json[] | null
           cta_title?: string | null
           description?: string
+          enable_card_payments?: boolean | null
           gallery_urls?: string[]
           id?: number
           is_light_version?: boolean

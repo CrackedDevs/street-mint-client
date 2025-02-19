@@ -76,6 +76,7 @@ function CreateCollectiblePage() {
     cta_email_list: [],
     cta_has_text_capture: false,
     cta_text_list: [],
+    enable_card_payments: false,
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -143,6 +144,7 @@ function CreateCollectiblePage() {
     setIsFreeMint(checked);
     if (checked) {
       handleCollectibleChange("price_usd", 0);
+      handleCollectibleChange("enable_card_payments", false);
     }
   };
 
@@ -480,28 +482,52 @@ function CreateCollectiblePage() {
                     />
                   </div>
                   {!isFreeMint && (
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="collectible-price"
-                        className="text-lg font-semibold"
-                      >
-                        Price (USD) <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="collectible-price"
-                        type="number"
-                        value={collectible.price_usd}
-                        onChange={(e) =>
-                          handleCollectibleChange(
-                            "price_usd",
-                            parseFloat(e.target.value)
-                          )
-                        }
-                        placeholder="Enter price in USD"
-                        required
-                        className="text-base"
-                      />
-                    </div>
+                    <>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="collectible-price"
+                          className="text-lg font-semibold"
+                        >
+                          Price (USD) <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id="collectible-price"
+                          type="number"
+                          value={collectible.price_usd}
+                          onChange={(e) =>
+                            handleCollectibleChange(
+                              "price_usd",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          placeholder="Enter price in USD"
+                          required
+                          className="text-base"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <div>
+                          <Label
+                            htmlFor="card-payments-toggle"
+                            className="text-lg font-semibold"
+                          >
+                            Enable Card Payments
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Allow users to pay with credit/debit cards
+                          </p>
+                        </div>
+                        <Switch
+                          id="card-payments-toggle"
+                          checked={collectible.enable_card_payments}
+                          onCheckedChange={(checked) =>
+                            handleCollectibleChange("enable_card_payments", checked)
+                          }
+                          className="scale-125"
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
 

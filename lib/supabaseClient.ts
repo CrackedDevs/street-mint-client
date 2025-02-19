@@ -55,6 +55,7 @@ export type Collectible = {
     cta_has_text_capture: boolean;
     cta_email_list: { [key: string]: string }[];
     cta_text_list: { [key: string]: string }[];
+    enable_card_payments?: boolean;
 };
 
 interface Order {
