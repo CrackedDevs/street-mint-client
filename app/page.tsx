@@ -61,33 +61,6 @@ export default function LandingPage() {
       </header>
 
       <main className="isolate">
-        {/* Hero section */}
-        <div className="relative pt-14">
-          <div className="py-24 sm:py-32">
-            <div className="mx-auto max-w-7xl px-6 lg:px-8">
-              <div className="mx-auto max-w-2xl text-center">
-                <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-                  Digital Collectibles, Real-World Connections
-                </h1>
-                <p className="mt-6 text-lg leading-8 text-gray-600">
-                  Create, mint, and share unique digital collectibles and IRLS
-                  on Solana with the power of NFC technology.
-                </p>
-                <div className="mt-10 flex items-center justify-center gap-x-6">
-                  <a
-                    href="#"
-                    className="text-sm font-semibold leading-6 text-gray-900"
-                  >
-                    Learn more <span aria-hidden="true">→</span>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* NFC Public Key Update Button */}
-        <div className="mt-10 flex items-center justify-center"></div>
-
         {/* Feature section */}
         <div className="mx-auto mt-32 max-w-7xl px-6 sm:mt-56 lg:px-8">
           <div className="mx-auto max-w-2xl lg:text-center">
@@ -156,13 +129,65 @@ export default function LandingPage() {
           </h1>
           <div>
             <div className="w-full max-w-[90vw] mx-auto space-y-16 py-8 relative">
-              {collectibles.map((collectible, index) => (
-                <CollectibleMegaCard
-                  key={collectible.id}
-                  collectible={collectible}
-                  index={index}
-                />
-              ))}
+              <div className="flex flex-col gap-4">
+                <h1 className="text-2xl font-bold">Live</h1>
+                {collectibles
+                  .filter((collectible) => {
+                    const now = new Date().getTime();
+                    const startDate = new Date(
+                      collectible.mint_start_date!
+                    ).getTime();
+                    const endDate = new Date(
+                      collectible.mint_end_date!
+                    ).getTime();
+                    return startDate <= now && endDate >= now;
+                  })
+                  .map((collectible, index) => (
+                    <CollectibleMegaCard
+                      key={collectible.id}
+                      collectible={collectible}
+                      index={index}
+                    />
+                  ))}
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <h1 className="text-2xl font-bold">Upcoming</h1>
+                {collectibles
+                  .filter((collectible) => {
+                    const now = new Date().getTime();
+                    const startDate = new Date(
+                      collectible.mint_start_date!
+                    ).getTime();
+                    return startDate > now;
+                  })
+                  .map((collectible, index) => (
+                    <CollectibleMegaCard
+                      key={collectible.id}
+                      collectible={collectible}
+                      index={index}
+                    />
+                  ))}
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <h1 className="text-2xl font-bold">Ended</h1>
+                {collectibles
+                  .filter((collectible) => {
+                    const now = new Date().getTime();
+                    const endDate = new Date(
+                      collectible.mint_end_date!
+                    ).getTime();
+                    return now > endDate;
+                  })
+                  .map((collectible, index) => (
+                    <CollectibleMegaCard
+                      key={collectible.id}
+                      collectible={collectible}
+                      index={index}
+                    />
+                  ))}
+              </div>
 
               <div className="flex justify-center">
                 <Link href="/showcase">
@@ -174,6 +199,33 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
+
+        {/* Hero section */}
+        <div className="relative pt-14">
+          <div className="py-24 sm:py-32">
+            <div className="mx-auto max-w-7xl px-6 lg:px-8">
+              <div className="mx-auto max-w-2xl text-center">
+                <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+                  Digital Collectibles, Real-World Connections
+                </h1>
+                <p className="mt-6 text-lg leading-8 text-gray-600">
+                  Create, mint, and share unique digital collectibles and IRLS
+                  on Solana with the power of NFC technology.
+                </p>
+                <div className="mt-10 flex items-center justify-center gap-x-6">
+                  <Link
+                    href="/faq"
+                    className="text-sm font-semibold leading-6 text-gray-900"
+                  >
+                    Learn more <span aria-hidden="true">→</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* NFC Public Key Update Button */}
+        <div className="mt-10 flex items-center justify-center"></div>
 
         {/* How it works section */}
         <div className="mx-auto mt-32 max-w-7xl px-6 sm:mt-56 lg:px-8">
@@ -243,12 +295,12 @@ export default function LandingPage() {
               >
                 Get started
               </a>
-              <a
-                href="#"
+              <Link
+                href="/faq"
                 className="text-sm font-semibold leading-6 text-gray-900"
               >
                 Learn more <span aria-hidden="true">→</span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>

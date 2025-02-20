@@ -91,6 +91,7 @@ export type Database = {
           created_at: string
           e: string
           id: number
+          last_uuid: string
           n: string
           server_auth: boolean
           x: string
@@ -99,6 +100,7 @@ export type Database = {
           created_at?: string
           e: string
           id?: number
+          last_uuid?: string
           n: string
           server_auth?: boolean
           x: string
@@ -107,8 +109,33 @@ export type Database = {
           created_at?: string
           e?: string
           id?: number
+          last_uuid?: string
           n?: string
           server_auth?: boolean
+          x?: string
+        }
+        Relationships: []
+      }
+      chip_taps_paid: {
+        Row: {
+          created_at: string
+          e: string
+          id: number
+          n: string
+          x: string
+        }
+        Insert: {
+          created_at?: string
+          e: string
+          id?: number
+          n: string
+          x: string
+        }
+        Update: {
+          created_at?: string
+          e?: string
+          id?: number
+          n?: string
           x?: string
         }
         Relationships: []
@@ -119,6 +146,7 @@ export type Database = {
           chain: string | null
           collection_id: number
           created_at: string
+          creator_royalty_array: Json | null
           cta_description: string | null
           cta_email_list: Json[] | null
           cta_enable: boolean | null
@@ -130,8 +158,10 @@ export type Database = {
           cta_text_list: Json[] | null
           cta_title: string | null
           description: string
+          enable_card_payments: boolean | null
           gallery_urls: string[]
           id: number
+          is_light_version: boolean
           location: string | null
           location_note: string | null
           metadata_uri: string | null
@@ -150,6 +180,7 @@ export type Database = {
           chain?: string | null
           collection_id: number
           created_at?: string
+          creator_royalty_array?: Json | null
           cta_description?: string | null
           cta_email_list?: Json[] | null
           cta_enable?: boolean | null
@@ -161,8 +192,10 @@ export type Database = {
           cta_text_list?: Json[] | null
           cta_title?: string | null
           description: string
+          enable_card_payments?: boolean | null
           gallery_urls: string[]
           id?: number
+          is_light_version?: boolean
           location?: string | null
           location_note?: string | null
           metadata_uri?: string | null
@@ -181,6 +214,7 @@ export type Database = {
           chain?: string | null
           collection_id?: number
           created_at?: string
+          creator_royalty_array?: Json | null
           cta_description?: string | null
           cta_email_list?: Json[] | null
           cta_enable?: boolean | null
@@ -192,8 +226,10 @@ export type Database = {
           cta_text_list?: Json[] | null
           cta_title?: string | null
           description?: string
+          enable_card_payments?: boolean | null
           gallery_urls?: string[]
           id?: number
+          is_light_version?: boolean
           location?: string | null
           location_note?: string | null
           metadata_uri?: string | null
@@ -254,6 +290,87 @@ export type Database = {
             columns: ["artist"]
             isOneToOne: false
             referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      light_orders: {
+        Row: {
+          airdrop_won: boolean
+          collectible_id: number | null
+          collection_id: number | null
+          created_at: string | null
+          device_id: string | null
+          email: string
+          email_sent: boolean | null
+          id: string
+          max_supply: number | null
+          mint_address: string | null
+          mint_signature: string | null
+          nft_type: string | null
+          price_sol: number | null
+          price_usd: number | null
+          quantity: number | null
+          status: string | null
+          tiplink_url: string | null
+          transaction_signature: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          airdrop_won?: boolean
+          collectible_id?: number | null
+          collection_id?: number | null
+          created_at?: string | null
+          device_id?: string | null
+          email: string
+          email_sent?: boolean | null
+          id?: string
+          max_supply?: number | null
+          mint_address?: string | null
+          mint_signature?: string | null
+          nft_type?: string | null
+          price_sol?: number | null
+          price_usd?: number | null
+          quantity?: number | null
+          status?: string | null
+          tiplink_url?: string | null
+          transaction_signature?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          airdrop_won?: boolean
+          collectible_id?: number | null
+          collection_id?: number | null
+          created_at?: string | null
+          device_id?: string | null
+          email?: string
+          email_sent?: boolean | null
+          id?: string
+          max_supply?: number | null
+          mint_address?: string | null
+          mint_signature?: string | null
+          nft_type?: string | null
+          price_sol?: number | null
+          price_usd?: number | null
+          quantity?: number | null
+          status?: string | null
+          tiplink_url?: string | null
+          transaction_signature?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "light_orders_collectible_id_fkey"
+            columns: ["collectible_id"]
+            isOneToOne: false
+            referencedRelation: "collectibles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "light_orders_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
             referencedColumns: ["id"]
           },
         ]

@@ -35,6 +35,7 @@ export type Collectible = {
     primary_image_url: string;
     quantity_type: QuantityType;
     quantity: number | null;
+    creator_royalty_array?: { creator_wallet_address: string; royalty_percentage: number; name: string; }[] | null;
     price_usd: number;
     location: string | null;
     location_note: string | null;
@@ -572,13 +573,15 @@ export async function checkMintEligibility(walletAddress: string, collectibleId:
         // Check if the wallet has already minted this NFT
         const { data: existingOrder, error: orderError } = await supabase
             .from('orders')
-            .select('id')
+            .select('id, status')
             .eq('wallet_address', resolvedWalletAddress)
             .eq('collectible_id', collectibleId)
-            .in('status', ['completed'])
+            .in('status', ['completed', 'pending'])
             .single();
 
         if (orderError && orderError.code !== 'PGRST116') throw orderError; // PGRST116 means no rows returned
+
+        console.log("existingOrder", existingOrder);
 
         if (existingOrder) {
             return { eligible: false, reason: 'You have already minted this NFT.' };
@@ -590,7 +593,7 @@ export async function checkMintEligibility(walletAddress: string, collectibleId:
             .select('id, status')
             .eq('device_id', deviceId)
             .eq('collectible_id', collectibleId)
-            .in('status', ['completed'])
+            .in('status', ['completed', 'pending'])
             .single();
 
 

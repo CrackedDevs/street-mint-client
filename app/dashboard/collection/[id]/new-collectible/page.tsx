@@ -21,6 +21,8 @@ import {
   UploadIcon,
   MapPinIcon,
   CalendarIcon,
+  PlusCircleIcon,
+  XCircleIcon,
 } from "lucide-react";
 import {
   Collectible,
@@ -39,6 +41,12 @@ import Delivery from "@/app/assets/delivery.svg";
 import withAuth from "@/app/dashboard/withAuth";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+interface CreatorRoyalty {
+  creator_wallet_address: string;
+  royalty_percentage: number;
+  name: string;
+}
+
 function CreateCollectiblePage() {
   const router = useRouter();
   const { id: collectionId } = useParams();
@@ -48,6 +56,7 @@ function CreateCollectiblePage() {
   const { userProfile } = useUserProfile();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [newCtaLogoImage, setNewCtaLogoImage] = useState<File | null>(null);
+  const [showCreatorForm, setShowCreatorForm] = useState(false);
 
   const [collectible, setCollectible] = useState<Collectible>({
     id: NumericUUID(),
@@ -60,7 +69,7 @@ function CreateCollectiblePage() {
     gallery_urls: [],
     location: "",
     location_note: "",
-    metadata_uri: "", // Add this line
+    metadata_uri: "",
     nfc_public_key: "",
     mint_start_date: "",
     mint_end_date: "",
@@ -76,6 +85,7 @@ function CreateCollectiblePage() {
     cta_email_list: [],
     cta_has_text_capture: false,
     cta_text_list: [],
+    creator_royalty_array: [],
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -163,6 +173,51 @@ function CreateCollectiblePage() {
         });
       }
     }
+  };
+
+  const handleAddCreator = () => {
+    const newCreator: CreatorRoyalty = {
+      creator_wallet_address: "",
+      royalty_percentage: 0,
+      name: "",
+    };
+
+    setCollectible((prev) => ({
+      ...prev,
+      creator_royalty_array: [
+        ...(prev.creator_royalty_array || []),
+        newCreator,
+      ],
+    }));
+  };
+
+  const handleRemoveCreator = (index: number) => {
+    setCollectible((prev) => ({
+      ...prev,
+      creator_royalty_array:
+        prev.creator_royalty_array?.filter((_, i) => i !== index) || [],
+    }));
+  };
+
+  const handleCreatorChange = (
+    index: number,
+    field: keyof CreatorRoyalty,
+    value: string | number
+  ) => {
+    setCollectible((prev) => {
+      const updatedCreators = [...(prev.creator_royalty_array || [])];
+      updatedCreators[index] = {
+        ...updatedCreators[index],
+        [field]:
+          field === "royalty_percentage"
+            ? Math.min(100, Math.max(0, Number(value)))
+            : value,
+      };
+      return {
+        ...prev,
+        creator_royalty_array: updatedCreators,
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -694,6 +749,7 @@ function CreateCollectiblePage() {
                         <Input
                           id="call-to-action-title"
                           value={collectible.cta_title ?? ""}
+                          placeholder="Join our newsletter"
                           required
                           onChange={(e) =>
                             handleCollectibleChange("cta_title", e.target.value)
@@ -711,6 +767,7 @@ function CreateCollectiblePage() {
                         <Textarea
                           id="call-to-action-description"
                           required
+                          placeholder="Join our newsletter to get exclusive updates and early access to new drops."
                           value={collectible.cta_description ?? ""}
                           onChange={(e) =>
                             handleCollectibleChange(
@@ -754,10 +811,11 @@ function CreateCollectiblePage() {
                           htmlFor="call-to-action-cta-text"
                           className="text-lg font-semibold"
                         >
-                          CTA Text
+                          CTA Button Text
                         </Label>
                         <Input
                           id="call-to-action-cta-text"
+                          placeholder="Signup"
                           value={collectible.cta_text ?? ""}
                           onChange={(e) =>
                             handleCollectibleChange("cta_text", e.target.value)
@@ -817,6 +875,106 @@ function CreateCollectiblePage() {
                         />
                       </div>
                     </div>
+                  )}
+                </div>
+
+                <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-lg font-semibold">
+                        Creator Royalties
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Add creators and their royalty percentages
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleAddCreator}
+                      className="flex items-center gap-2"
+                    >
+                      <PlusCircleIcon className="h-4 w-4" />
+                      Add Creator
+                    </Button>
+                  </div>
+
+                  {collectible.creator_royalty_array?.map((creator, index) => (
+                    <div
+                      key={index}
+                      className="space-y-4 bg-background/50 p-4 rounded-lg relative"
+                    >
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2"
+                        onClick={() => handleRemoveCreator(index)}
+                      >
+                        <XCircleIcon className="h-4 w-4 text-destructive" />
+                      </Button>
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`creator-name-${index}`}>
+                          Creator Name
+                        </Label>
+                        <Input
+                          id={`creator-name-${index}`}
+                          value={creator.name}
+                          onChange={(e) =>
+                            handleCreatorChange(index, "name", e.target.value)
+                          }
+                          placeholder="Enter creator name"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`creator-wallet-${index}`}>
+                          Wallet Address
+                        </Label>
+                        <Input
+                          id={`creator-wallet-${index}`}
+                          value={creator.creator_wallet_address}
+                          onChange={(e) =>
+                            handleCreatorChange(
+                              index,
+                              "creator_wallet_address",
+                              e.target.value.trim()
+                            )
+                          }
+                          placeholder="Enter wallet address"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`creator-royalty-${index}`}>
+                          Royalty Percentage
+                        </Label>
+                        <Input
+                          id={`creator-royalty-${index}`}
+                          type="text"
+                          value={creator.royalty_percentage}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (/^\d*\.?\d*$/.test(value)) {
+                              handleCreatorChange(
+                                index,
+                                "royalty_percentage",
+                                Number(value)
+                              );
+                            }
+                          }}
+                          placeholder="Enter percentage (0-100)"
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  {collectible.creator_royalty_array?.length === 0 && (
+                    <p className="text-center text-muted-foreground py-4">
+                      No creators added. Click &apos;Add Creator&apos; to add
+                      creator royalties.
+                    </p>
                   )}
                 </div>
               </div>

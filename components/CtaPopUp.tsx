@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Collectible, updateCollectible } from "@/lib/supabaseClient";
 import { toast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 interface CtaPopUpProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ function CtaPopUp({
 CtaPopUpProps) {
   const [email, setEmail] = useState("");
   const [text, setText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { reward: confettiReward, isAnimating } = useReward(
     "rewardId",
     "confetti",
@@ -50,6 +52,15 @@ CtaPopUpProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+
+    if (ctaLink) {
+      // Wait for confetti animation before redirect
+      window.open(
+        ctaLink.includes("http") ? ctaLink : `https://${ctaLink}`,
+        "_blank"
+      );
+    }
 
     let updatedCollectible: Collectible = { ...collectible };
 
@@ -72,44 +83,32 @@ CtaPopUpProps) {
         ],
       };
     }
-
-    const success = await updateCollectible(updatedCollectible);
-    if (success) {
-      if (hasEmailCapture && hasTextCapture) {
+    if (hasEmailCapture || hasTextCapture) {
+      const success = await updateCollectible(updatedCollectible);
+      if (success) {
+        if (hasEmailCapture && hasTextCapture) {
+          toast({
+            title: "Email and text added to list",
+          });
+        } else if (hasEmailCapture) {
+          toast({
+            title: "Email added to list",
+          });
+        } else if (hasTextCapture) {
+          toast({
+            title: "Text added to list",
+          });
+        }
+      } else {
         toast({
-          title: "Email and text added to list",
-        });
-      } else if (hasEmailCapture) {
-        toast({
-          title: "Email added to list",
-        });
-      } else if (hasTextCapture) {
-        toast({
-          title: "Text added to list",
+          title: "Failed to update list",
         });
       }
-    } else {
-      toast({
-        title: "Failed to update list",
-      });
     }
 
-    confettiReward();
+    onClose();
 
-    if (ctaLink) {
-      // Wait for confetti animation before redirect
-      setTimeout(() => {
-        window.open(
-          ctaLink.includes("http") ? ctaLink : `https://${ctaLink}`,
-          "_blank"
-        );
-        onClose();
-      }, 1000);
-    } else {
-      setTimeout(() => {
-        onClose();
-      }, 1000);
-    }
+    setIsLoading(false);
   };
 
   if (!isOpen) return null;
@@ -180,13 +179,10 @@ CtaPopUpProps) {
           <div className="flex justify-center">
             <Button
               type="submit"
-              disabled={isAnimating}
+              disabled={isLoading}
               className="relative rounded-lg  px-6 py-2 text-white transition-all  disabled:opacity-50"
             >
-              <span
-                id="rewardId"
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-              />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
               {ctaText}
             </Button>
           </div>

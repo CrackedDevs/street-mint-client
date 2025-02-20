@@ -10,6 +10,7 @@ export async function POST(req: Request, res: NextApiResponse) {
     await req.json();
 
   const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(walletAddress || "");
+  const supabaseAdmin = await getSupabaseAdmin();
 
   if (!collectibleId || !walletAddress) {
     return NextResponse.json(
@@ -17,6 +18,8 @@ export async function POST(req: Request, res: NextApiResponse) {
       { status: 400 }
     );
   }
+
+  let order: any;
 
   try {
     // Fetch collectible details
@@ -53,6 +56,12 @@ export async function POST(req: Request, res: NextApiResponse) {
     console.log("Reason:", reason);
 
     if (!eligible) {
+      if (order && order.id) {
+        await supabaseAdmin
+          .from("orders")
+          .update({ status: "failed" })
+          .eq("id", order.id);
+      }
       return NextResponse.json(
         {
           success: false,
@@ -63,8 +72,6 @@ export async function POST(req: Request, res: NextApiResponse) {
     }
 
     // Create order in database
-    const supabaseAdmin = await getSupabaseAdmin();
-    let order;
     try {
       const { data, error: insertError } = await supabaseAdmin
         .from("orders")
@@ -113,6 +120,12 @@ export async function POST(req: Request, res: NextApiResponse) {
     );
   } catch (error) {
     console.error("Error initiating minting:", error);
+    if (order && order.id) {
+      await supabaseAdmin
+        .from("orders")
+        .update({ status: "failed" })
+        .eq("id", order.id);
+    }
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

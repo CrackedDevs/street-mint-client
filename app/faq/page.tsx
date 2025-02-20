@@ -4,35 +4,59 @@ import { motion } from "framer-motion";
 import FAQAccordion from "@/components/faq-accordion";
 import { Button } from "@/components/ui/button";
 import type React from "react";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function StreetMintPage() {
   return (
     <div className="min-h-screen bg-gray-100">
       <div
-        className="bg-cover bg-center h-96"
+        className="bg-cover bg-center h-[32rem] md:h-[34rem]"
         style={{
-          backgroundImage: "url('/placeholder.svg?height=1080&width=1920')",
+          backgroundImage: "url('/banner-image.jpeg')",
         }}
       >
-        <div className="h-full bg-black bg-opacity-50 flex items-center justify-center">
-          <motion.h1
+        <div className="h-full bg-black bg-opacity-50 flex flex-col items-center justify-center space-y-4 md:space-y-6 px-4">
+          <motion.p
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-5xl font-bold text-white text-center"
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-xl md:text-2xl text-white text-center font-semibold"
           >
-            Welcome to Street Mint!
-          </motion.h1>
+            The Shoreditch Street Art Mint Tour is brought to you by:
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="flex items-center justify-center space-x-8 md:space-x-24"
+          >
+            <Image
+              src="/logo-white.svg"
+              alt="Street Mint"
+              width={200}
+              height={200}
+              className="h-20 md:h-48"
+            />
+            <span className="text-white text-3xl md:text-5xl font-bold">X</span>
+            <Image
+              src="/otz-logo-transparent.png"
+              alt="OTZ"
+              width={144}
+              height={144}
+              className="h-24 md:h-32 translate-x-2 md:translate-x-5"
+            />
+          </motion.div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-12">
         <Section title="Welcome">
           <p>
-            You&apos;ve discovered a Street Mint station, your gateway to owning a
-            unique piece of the urban landscape! We&apos;re revolutionising street
-            art by turning murals into digital collectibles that you can hunt,
-            collect, own and trade.
+            You&apos;ve discovered a Street Mint station, your gateway to owning
+            a unique piece of the urban landscape! We&apos;re revolutionising
+            street art by turning murals into digital collectibles that you can
+            hunt, collect, own and trade.
           </p>
           <p className="mt-4">
             If you know how to use an email, you can own one of our Street Mint
@@ -47,15 +71,16 @@ export default function StreetMintPage() {
             collectibles of the amazing street art you see around you. We
             believe in empowering artists, supporting local communities and
             making art collecting accessible to everyone. But we also believe in
-            the power of experience and being in the moment. That&apos;s why we&apos;ve
-            designed our platform to be truly exclusive and location-based.
+            the power of experience and being in the moment. That&apos;s why
+            we&apos;ve designed our platform to be truly experiential and
+            location-based.
           </p>
           <p className="mt-4">
-            <strong>Here&apos;s the catch:</strong> You can ONLY claim this digital
-            collectible by tapping the Mint Station in person, you cannot access
-            it online or share the link with others. The only other way to
-            acquire it is by buying it from a seller on a secondary marketplace
-            (but probably at a much higher price).
+            <strong>Here&apos;s the catch:</strong> You can ONLY claim this
+            digital collectible by tapping the Mint Station in person, you
+            cannot access it online or share the link with others. The only
+            other way to acquire it is by buying it from a seller on a secondary
+            marketplace (but probably at a much higher price).
           </p>
         </Section>
 
@@ -63,13 +88,14 @@ export default function StreetMintPage() {
           <p>It&apos;s as easy as 1, 2, 3!</p>
           <ol className="list-decimal list-inside mt-4 space-y-2">
             <li>
-              <strong>Tap & Claim:</strong> Simply tap your phone on the &quot;X&quot;
+              <strong>Tap & Claim:</strong> Find the NFC reader on your phone
+              (click here for help). Simply tap your phone on the &quot;X&quot;
               located on this Mint Station.
             </li>
             <li>
-              <strong>Enter Details:</strong> You&apos;ll be prompted to enter your
-              email address (and payment information if all the free editions
-              have been claimed).
+              <strong>Enter Details:</strong> You&apos;ll be prompted to enter
+              your email address (and payment information if all the free
+              editions have been claimed - we accept credit card and Solana).
             </li>
             <li>
               <strong>Own Your Art:</strong> That&apos;s it! Your unique digital
@@ -118,10 +144,12 @@ export default function StreetMintPage() {
         <Section title="Get Involved!">
           <p>
             Are you an artist, gallery, local council, or street art enthusiast?
-            We&apos;d love to hear from you! Join us in bringing Street Mint to your
-            city and transforming the way we experience and collect art.
+            We&apos;d love to hear from you! Join us in bringing Street Mint to
+            your city and transforming the way we experience and collect art.
           </p>
-          <Button className="mt-4">Contact Us</Button>
+          <Link href="/contact-us">
+            <Button className="mt-4">Contact Us</Button>
+          </Link>
         </Section>
 
         <Section title="About Us">
@@ -133,8 +161,8 @@ export default function StreetMintPage() {
             </li>
             <li>
               <strong>World&apos;s Largest Collection:</strong> Create the
-              world&apos;s largest decentralized art gallery, open 24/7
-              and accessible to everyone.
+              world&apos;s largest decentralized art gallery, open 24/7 and
+              accessible to everyone.
             </li>
             <li>Bring exposure to street artists and their incredible work.</li>
             <li>
@@ -196,7 +224,8 @@ export default function StreetMintPage() {
             </li>
             <li>
               <strong>Fiat and Crypto Payments:</strong> Cater to a wider
-              audience by accepting both traditional and cryptocurrencies.
+              audience by accepting both traditional credit card payments and
+              cryptocurrencies.
             </li>
           </ul>
 
@@ -297,10 +326,12 @@ export default function StreetMintPage() {
         <Section title="Get Involved!">
           <p>
             Are you an artist, gallery, local council, or street art enthusiast?
-            We&apos;d love to hear from you! Join us in bringing Street Mint to your
-            city and transforming the way we experience and collect art.
+            We&apos;d love to hear from you! Join us in bringing Street Mint to
+            your city and transforming the way we experience and collect art.
           </p>
-          <Button className="mt-4">Contact Us</Button>
+          <Link href="/contact-us">
+            <Button className="mt-4">Contact Us</Button>
+          </Link>
         </Section>
       </div>
     </div>

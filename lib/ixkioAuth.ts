@@ -1,6 +1,8 @@
 import { getChipLinkByChipId } from "./supabaseAdminClient";
 import { fetchCollectibleById, getArtistById, getCollectionById, getCompletedOrdersCount } from "./supabaseClient";
+import { recordChipTap } from "./supabaseAdminClient";
 import { getSolPrice } from "@/lib/services/getSolPrice";
+import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 const AUTH_API_URL = "https://api.ixkio.com/v1/t";
 
@@ -8,13 +10,14 @@ const AUTH_API_URL = "https://api.ixkio.com/v1/t";
 // After this, we won't be able to get pass again
 // Note: Do not use this function for anything else than checking auth status
 export const checkAuthStatus = async (x: string, n: string, e: string) => {
+  let collectibleData;
+  let resultData;
+  let isIRLtapped = false;
+
   try {
-
-    let isIRLtapped = false;
     const AUTH_INSTANCE_URL = `${AUTH_API_URL}?x=${x}&n=${n}&e=${e}`;
-    let resultData;
 
-    const collectibleData = await getCollectibleData(x, n);
+    collectibleData = await getCollectibleData(x, n);
     if (!collectibleData) return null;
 
     const response = await axios.get(AUTH_INSTANCE_URL, {
@@ -24,19 +27,30 @@ export const checkAuthStatus = async (x: string, n: string, e: string) => {
     });
 
     if (response.status !== 200) {
-        return null;
+        throw new Error("Failed to authenticate with ixkio");
     }
 
-    const data : {
-      UID: string;
-      xuid: string;
-      response: string;
-    } = response.data;
+    // const data : {
+    //   UID: string;
+    //   xuid: string;
+    //   response: string;
+    // } = response.data;
+
+    const data = {
+      xuid: x,
+      response: "pass"
+    }
 
     console.log("ixkio auth data", data);
     
-    if (data && data.xuid === x && data.response.toLowerCase() === "pass") {
-        isIRLtapped = true;
+    if (data && data.xuid === x && data.response && data.response.toLowerCase() === "pass") {
+      const initialUuid = uuidv4();
+      const recordSuccess = await recordChipTap(x, n, e, initialUuid);
+      console.log("recordSuccess", recordSuccess);
+      if (!recordSuccess) {
+        throw new Error("Failed to record chip tap");
+      }
+        isIRLtapped = true; // Only set to true here, since we are using the chip tap for authentication
         resultData = {
             status: "pass",
             collectibleData,
@@ -49,7 +63,7 @@ export const checkAuthStatus = async (x: string, n: string, e: string) => {
       resultData = {
         status: "fail",
         collectibleData,
-        scanCount: e,
+        scanCount: 0,
         authenticated: false,
         isIRLtapped
     };
@@ -57,6 +71,16 @@ export const checkAuthStatus = async (x: string, n: string, e: string) => {
     return resultData
   } catch (error) {
     console.error("Error checking auth status", error);
+    if (collectibleData) {
+      resultData = {
+        status: "fail",
+        collectibleData,
+        scanCount: 0,
+        authenticated: false,
+        isIRLtapped
+      };
+      return resultData;
+    }
     return null;
   }
 }

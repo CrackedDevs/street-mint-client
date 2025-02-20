@@ -50,7 +50,7 @@ import {
 } from "./ui/dialog";
 import Image from "next/image";
 import CheckInboxModal from "./modals/ShowMailSentModal";
-import { getSupabaseAdmin, recordChipTap } from "@/lib/supabaseAdminClient";
+import { getSupabaseAdmin, recordPaidChipTap } from "@/lib/supabaseAdminClient";
 import { getSolPrice } from "@/lib/services/getSolPrice";
 import { MintStatus } from "./EditionInformation-Old";
 import WaitlistModal from "./modals/PromotionalModal";
@@ -265,13 +265,15 @@ export default function MintButton({
     console.log("isEmail", isEmail);
     console.log("addressToUse", addressToUse);
 
+    let newOrderId = null;
+
     if (!addressToUse || !isEligible) {
       return;
     }
     setIsMinting(true);
     setError(null);
     if (collectible.price_usd > 0 && x && n && e) {
-      const recordSuccess = await recordChipTap(x, n, e);
+      const recordSuccess = await recordPaidChipTap(x, n, e);
       if (!recordSuccess) {
         return;
       }
@@ -297,12 +299,15 @@ export default function MintButton({
       let priceInSol = 0;
       const { orderId, isFree, tipLinkWalletAddress, tipLinkUrl } =
         await initResponse.json();
+
+      newOrderId = orderId;
+
       setTipLinkUrl(tipLinkUrl);
       if (!isFree && publicKey) {
         // Step 2: Create payment transaction (only for paid mints)
         const solPrice = await getSolPrice();
         if (!solPrice) {
-          return;
+          throw new Error("Failed to get SOL price");
         }
         const solPriceUSD = solPrice;
         priceInSol = collectible.price_usd / solPriceUSD;
@@ -340,6 +345,12 @@ export default function MintButton({
         );
       }
 
+      const chipTapData = {
+        x,
+        n,
+        e,
+      };
+
       const processResponse = await fetch("/api/collection/mint/process", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -350,6 +361,8 @@ export default function MintButton({
           priceInSol,
           isEmail,
           nftImageUrl: collectible.primary_image_url,
+          collectibleId: collectible.id,
+          chipTapData: chipTapData,
         }),
       });
 
@@ -378,9 +391,6 @@ export default function MintButton({
           setShowAirdropModal(true);
           updateOrderAirdropStatus(orderId, true);
         }
-        if (collectible.id === 2980058898) {
-          setShowWaitlistModal(true);
-        }
         localStorage.setItem("lastMintInput", addressToUse);
         setWalletAddress("");
       } else {
@@ -396,16 +406,21 @@ export default function MintButton({
         variant: "destructive",
       });
       // Set the order status as failed
-      if (existingOrder && existingOrder.id) {
-        const supabaseAdmin = await getSupabaseAdmin();
+      if (newOrderId) {
         try {
-          const { error } = await supabaseAdmin
-            .from("orders")
-            .update({ status: "failed" })
-            .eq("id", existingOrder.id);
+          const response = await fetch("/api/orders/update-status", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              orderId: newOrderId,
+              status: "failed",
+            }),
+          });
 
-          if (error) {
-            console.error("Failed to update order status:", error);
+          if (!response.ok) {
+            console.error("Failed to update order status");
           }
         } catch (updateError) {
           console.error("Error updating order status:", updateError);
@@ -466,7 +481,7 @@ export default function MintButton({
       setTimeout(() => {
         setShowSuccessPopUp(false);
         setShowCtaPopUp(true);
-      }, 2000);
+      }, 5000);
     }
     setIsMinting(false);
   };
@@ -695,42 +710,46 @@ export default function MintButton({
       )}
       <SuccessPopup
         isOpen={showSuccessPopUp}
-        onClose={() => setShowSuccessPopUp(false)}
+        onClose={() => {
+          setShowSuccessPopUp(false);
+          setShowCtaPopUp(true);
+        }}
       />
       {(transactionSignature || existingOrder?.status === "completed") &&
         renderCompletedMint()}
-      {mintStatus === "ongoing" && (
-        <div className="flex flex-col items-center justify-center w-full">
+      {mintStatus === "ongoing" &&
+        !(transactionSignature || existingOrder?.status === "completed") && (
           <div className="flex flex-col items-center justify-center w-full">
-            {isFreeMint ? (
-              <div className="w-full flex mt-2 gap-4 flex-col items-center justify-center">
-                <Input
-                  type="text"
-                  placeholder="Enter your Email, Wallet or .SOL address"
-                  value={walletAddress}
-                  onChange={(e) => setWalletAddress(e.target.value)}
-                  className="w-full h-12 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
-                />
-                {existingOrder?.status !== "completed" &&
-                  walletAddress &&
-                  renderMintButton()}
-              </div>
-            ) : (
-              <div className="w-full mt-4 flex flex-col items-center justify-center">
-                {renderWalletButton()}
-                <div className="hidden">
-                  <WalletMultiButton />
+            <div className="flex flex-col items-center justify-center w-full">
+              {isFreeMint ? (
+                <div className="w-full flex mt-2 gap-4 flex-col items-center justify-center">
+                  <Input
+                    type="text"
+                    placeholder="Enter your Email, Wallet or .SOL address"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    className="w-full h-12 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
+                  />
+                  {existingOrder?.status !== "completed" &&
+                    walletAddress &&
+                    renderMintButton()}
                 </div>
-                {existingOrder?.status !== "completed" &&
-                  walletAddress &&
-                  renderMintButton()}
-              </div>
-            )}
-          </div>
+              ) : (
+                <div className="w-full mt-4 flex flex-col items-center justify-center">
+                  {renderWalletButton()}
+                  <div className="hidden">
+                    <WalletMultiButton />
+                  </div>
+                  {existingOrder?.status !== "completed" &&
+                    walletAddress &&
+                    renderMintButton()}
+                </div>
+              )}
+            </div>
 
-          {error && <p className="text-red-500 mt-2">{error}</p>}
-        </div>
-      )}
+            {error && <p className="text-red-500 mt-2">{error}</p>}
+          </div>
+        )}
     </div>
   );
 }
