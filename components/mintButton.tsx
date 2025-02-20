@@ -101,7 +101,7 @@ export default function MintButton({
   const [transactionSignature, setTransactionSignature] = useState<
     string | null
   >(null);
-  const [deviceId, setDeviceId] = useState("");
+  const [deviceId, setDeviceId] = useState<string | null>(null);
   const [existingOrder, setExistingOrder] = useState<any | null>(null);
   const isFreeMint = collectible.price_usd === 0;
   const ctaEnabled = collectible.cta_enable;
@@ -152,31 +152,36 @@ export default function MintButton({
   };
 
   async function fetchDeviceId() {
-    let deviceId = localStorage.getItem("BrowserID");
-    console.log("Device ID in mintButton.tsx:", deviceId);
     try {
-      if (!deviceId) {
         const id = await getData({ ignoreCache: true, extendedResult: true });
+        if (!id.visitorId) {
+          return null;
+        }
         console.log("ID in mintButton.tsx:", id.visitorId, id.browserName);
         setDeviceId(id.visitorId);
-        // Store the new device ID
-        if (id.browserName == "Mobile Safari") {
-          localStorage.setItem("BrowserID", `${id.visitorId}-${uuidv4()}`);
-        } else {
-          localStorage.setItem("BrowserID", id.visitorId);
-        }
-      } else {
-        setDeviceId(deviceId);
-      }
-      return deviceId!;
+      return id.visitorId;
     } catch (error) {
-      console.error("Error fetching or setting device ID:", error);
-      const newDeviceID = uuidv4();
-      localStorage.setItem("BrowserID", newDeviceID);
-      setDeviceId(newDeviceID);
-      return newDeviceID;
+      setDeviceId(null);
+      return null;
     }
   }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (deviceId === null) {
+        toast({
+          title: "Warning",
+          description: "Unable to verify device. Please try refreshing the page or removing the ad blocker.",
+          variant: "destructive",
+        });
+      } else {
+        clearTimeout(timer);
+      }
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [deviceId]);
+
   useEffect(() => {
     fetchDeviceId();
   }, []);
@@ -188,7 +193,11 @@ export default function MintButton({
     const addressToCheck = isFreeMint ? walletAddress : publicKey?.toString();
     if (!deviceId) {
       const device = await fetchDeviceId();
-      setDeviceId(device);
+      if (device) {
+        setDeviceId(device);
+      } else {
+        return;
+      }
     }
     if (transactionSignature) {
       return;
@@ -640,7 +649,8 @@ export default function MintButton({
         isMinting ||
         !isEligible ||
         existingOrder?.status === "completed" ||
-        isLoading
+        isLoading ||
+        !deviceId
       }
     >
       {getButtonText()}
