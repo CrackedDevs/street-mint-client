@@ -88,8 +88,9 @@ export default function StreetMintPage() {
           <p>It&apos;s as easy as 1, 2, 3!</p>
           <ol className="list-decimal list-inside mt-4 space-y-2">
             <li>
-              <strong>Tap & Claim:</strong> Find the NFC reader on your phone
-              (click here for help). Simply tap your phone on the &quot;X&quot;
+              <strong>Tap & Claim:</strong> Find the NFC reader on your phone (
+              <a href="https://youtube.com/shorts/blv-d6YkA3E?si=Uwur12s-l_IaNruX" target="_blank" className="text-blue-500">Android click here</a>
+               ). Simply tap your phone on the &quot;X&quot;
               located on this Mint Station.
             </li>
             <li>
