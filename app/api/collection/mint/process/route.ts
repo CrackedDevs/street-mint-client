@@ -13,6 +13,7 @@ import {
   mintNFTWithBubbleGumTree,
   resolveSolDomain,
 } from "../../collection.helper";
+import { v4 as uuidv4 } from "uuid";
 import { NextResponse } from "next/server";
 import { getChipTap, getSupabaseAdmin, recordChipTapServerAuth } from "@/lib/supabaseAdminClient";
 import TipLinkEmailTemplate from "@/components/email/tiplink-template";
@@ -130,7 +131,8 @@ export async function POST(req: Request, res: NextApiResponse) {
   }
 
   try {
-    const chipTapDataFromDb = await getChipTap(chipTapData.x, chipTapData.n, chipTapData.e);
+    const transactionUid = uuidv4();
+    const chipTapDataFromDb = await getChipTap(chipTapData.x, chipTapData.n, chipTapData.e, transactionUid);
 
     if (chipTapDataFromDb && chipTapDataFromDb.server_auth == true) {
       throw new Error("Chip tap already exists or used");
@@ -168,7 +170,7 @@ export async function POST(req: Request, res: NextApiResponse) {
 
     const supabaseAdmin = await getSupabaseAdmin();
 
-    await new Promise(resolve => setTimeout(resolve, 600));
+    await new Promise(resolve => setTimeout(resolve, 700));
 
     const { count, error: countError } = await supabaseAdmin
     .from('orders')
@@ -183,7 +185,7 @@ export async function POST(req: Request, res: NextApiResponse) {
 
     console.log("Count of existing orders for collectible of address ", resolvedWalletAddress, " is ", count);
 
-    const recordSuccess = await recordChipTapServerAuth(chipTapData.x, chipTapData.n, chipTapData.e);
+    const recordSuccess = await recordChipTapServerAuth(chipTapData.x, chipTapData.n, chipTapData.e, transactionUid);
 
     if (!recordSuccess) {
       throw new Error("Failed to record chip tap because it was already used or tried to use it more than once");

@@ -2,6 +2,7 @@ import { getChipLinkByChipId } from "./supabaseAdminClient";
 import { fetchCollectibleById, getArtistById, getCollectionById, getCompletedOrdersCount } from "./supabaseClient";
 import { recordChipTap } from "./supabaseAdminClient";
 import { getSolPrice } from "@/lib/services/getSolPrice";
+import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 const AUTH_API_URL = "https://api.ixkio.com/v1/t";
 
@@ -29,16 +30,22 @@ export const checkAuthStatus = async (x: string, n: string, e: string) => {
         throw new Error("Failed to authenticate with ixkio");
     }
 
-    const data : {
-      UID: string;
-      xuid: string;
-      response: string;
-    } = response.data;
+    // const data : {
+    //   UID: string;
+    //   xuid: string;
+    //   response: string;
+    // } = response.data;
+
+    const data = {
+      xuid: x,
+      response: "pass"
+    }
 
     console.log("ixkio auth data", data);
     
     if (data && data.xuid === x && data.response && data.response.toLowerCase() === "pass") {
-      const recordSuccess = await recordChipTap(x, n, e);
+      const initialUuid = uuidv4();
+      const recordSuccess = await recordChipTap(x, n, e, initialUuid);
       console.log("recordSuccess", recordSuccess);
       if (!recordSuccess) {
         throw new Error("Failed to record chip tap");

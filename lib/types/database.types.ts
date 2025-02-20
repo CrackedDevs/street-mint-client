@@ -91,27 +91,27 @@ export type Database = {
           created_at: string
           e: string
           id: number
+          last_uuid: string
           n: string
           server_auth: boolean
-          used: number
           x: string
         }
         Insert: {
           created_at?: string
           e: string
           id?: number
+          last_uuid?: string
           n: string
           server_auth?: boolean
-          used?: number
           x: string
         }
         Update: {
           created_at?: string
           e?: string
           id?: number
+          last_uuid?: string
           n?: string
           server_auth?: boolean
-          used?: number
           x?: string
         }
         Relationships: []
