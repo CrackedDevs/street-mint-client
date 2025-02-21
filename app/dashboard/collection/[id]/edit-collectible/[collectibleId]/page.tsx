@@ -231,7 +231,7 @@ function EditCollectiblePage() {
         cta_logo_url: uploadedCtaLogoUrl,
       };
 
-      const success = await updateCollectible(updatedCollectible);
+      const { success } = await updateCollectible(updatedCollectible);
 
       if (success) {
         toast({
