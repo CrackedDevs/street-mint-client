@@ -84,8 +84,12 @@ CtaPopUpProps) {
       };
     }
     if (hasEmailCapture || hasTextCapture) {
-      const { success, error } = await updateCollectible(updatedCollectible);
-      if (success) {
+      const response = await fetch("/api/cta/save-cta-data", {
+        method: "PUT",
+        body: JSON.stringify(updatedCollectible),
+      });
+      const data = await response.json();
+      if (data.success) {
         if (hasEmailCapture && hasTextCapture) {
           toast({
             title: "Email and text added to list",
@@ -102,7 +106,7 @@ CtaPopUpProps) {
       } else {
         toast({
           title: "Failed to update list",
-          description: error?.message,
+          description: data.error,
         });
       }
     }
