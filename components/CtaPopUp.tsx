@@ -84,7 +84,7 @@ CtaPopUpProps) {
       };
     }
     if (hasEmailCapture || hasTextCapture) {
-      const success = await updateCollectible(updatedCollectible);
+      const { success, error } = await updateCollectible(updatedCollectible);
       if (success) {
         if (hasEmailCapture && hasTextCapture) {
           toast({
@@ -102,6 +102,7 @@ CtaPopUpProps) {
       } else {
         toast({
           title: "Failed to update list",
+          description: error?.message,
         });
       }
     }
