@@ -344,10 +344,10 @@ export const fetchCollectibleById = async (id: number) => {
     return data;
 };
 
-export const updateCollectible = async (collectible: Collectible): Promise<boolean> => {
+export const updateCollectible = async (collectible: Collectible): Promise<{ success: boolean; error: Error | null }> => {
     const { user, error: authError } = await getAuthenticatedUser();
     if (!user || authError) {
-        return false;
+        return { success: false, error: authError || null };
     }
     const { error } = await supabase
         .from('collectibles')
@@ -356,10 +356,10 @@ export const updateCollectible = async (collectible: Collectible): Promise<boole
 
     if (error) {
         console.error("Error updating collectible:", error);
-        return false;
+        return { success: false, error: error as unknown as Error };
     }
 
-    return true;
+    return { success: true, error: null };
 };
 
 export const updateProfile = async (profileData: Artist) => {
