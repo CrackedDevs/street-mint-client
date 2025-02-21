@@ -171,7 +171,7 @@ export default function MintButton({
       if (deviceId === null) {
         toast({
           title: "Warning",
-          description: "Unable to verify device. Please try refreshing the page or removing the ad blocker.",
+          description: "Unable to verify device. Please remove the ad blocker and scan the chip again.",
           variant: "destructive",
         });
       } else {
