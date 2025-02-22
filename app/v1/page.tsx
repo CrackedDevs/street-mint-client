@@ -27,7 +27,8 @@ export default async function NFTPage({
   const data = await checkAuthStatus(
     searchParams.x,
     searchParams.n,
-    searchParams.e
+    searchParams.e,
+    isIrlsDomain
   );
 
   if (!data) {
