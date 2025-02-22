@@ -29,6 +29,7 @@ import {
   createCollectible,
   QuantityType,
   uploadFileToPinata,
+  Brand,
 } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -86,6 +87,7 @@ function CreateCollectiblePage() {
     cta_has_text_capture: false,
     cta_text_list: [],
     creator_royalty_array: [],
+    is_irls: false,
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -467,6 +469,30 @@ function CreateCollectiblePage() {
                       </div>
                     </Label>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="collectible-brand"
+                    className="text-lg font-semibold"
+                  >
+                    Brand <span className="text-destructive">*</span>
+                  </Label>
+                  <select
+                    id="collectible-brand"
+                    value={collectible.is_irls ? Brand.IRLS : Brand.StreetMint}
+                    onChange={(e) =>
+                      handleCollectibleChange(
+                        "is_irls",
+                        e.target.value === Brand.IRLS
+                      )
+                    }
+                    className="w-full p-2 border rounded-md bg-background text-base"
+                    required
+                  >
+                    <option value={Brand.StreetMint}>StreetMint</option>
+                    <option value={Brand.IRLS}>IRLS</option>
+                  </select>
                 </div>
 
                 <div className="space-y-2">

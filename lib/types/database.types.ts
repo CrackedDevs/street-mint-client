@@ -161,6 +161,7 @@ export type Database = {
           enable_card_payments: boolean | null
           gallery_urls: string[]
           id: number
+          is_irls: boolean | null
           is_light_version: boolean
           location: string | null
           location_note: string | null
@@ -195,6 +196,7 @@ export type Database = {
           enable_card_payments?: boolean | null
           gallery_urls: string[]
           id?: number
+          is_irls?: boolean | null
           is_light_version?: boolean
           location?: string | null
           location_note?: string | null
@@ -229,6 +231,7 @@ export type Database = {
           enable_card_payments?: boolean | null
           gallery_urls?: string[]
           id?: number
+          is_irls?: boolean | null
           is_light_version?: boolean
           location?: string | null
           location_note?: string | null

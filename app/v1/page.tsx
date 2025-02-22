@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
 import EditionInformation from "@/components/EditionInformation";
 import { checkAuthStatus } from "@/lib/ixkioAuth";
+import { redirect } from "next/navigation";
 
 export default async function NFTPage({
   searchParams,
@@ -12,6 +13,16 @@ export default async function NFTPage({
   searchParams: { x: string; n: string; e: string };
 }) {
   console.log(searchParams);
+
+  // Check if we're on irls.xyz domain
+  const isIrlsDomain =
+    typeof window !== "undefined" &&
+    window.location.hostname === "www.irls.xyz";
+  console.log(
+    "isIrlsDomain",
+    typeof window !== "undefined" && window.location.hostname
+  );
+  const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
 
   const data = await checkAuthStatus(
     searchParams.x,
@@ -23,14 +34,20 @@ export default async function NFTPage({
     return (
       <div className="flex justify-center items-center h-screen">
         <Image
-          src="/logo.svg"
-          alt="Street mint logo"
+          src={isIrlsDomain ? "/irlLogo.svg" : "/logo.svg"}
+          alt={isIrlsDomain ? "IRLS logo" : "Street mint logo"}
           width={250}
           height={100}
           className="h-20 w-auto animate-pulse"
         />
       </div>
     );
+  }
+
+  if (data.is_irls == true && data.redirectUrl) {
+    redirect(data.redirectUrl);
+  } else if (data.is_irls == true) {
+    alert("IRLS is not available for this moment");
   }
 
   const {

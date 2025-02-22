@@ -5,6 +5,7 @@ import { getSolPrice } from "@/lib/services/getSolPrice";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 const AUTH_API_URL = "https://api.ixkio.com/v1/t";
+const IRLS_REDIRECT_URL = "https://www.irls.xyz/v1";
 
 // We will only get pass once for a {x, n, e} and that will be in the following function
 // After this, we won't be able to get pass again
@@ -19,6 +20,19 @@ export const checkAuthStatus = async (x: string, n: string, e: string) => {
 
     collectibleData = await getCollectibleData(x, n);
     if (!collectibleData) return null;
+
+    if (collectibleData.collectible.is_irls) {
+      const redirectUrl = `${IRLS_REDIRECT_URL}?x=${x}&n=${n}&e=${e}`;
+      resultData = {
+        status: "wait",
+        collectibleData,
+        isIRLtapped: false,
+        authenticated: false,
+        is_irls: true,
+        redirectUrl
+      }
+      return resultData;
+    }
 
     const response = await axios.get(AUTH_INSTANCE_URL, {
         headers: {
@@ -51,7 +65,8 @@ export const checkAuthStatus = async (x: string, n: string, e: string) => {
             collectibleData,
             scanCount: e,
             authenticated: true,
-            isIRLtapped
+            isIRLtapped,
+            is_irls: false
         };
     }
     else {
@@ -60,7 +75,8 @@ export const checkAuthStatus = async (x: string, n: string, e: string) => {
         collectibleData,
         scanCount: 0,
         authenticated: false,
-        isIRLtapped
+        isIRLtapped,
+        is_irls: false
     };
   }
     return resultData
@@ -72,7 +88,8 @@ export const checkAuthStatus = async (x: string, n: string, e: string) => {
         collectibleData,
         scanCount: 0,
         authenticated: false,
-        isIRLtapped
+        isIRLtapped,
+        is_irls: false
       };
       return resultData;
     }

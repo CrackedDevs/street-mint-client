@@ -23,6 +23,7 @@ import {
   QuantityType,
   updateCollectible,
   uploadFileToPinata,
+  Brand,
 } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import withAuth from "@/app/dashboard/withAuth";
@@ -276,6 +277,30 @@ function EditCollectiblePage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="collectible-brand"
+                  className="text-lg font-semibold"
+                >
+                  Brand <span className="text-destructive">*</span>
+                </Label>
+                <select
+                  id="collectible-brand"
+                  value={collectible.is_irls ? Brand.IRLS : Brand.StreetMint}
+                  onChange={(e) =>
+                    handleCollectibleChange(
+                      "is_irls",
+                      e.target.value === Brand.IRLS
+                    )
+                  }
+                  className="w-full p-2 border rounded-md bg-background text-base"
+                  required
+                >
+                  <option value={Brand.StreetMint}>StreetMint</option>
+                  <option value={Brand.IRLS}>IRLS</option>
+                </select>
+              </div>
+
               <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
                 <div className="space-y-2">
                   <Label
