@@ -10,7 +10,7 @@ const IRLS_REDIRECT_URL = "https://www.irls.xyz/v1";
 // We will only get pass once for a {x, n, e} and that will be in the following function
 // After this, we won't be able to get pass again
 // Note: Do not use this function for anything else than checking auth status
-export const checkAuthStatus = async (x: string, n: string, e: string) => {
+export const checkAuthStatus = async (x: string, n: string, e: string, isCurrentIRLS: boolean) => {
   let collectibleData;
   let resultData;
   let isIRLtapped = false;
@@ -21,7 +21,7 @@ export const checkAuthStatus = async (x: string, n: string, e: string) => {
     collectibleData = await getCollectibleData(x, n);
     if (!collectibleData) return null;
 
-    if (collectibleData.collectible.is_irls) {
+    if (!isCurrentIRLS && collectibleData.collectible.is_irls) {
       const redirectUrl = `${IRLS_REDIRECT_URL}?x=${x}&n=${n}&e=${e}`;
       resultData = {
         status: "wait",
