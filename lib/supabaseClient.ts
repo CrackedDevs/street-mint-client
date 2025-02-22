@@ -28,6 +28,11 @@ export enum QuantityType {
     Limited = "limited",
 }
 
+export enum Brand {
+    StreetMint = "StreetMint",
+    IRLS = "IRLS",
+}
+
 export type Collectible = {
     id: number;
     name: string;

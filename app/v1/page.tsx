@@ -14,6 +14,16 @@ export default async function NFTPage({
 }) {
   console.log(searchParams);
 
+  // Check if we're on irls.xyz domain
+  const isIrlsDomain =
+    typeof window !== "undefined" &&
+    window.location.hostname === "www.irls.xyz";
+  console.log(
+    "isIrlsDomain",
+    typeof window !== "undefined" && window.location.hostname
+  );
+  const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
+
   const data = await checkAuthStatus(
     searchParams.x,
     searchParams.n,
@@ -24,8 +34,8 @@ export default async function NFTPage({
     return (
       <div className="flex justify-center items-center h-screen">
         <Image
-          src="/logo.svg"
-          alt="Street mint logo"
+          src={isIrlsDomain ? "/irlLogo.svg" : "/logo.svg"}
+          alt={isIrlsDomain ? "IRLS logo" : "Street mint logo"}
           width={250}
           height={100}
           className="h-20 w-auto animate-pulse"
