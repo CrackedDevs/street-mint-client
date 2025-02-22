@@ -1,5 +1,3 @@
-"use client";
-
 import Image from "next/image";
 import { QuantityType } from "@/lib/supabaseClient";
 import Gallery from "@/components/gallery";
