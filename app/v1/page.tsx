@@ -24,9 +24,6 @@ export default async function NFTPage({
   );
   const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
 
-  console.log("typeof window !== undefined", typeof window !== "undefined");
-  console.log("window.location.hostname", window.location.hostname);
-
   const data = await checkAuthStatus(
     searchParams.x,
     searchParams.n,
