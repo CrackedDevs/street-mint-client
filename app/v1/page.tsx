@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import { QuantityType } from "@/lib/supabaseClient";
 import Gallery from "@/components/gallery";
@@ -23,6 +25,9 @@ export default async function NFTPage({
     typeof window !== "undefined" && window.location.hostname
   );
   const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
+
+  console.log("typeof window !== undefined", typeof window !== "undefined");
+  console.log("window.location.hostname", window.location.hostname);
 
   const data = await checkAuthStatus(
     searchParams.x,
