@@ -86,6 +86,7 @@ function CreateCollectiblePage() {
     cta_has_text_capture: false,
     cta_text_list: [],
     creator_royalty_array: [],
+    is_irls: false
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);

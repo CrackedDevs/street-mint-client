@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
 import EditionInformation from "@/components/EditionInformation";
 import { checkAuthStatus } from "@/lib/ixkioAuth";
+import { redirect } from "next/navigation";
 
 export default async function NFTPage({
   searchParams,
@@ -31,6 +32,12 @@ export default async function NFTPage({
         />
       </div>
     );
+  }
+
+  if (data.is_irls == true && data.redirectUrl) {
+    redirect(data.redirectUrl);
+  } else if (data.is_irls == true) {
+    alert("IRLS is not available for this moment");
   }
 
   const {
