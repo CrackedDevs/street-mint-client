@@ -6,6 +6,7 @@ import ArtistInfoComponent from "@/components/ArtistInfoComponent";
 import EditionInformation from "@/components/EditionInformation";
 import { checkAuthStatus } from "@/lib/ixkioAuth";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 export default async function NFTPage({
   searchParams,
@@ -14,14 +15,12 @@ export default async function NFTPage({
 }) {
   console.log(searchParams);
 
-  // Check if we're on irls.xyz domain
-  const isIrlsDomain =
-    typeof window !== "undefined" &&
-    window.location.hostname === "www.irls.xyz";
-  console.log(
-    "isIrlsDomain",
-    typeof window !== "undefined" && window.location.hostname
-  );
+  // Get hostname from headers
+  const host = headers().get("host") || "";
+  console.log("host", host);
+  const isIrlsDomain = host.includes("irls.xyz");
+  console.log("isIrlsDomain", isIrlsDomain);
+  
   const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
 
   const data = await checkAuthStatus(
