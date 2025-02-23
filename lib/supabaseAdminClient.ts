@@ -135,16 +135,18 @@ export async function recordChipTapServerAuth(x: string, n: string, e: string, u
         .eq('last_uuid', uuid)
         .select();
 
-    console.log("chipTapServerAuth data", data);
     if (error) {
         console.error('Error recording Chip tap:', error);
         return false;
     }
-    console.log("chipTapServerAuth data", data);
-    if (!data) {
+
+    if (!data || data.length === 0) {
         console.error('No data found');
         return false;
     }
+
+    console.log("chipTapServerAuth data", data);
+
     return true;
 }
 

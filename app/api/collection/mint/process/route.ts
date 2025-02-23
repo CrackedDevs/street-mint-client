@@ -134,7 +134,11 @@ export async function POST(req: Request, res: NextApiResponse) {
     const transactionUid = uuidv4();
     const chipTapDataFromDb = await getChipTap(chipTapData.x, chipTapData.n, chipTapData.e, transactionUid);
 
-    if (chipTapDataFromDb && chipTapDataFromDb.server_auth == true) {
+    if (!chipTapDataFromDb) {
+      throw new Error("Chip tap not found");
+    }
+
+    if (chipTapDataFromDb.server_auth == true) {
       throw new Error("Chip tap already exists or used");
     }
 
@@ -144,6 +148,7 @@ export async function POST(req: Request, res: NextApiResponse) {
       .from("orders")
       .select("*, collectibles(name, metadata_uri, creator_royalty_array)")
       .eq("id", orderId)
+      .eq("collectible_id", collectibleId)
       .single();
     console.timeEnd("Fetch Order Duration"); // End timing order fetch
 
