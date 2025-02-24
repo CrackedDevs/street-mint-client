@@ -13,11 +13,8 @@ export default async function NFTPage({
 }: {
   searchParams: { x: string; n: string; e: string };
 }) {
-  console.log(searchParams);
-
   // Get hostname from headers
   const host = headers().get("host") || "";
-  console.log("host", host);
   const isIrlsDomain = host.includes("irls.xyz");
   console.log("isIrlsDomain", isIrlsDomain);
   

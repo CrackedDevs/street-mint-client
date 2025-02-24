@@ -118,9 +118,7 @@ function CreateCollectiblePage() {
         });
         return;
       }
-      console.log("file", file);
       if (file.type.includes("video")) {
-        console.log("video");
         handleCollectibleChange("is_video", true);
       }
       setPrimaryImageLocalFile(file);
