@@ -641,12 +641,12 @@ function CreateCollectiblePage() {
                       id="mint-start-date"
                       type="datetime-local"
                       value={collectible.mint_start_date ?? ""}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         handleCollectibleChange(
                           "mint_start_date",
-                          e.target.value
-                        )
-                      }
+                          new Date(e.target.value + ":00Z").toISOString()
+                        );
+                      }}
                       className="text-base w-fit"
                     />
                   </div>
@@ -665,7 +665,7 @@ function CreateCollectiblePage() {
                       type="datetime-local"
                       value={collectible.mint_end_date ?? ""}
                       onChange={(e) =>
-                        handleCollectibleChange("mint_end_date", e.target.value)
+                        handleCollectibleChange("mint_end_date",  new Date(e.target.value + ":00Z").toISOString())
                       }
                       className="text-base w-fit"
                     />

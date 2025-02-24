@@ -355,7 +355,10 @@ function EditCollectiblePage() {
                     type="datetime-local"
                     value={collectible.mint_start_date ?? ""}
                     onChange={(e) =>
-                      handleCollectibleChange("mint_start_date", e.target.value)
+                      handleCollectibleChange(
+                        "mint_start_date",
+                        new Date(e.target.value + ":00Z").toISOString()
+                      )
                     }
                     className="text-base"
                   />
@@ -375,7 +378,10 @@ function EditCollectiblePage() {
                     type="datetime-local"
                     value={collectible.mint_end_date ?? ""}
                     onChange={(e) =>
-                      handleCollectibleChange("mint_end_date", e.target.value)
+                      handleCollectibleChange(
+                        "mint_end_date",
+                        new Date(e.target.value + ":00Z").toISOString()
+                      )
                     }
                     className="text-base"
                   />
