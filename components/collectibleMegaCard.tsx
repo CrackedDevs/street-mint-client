@@ -101,12 +101,22 @@ export default function CollectibleMegaCard({
               index % 2 === 0 ? "md:order-first" : "md:order-last"
             }`}
           >
-            <Image
-              src={collectible.primary_image_url || "/placeholder.svg"}
-              alt={collectible.name}
-              fill
-              className="object-cover rounded-lg"
-            />
+            {collectible.is_video ? (
+              <video
+                src={collectible.primary_image_url || "/placeholder.svg"}
+                autoPlay={true}
+                loop={true}
+                muted={true}
+                className="w-full object-cover rounded-lg"
+              />
+            ) : (
+              <Image
+                src={collectible.primary_image_url || "/placeholder.svg"}
+                alt={`${collectible.name} - Main Image`}
+                fill
+                className="object-cover rounded-lg"
+              />
+            )}
           </div>
           <div className="flex flex-col justify-between">
             <div className="space-y-4 md:space-y-8">

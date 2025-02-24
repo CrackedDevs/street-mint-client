@@ -104,6 +104,17 @@ const columns: ColumnDef<Order>[] = [
     ),
   },
   {
+    accessorKey: "created_at",
+    header: "Timestamp",
+    cell: ({ row }) => {
+      const createdAt = row.getValue("created_at") as string;
+      const date = new Date(createdAt).toISOString();
+      return (
+        <div className="capitalize">{date.slice(0, 19).replace("T", " ")}</div>
+      )
+    },
+  },
+  {
     accessorKey: "airdrop_won",
     header: "Airdrop Won",
     cell: ({ row }) => (

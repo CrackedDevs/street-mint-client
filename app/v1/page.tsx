@@ -13,11 +13,8 @@ export default async function NFTPage({
 }: {
   searchParams: { x: string; n: string; e: string };
 }) {
-  console.log(searchParams);
-
   // Get hostname from headers
   const host = headers().get("host") || "";
-  console.log("host", host);
   const isIrlsDomain = host.includes("irls.xyz");
   console.log("isIrlsDomain", isIrlsDomain);
   
@@ -82,15 +79,26 @@ export default async function NFTPage({
       {/* Main content */}
       <main className="py-8 md:px-10 gap-10 px-4">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
-          {/* Left column - Main Image */}
+          {/* Left column - Main Image / Video */}
           <div className="relative flex justify-center items-center h-full w-full">
-            <Image
-              src={collectible.primary_image_url}
-              alt={`${collectible.name} - Main Image`}
-              objectFit="contain"
-              width={500}
-              height={500}
-            />
+            {collectible.is_video ? (
+              <video
+                src={collectible.primary_image_url}
+                autoPlay={true}
+                loop={true}
+                muted={true}
+                width={500}
+                height={500}
+              />
+            ) : (
+              <Image
+                src={collectible.primary_image_url}
+                alt={`${collectible.name} - Main Image`}
+                objectFit="contain"
+                width={500}
+                height={500}
+              />
+            )}
           </div>
 
           {/* Right column - Details */}
