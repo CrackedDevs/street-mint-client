@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import CollectibleMegaCard from "@/components/collectibleMegaCard";
 import DotPattern from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
-import { fetchAllCollectibles, CollectibleDetailed } from "@/lib/supabaseClient";
+import {
+  fetchAllCollectibles,
+  CollectibleDetailed,
+} from "@/lib/supabaseClient";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,10 +38,11 @@ export default function ArtworkList() {
         if (!response) {
           throw new Error("Failed to fetch collectibles data");
         }
-        
-        const { collectibles: newCollectibles, hasMore: moreAvailable } = response;
 
-        setCollectibles(prev => 
+        const { collectibles: newCollectibles, hasMore: moreAvailable } =
+          response;
+
+        setCollectibles((prev) =>
           offset === 0 ? newCollectibles : [...prev, ...newCollectibles]
         );
         setHasMore(moreAvailable);
@@ -58,7 +62,7 @@ export default function ArtworkList() {
   }, [offset]);
 
   const loadMore = () => {
-    setOffset(prev => prev + LIMIT);
+    setOffset((prev) => prev + LIMIT);
   };
 
   return (
@@ -87,12 +91,16 @@ export default function ArtworkList() {
           <div>
             <div className="w-full max-w-[92vw] mx-auto space-y-16 py-32 relative">
               {collectibles.map((collectible, index) => (
-                <CollectibleMegaCard key={collectible.id} collectible={collectible} index={index} />
+                <CollectibleMegaCard
+                  key={collectible.id}
+                  collectible={collectible}
+                  index={index}
+                />
               ))}
-              
+
               {hasMore && (
                 <div className="flex justify-center pb-16">
-                  <Button 
+                  <Button
                     onClick={loadMore}
                     disabled={loading}
                     className="w-48 text-lg h-12"

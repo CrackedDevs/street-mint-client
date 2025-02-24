@@ -36,13 +36,38 @@ export default function CollectibleMegaCard({
     const updateMintingStatus = () => {
       const DateTime = new Date();
       const now = DateTime.getTime();
-      if (!collectible.mint_start_date || !collectible.mint_end_date) {
+
+      if (!collectible.mint_start_date && !collectible.mint_end_date) {
         setMintingStatus("ongoing");
         return;
       }
+
+      if (collectible.mint_start_date && !collectible.mint_end_date) {
+        const startDateUTC = new Date(collectible.mint_start_date).getTime();
+        if (now < startDateUTC) {
+          setMintingStatus("not-started");
+          const timeToStart = startDateUTC - now;
+          setTimeLeft(TimeService.formatTimeLeft(timeToStart));
+        } else {
+          setMintingStatus("ongoing");
+        }
+        return;
+      } else if (collectible.mint_end_date && !collectible.mint_start_date) {
+        const endDateUTC = new Date(collectible.mint_end_date).getTime();
+        if (now > endDateUTC) {
+          setMintingStatus("ended");
+          setTimeLeft("");
+        } else {
+          setMintingStatus("ongoing");
+          const timeToEnd = endDateUTC - now;
+          setTimeLeft(TimeService.formatTimeLeft(timeToEnd));
+        }
+        return;
+      }
+
       // Convert mint start and end dates to UTC
-      const startDateUTC = new Date(collectible.mint_start_date).getTime();
-      const endDateUTC = new Date(collectible.mint_end_date).getTime();
+      const startDateUTC = new Date(collectible.mint_start_date!).getTime();
+      const endDateUTC = new Date(collectible.mint_end_date!).getTime();
 
       if (now < startDateUTC) {
         setMintingStatus("not-started");

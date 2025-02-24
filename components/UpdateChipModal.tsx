@@ -37,7 +37,12 @@ export default function UpdateChipModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    await onUpdate({ ...chip, chip_id: chipId, collectible_id: collectibleId, metadata: chip.metadata });
+    await onUpdate({
+      ...chip,
+      chip_id: chipId,
+      collectible_id: collectibleId,
+      metadata: chip.metadata,
+    });
     setIsLoading(false);
     onClose();
   };

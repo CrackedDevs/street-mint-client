@@ -37,6 +37,15 @@ export type ChipLinkDetailed = ChipLink & {
     }
 }
 
+export type ChipTap = {
+    id: number;
+    x: string;
+    n: string;
+    e: string;
+    server_auth: boolean;
+    last_uuid: string;
+}
+
 export type ChipLinkCreate = Omit<ChipLink, "id" | "created_at">;
 
 export async function getSupabaseAdmin() {
@@ -88,11 +97,25 @@ export async function recordNfcTap(rnd: string): Promise<boolean> {
     return true;
 }
 
-export async function recordChipTap(x: string, n: string, e: string): Promise<boolean> {
+export async function recordPaidChipTap(x: string, n: string, e: string): Promise<boolean> {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin
+        .from('chip_taps_paid')
+        .insert({ x, n, e });
+
+    console.log("data", data);
+    if (error) {
+        console.error('Error recording paid Chip tap:', error);
+        return false;
+    }
+    return true;
+}
+
+export async function recordChipTap(x: string, n: string, e: string, uuid: string): Promise<boolean> {
     const supabaseAdmin = await getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
         .from('chip_taps')
-        .insert({ x, n, e, server_auth: false });
+        .insert({ x, n, e, server_auth: false, last_uuid: uuid });
 
     console.log("data", data);
     if (error) {
@@ -100,6 +123,66 @@ export async function recordChipTap(x: string, n: string, e: string): Promise<bo
         return false;
     }
     return true;
+}
+
+export async function recordChipTapServerAuth(x: string, n: string, e: string, uuid: string): Promise<boolean> {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin
+        .from('chip_taps')
+        .update({ server_auth: true })
+        .eq('x', x)
+        .eq('n', n)
+        .eq('e', e)
+        .eq('last_uuid', uuid)
+        .select();
+
+    if (error) {
+        console.error('Error recording Chip tap:', error);
+        return false;
+    }
+
+    if (!data || data.length === 0) {
+        console.error('No data found');
+        return false;
+    }
+
+    console.log("chipTapServerAuth data", data);
+
+    return true;
+}
+
+// Do not use this function, since it is used for authentication and prevent race condition
+export async function getChipTap(x: string, n: string, e: string, uuid: string): Promise<ChipTap | null> {
+    const supabaseAdmin = await getSupabaseAdmin();
+
+    const { data: chipTapData, error: chipTapError } = await supabaseAdmin
+    .from('chip_taps')
+    .select('id, last_uuid')
+    .eq('x', x)
+    .eq('n', n)
+    .eq('e', e)
+    .single();
+
+    if (chipTapError) {
+        console.error('Error getting chip tap:', chipTapError);
+        return null;
+    }
+
+    const { data, error } = await supabaseAdmin
+        .from('chip_taps')
+        .update({ last_uuid: uuid })
+        .eq('x', x)
+        .eq('n', n)
+        .eq('e', e)
+        .select('id, last_uuid, x, n, e, server_auth')
+        .single();
+
+    console.log("chipTap data", data);
+    if (error) {
+        console.error('Error recording Chip tap:', error);
+        return null;
+    }
+    return data;
 }
 
 export async function getAllChipLinks() {

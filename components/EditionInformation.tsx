@@ -49,13 +49,37 @@ const EditionInformation = ({
     const updateMintingStatus = () => {
       const DateTime = new Date();
       const now = DateTime.getTime();
-      if (!collectible.mint_start_date || !collectible.mint_end_date) {
+
+      if (!collectible.mint_start_date && !collectible.mint_end_date) {
         setMintingStatus("ongoing");
         return;
       }
+
+      if (collectible.mint_start_date && !collectible.mint_end_date) {
+        const startDateUTC = new Date(collectible.mint_start_date).getTime();
+        if (now < startDateUTC) {
+          setMintingStatus("not-started");
+          const timeToStart = startDateUTC - now;
+          setTimeLeft(TimeService.formatTimeLeft(timeToStart));
+        } else {
+          setMintingStatus("ongoing");
+        }
+        return;
+      } else if (collectible.mint_end_date && !collectible.mint_start_date) {
+        const endDateUTC = new Date(collectible.mint_end_date).getTime();
+        if (now > endDateUTC) {
+          setMintingStatus("ended");
+          setTimeLeft("");
+        } else {
+          setMintingStatus("ongoing");
+          const timeToEnd = endDateUTC - now;
+          setTimeLeft(TimeService.formatTimeLeft(timeToEnd));
+        }
+      }
+
       // Convert mint start and end dates to UTC
-      const startDateUTC = new Date(collectible.mint_start_date).getTime();
-      const endDateUTC = new Date(collectible.mint_end_date).getTime();
+      const startDateUTC = new Date(collectible.mint_start_date!).getTime();
+      const endDateUTC = new Date(collectible.mint_end_date!).getTime();
 
       if (now < startDateUTC) {
         setMintingStatus("not-started");
@@ -102,9 +126,9 @@ const EditionInformation = ({
       <CardContent className="space-y-4 md:space-y-6">
         <div className="md:flex md:justify-between md:items-center pt-4">
           <div className="text-center md:text-left pb-2">
-            <span className="text-5xl md:text-6xl font-bold">
+            <span className="text-3xl md:text-4xl font-bold">
               {collectible.price_usd === 0
-                ? "Free Mint"
+                ? "Free Collectible"
                 : `$${collectible.price_usd.toFixed(2)}`}
             </span>
           </div>
@@ -114,7 +138,7 @@ const EditionInformation = ({
               variant="outline"
               className="border-white/20 text-white md:mt-2 rounded-xl"
             >
-              EXCLUSIVE IRL MINT <Earth className="ml-2 w-4 h-4" />
+              EXCLUSIVELY IRL ONLY <Earth className="ml-2 w-4 h-4" />
             </Badge>
           </div>
         </div>

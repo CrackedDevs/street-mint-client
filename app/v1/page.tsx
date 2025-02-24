@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
 import EditionInformation from "@/components/EditionInformation";
 import { checkAuthStatus } from "@/lib/ixkioAuth";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 export default async function NFTPage({
   searchParams,
@@ -13,24 +15,39 @@ export default async function NFTPage({
 }) {
   console.log(searchParams);
 
+  // Get hostname from headers
+  const host = headers().get("host") || "";
+  console.log("host", host);
+  const isIrlsDomain = host.includes("irls.xyz");
+  console.log("isIrlsDomain", isIrlsDomain);
+  
+  const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
+
   const data = await checkAuthStatus(
     searchParams.x,
     searchParams.n,
-    searchParams.e
+    searchParams.e,
+    isIrlsDomain
   );
 
   if (!data) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Image
-          src="/logo.svg"
-          alt="Street mint logo"
+          src={isIrlsDomain ? "/irlLogo.svg" : "/logo.svg"}
+          alt={isIrlsDomain ? "IRLS logo" : "Street mint logo"}
           width={250}
           height={100}
           className="h-20 w-auto animate-pulse"
         />
       </div>
     );
+  }
+
+  if (data.is_irls == true && data.redirectUrl) {
+    redirect(data.redirectUrl);
+  } else if (data.is_irls == true) {
+    alert("IRLS is not available for this moment");
   }
 
   const {
@@ -52,8 +69,8 @@ export default async function NFTPage({
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex justify-center items-center w-full">
             <Image
-              src="/logo.svg"
-              alt="Street mint logo"
+              src={isIrlsDomain ? "/irlLogo.svg" : "/logo.svg"}
+              alt={isIrlsDomain ? "IRLS logo" : "Street mint logo"}
               width={150}
               height={50}
               className="h-8 w-auto"
@@ -102,6 +119,13 @@ export default async function NFTPage({
               }}
               collectible={{
                 ...collectible,
+                creator_royalty_array: collectible.creator_royalty_array as
+                  | {
+                      creator_wallet_address: string;
+                      royalty_percentage: number;
+                      name: string;
+                    }[]
+                  | null,
                 quantity_type: collectible.quantity_type as QuantityType,
                 whitelist: collectible.whitelist || false,
                 cta_enable: collectible.cta_enable || false,
