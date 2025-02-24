@@ -91,6 +91,7 @@ export type Database = {
           created_at: string
           e: string
           id: number
+          last_uuid: string
           n: string
           server_auth: boolean
           x: string
@@ -99,6 +100,7 @@ export type Database = {
           created_at?: string
           e: string
           id?: number
+          last_uuid?: string
           n: string
           server_auth?: boolean
           x: string
@@ -107,8 +109,33 @@ export type Database = {
           created_at?: string
           e?: string
           id?: number
+          last_uuid?: string
           n?: string
           server_auth?: boolean
+          x?: string
+        }
+        Relationships: []
+      }
+      chip_taps_paid: {
+        Row: {
+          created_at: string
+          e: string
+          id: number
+          n: string
+          x: string
+        }
+        Insert: {
+          created_at?: string
+          e: string
+          id?: number
+          n: string
+          x: string
+        }
+        Update: {
+          created_at?: string
+          e?: string
+          id?: number
+          n?: string
           x?: string
         }
         Relationships: []
@@ -134,7 +161,9 @@ export type Database = {
           enable_card_payments: boolean | null
           gallery_urls: string[]
           id: number
+          is_irls: boolean | null
           is_light_version: boolean
+          is_video: boolean | null
           location: string | null
           location_note: string | null
           metadata_uri: string | null
@@ -146,6 +175,7 @@ export type Database = {
           primary_image_url: string
           quantity: number | null
           quantity_type: Database["public"]["Enums"]["quantity_type"]
+          stripe_price_id: string | null
           whitelist: boolean | null
         }
         Insert: {
@@ -168,7 +198,9 @@ export type Database = {
           enable_card_payments?: boolean | null
           gallery_urls: string[]
           id?: number
+          is_irls?: boolean | null
           is_light_version?: boolean
+          is_video?: boolean | null
           location?: string | null
           location_note?: string | null
           metadata_uri?: string | null
@@ -180,6 +212,7 @@ export type Database = {
           primary_image_url: string
           quantity?: number | null
           quantity_type: Database["public"]["Enums"]["quantity_type"]
+          stripe_price_id?: string | null
           whitelist?: boolean | null
         }
         Update: {
@@ -202,7 +235,9 @@ export type Database = {
           enable_card_payments?: boolean | null
           gallery_urls?: string[]
           id?: number
+          is_irls?: boolean | null
           is_light_version?: boolean
+          is_video?: boolean | null
           location?: string | null
           location_note?: string | null
           metadata_uri?: string | null
@@ -214,6 +249,7 @@ export type Database = {
           primary_image_url?: string
           quantity?: number | null
           quantity_type?: Database["public"]["Enums"]["quantity_type"]
+          stripe_price_id?: string | null
           whitelist?: boolean | null
         }
         Relationships: [

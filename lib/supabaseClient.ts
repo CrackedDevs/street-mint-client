@@ -28,6 +28,11 @@ export enum QuantityType {
     Limited = "limited",
 }
 
+export enum Brand {
+    StreetMint = "StreetMint",
+    IRLS = "IRLS",
+}
+
 export type Collectible = {
     id: number;
     name: string;
@@ -35,6 +40,7 @@ export type Collectible = {
     primary_image_url: string;
     quantity_type: QuantityType;
     quantity: number | null;
+    creator_royalty_array?: { creator_wallet_address: string; royalty_percentage: number; name: string; }[] | null;
     price_usd: number;
     location: string | null;
     location_note: string | null;
@@ -55,7 +61,12 @@ export type Collectible = {
     cta_has_text_capture: boolean;
     cta_email_list: { [key: string]: string }[];
     cta_text_list: { [key: string]: string }[];
+
     enable_card_payments?: boolean;
+
+    is_irls: boolean | null;
+    is_video: boolean | null;
+
 };
 
 interface Order {
@@ -344,10 +355,10 @@ export const fetchCollectibleById = async (id: number) => {
     return data;
 };
 
-export const updateCollectible = async (collectible: Collectible): Promise<boolean> => {
+export const updateCollectible = async (collectible: Collectible): Promise<{ success: boolean; error: Error | null }> => {
     const { user, error: authError } = await getAuthenticatedUser();
     if (!user || authError) {
-        return false;
+        return { success: false, error: authError || null };
     }
     const { error } = await supabase
         .from('collectibles')
@@ -356,10 +367,10 @@ export const updateCollectible = async (collectible: Collectible): Promise<boole
 
     if (error) {
         console.error("Error updating collectible:", error);
-        return false;
+        return { success: false, error: error as unknown as Error };
     }
 
-    return true;
+    return { success: true, error: null };
 };
 
 export const updateProfile = async (profileData: Artist) => {
@@ -487,7 +498,9 @@ export const fetchAllCollectibles = async (offset: number = 0, limit: number = 1
             cta_has_email_capture,
             cta_has_text_capture,
             cta_email_list,
-            cta_text_list
+            cta_text_list,
+            is_irls,
+            is_video
         `)
         .range(offset, offset + limit - 1)
         .order('created_at', { ascending: false });

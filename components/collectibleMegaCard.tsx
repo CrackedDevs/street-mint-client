@@ -36,13 +36,38 @@ export default function CollectibleMegaCard({
     const updateMintingStatus = () => {
       const DateTime = new Date();
       const now = DateTime.getTime();
-      if (!collectible.mint_start_date || !collectible.mint_end_date) {
+
+      if (!collectible.mint_start_date && !collectible.mint_end_date) {
         setMintingStatus("ongoing");
         return;
       }
+
+      if (collectible.mint_start_date && !collectible.mint_end_date) {
+        const startDateUTC = new Date(collectible.mint_start_date).getTime();
+        if (now < startDateUTC) {
+          setMintingStatus("not-started");
+          const timeToStart = startDateUTC - now;
+          setTimeLeft(TimeService.formatTimeLeft(timeToStart));
+        } else {
+          setMintingStatus("ongoing");
+        }
+        return;
+      } else if (collectible.mint_end_date && !collectible.mint_start_date) {
+        const endDateUTC = new Date(collectible.mint_end_date).getTime();
+        if (now > endDateUTC) {
+          setMintingStatus("ended");
+          setTimeLeft("");
+        } else {
+          setMintingStatus("ongoing");
+          const timeToEnd = endDateUTC - now;
+          setTimeLeft(TimeService.formatTimeLeft(timeToEnd));
+        }
+        return;
+      }
+
       // Convert mint start and end dates to UTC
-      const startDateUTC = new Date(collectible.mint_start_date).getTime();
-      const endDateUTC = new Date(collectible.mint_end_date).getTime();
+      const startDateUTC = new Date(collectible.mint_start_date!).getTime();
+      const endDateUTC = new Date(collectible.mint_end_date!).getTime();
 
       if (now < startDateUTC) {
         setMintingStatus("not-started");
@@ -76,12 +101,22 @@ export default function CollectibleMegaCard({
               index % 2 === 0 ? "md:order-first" : "md:order-last"
             }`}
           >
-            <Image
-              src={collectible.primary_image_url || "/placeholder.svg"}
-              alt={collectible.name}
-              fill
-              className="object-cover rounded-lg"
-            />
+            {collectible.is_video ? (
+              <video
+                src={collectible.primary_image_url || "/placeholder.svg"}
+                autoPlay={true}
+                loop={true}
+                muted={true}
+                className="w-full object-cover rounded-lg"
+              />
+            ) : (
+              <Image
+                src={collectible.primary_image_url || "/placeholder.svg"}
+                alt={`${collectible.name} - Main Image`}
+                fill
+                className="object-cover rounded-lg"
+              />
+            )}
           </div>
           <div className="flex flex-col justify-between">
             <div className="space-y-4 md:space-y-8">

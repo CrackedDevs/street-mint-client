@@ -15,14 +15,13 @@ export default function ContactForm() {
   const [body, setBody] = useState("");
 
   const isIrlsDomain =
-  typeof window !== "undefined" &&
-  window.location.hostname === "www.irls.xyz";
-console.log(
-  "isIrlsDomain",
-  typeof window !== "undefined" && window.location.hostname
-);
-const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
-
+    typeof window !== "undefined" &&
+    window.location.hostname === "www.irls.xyz";
+  console.log(
+    "isIrlsDomain",
+    typeof window !== "undefined" && window.location.hostname
+  );
+  const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

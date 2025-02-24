@@ -134,6 +134,27 @@ export default function LandingPage() {
                 {collectibles
                   .filter((collectible) => {
                     const now = new Date().getTime();
+
+                    if (!collectible.mint_start_date && !collectible.mint_end_date) {
+                      return true;
+                    }
+
+                    if (collectible.mint_start_date && !collectible.mint_end_date) {
+                      const startDateUTC = new Date(collectible.mint_start_date).getTime();
+                      if (now < startDateUTC) {
+                        return false;
+                      } else {
+                        return true;
+                      }
+                    } else if (collectible.mint_end_date && !collectible.mint_start_date) {
+                      const endDateUTC = new Date(collectible.mint_end_date).getTime();
+                      if (now > endDateUTC) {
+                        return false;
+                      } else {
+                        return true;
+                      }
+                    }
+                    
                     const startDate = new Date(
                       collectible.mint_start_date!
                     ).getTime();
@@ -156,6 +177,9 @@ export default function LandingPage() {
                 {collectibles
                   .filter((collectible) => {
                     const now = new Date().getTime();
+                    if (!collectible.mint_start_date) {
+                      return false;
+                    }
                     const startDate = new Date(
                       collectible.mint_start_date!
                     ).getTime();
