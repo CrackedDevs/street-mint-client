@@ -163,6 +163,7 @@ export type Database = {
           id: number
           is_irls: boolean | null
           is_light_version: boolean
+          is_video: boolean | null
           location: string | null
           location_note: string | null
           metadata_uri: string | null
@@ -174,6 +175,7 @@ export type Database = {
           primary_image_url: string
           quantity: number | null
           quantity_type: Database["public"]["Enums"]["quantity_type"]
+          stripe_price_id: string | null
           whitelist: boolean | null
         }
         Insert: {
@@ -198,6 +200,7 @@ export type Database = {
           id?: number
           is_irls?: boolean | null
           is_light_version?: boolean
+          is_video?: boolean | null
           location?: string | null
           location_note?: string | null
           metadata_uri?: string | null
@@ -209,6 +212,7 @@ export type Database = {
           primary_image_url: string
           quantity?: number | null
           quantity_type: Database["public"]["Enums"]["quantity_type"]
+          stripe_price_id?: string | null
           whitelist?: boolean | null
         }
         Update: {
@@ -233,6 +237,7 @@ export type Database = {
           id?: number
           is_irls?: boolean | null
           is_light_version?: boolean
+          is_video?: boolean | null
           location?: string | null
           location_note?: string | null
           metadata_uri?: string | null
@@ -244,6 +249,7 @@ export type Database = {
           primary_image_url?: string
           quantity?: number | null
           quantity_type?: Database["public"]["Enums"]["quantity_type"]
+          stripe_price_id?: string | null
           whitelist?: boolean | null
         }
         Relationships: [

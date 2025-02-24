@@ -88,6 +88,7 @@ function CreateCollectiblePage() {
     cta_text_list: [],
     creator_royalty_array: [],
     is_irls: false,
+    is_video: false,
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -116,6 +117,9 @@ function CreateCollectiblePage() {
           variant: "destructive",
         });
         return;
+      }
+      if (file.type.includes("video")) {
+        handleCollectibleChange("is_video", true);
       }
       setPrimaryImageLocalFile(file);
       handleCollectibleChange("primary_image_url", URL.createObjectURL(file));
