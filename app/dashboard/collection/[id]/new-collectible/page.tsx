@@ -37,6 +37,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import Delivery from "@/app/assets/delivery.svg";
 import withAuth from "@/app/dashboard/withAuth";
+import { createProduct } from "@/helpers/stripe";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 function CreateCollectiblePage() {
@@ -77,6 +78,7 @@ function CreateCollectiblePage() {
     cta_has_text_capture: false,
     cta_text_list: [],
     enable_card_payments: false,
+    stripe_price_id: "",
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -222,6 +224,14 @@ function CreateCollectiblePage() {
         ? await uploadFileToPinata(newCtaLogoImage)
         : null;
 
+      let stripePriceId: string | null = null;
+      if (collectible.enable_card_payments) {
+        stripePriceId = await createProduct(
+          collectible.name,
+          collectible.price_usd
+        );
+      }
+
       const newCollectible: Collectible = {
         ...collectible,
         primary_image_url: primaryImageUrl,
@@ -229,6 +239,7 @@ function CreateCollectiblePage() {
         id: NumericUUID(),
         price_usd: isFreeMint ? 0 : collectible.price_usd,
         cta_logo_url: uploadedCtaLogoUrl,
+        stripe_price_id: stripePriceId || "",
       };
 
       const createdCollectible = await createCollectible(
@@ -488,7 +499,8 @@ function CreateCollectiblePage() {
                           htmlFor="collectible-price"
                           className="text-lg font-semibold"
                         >
-                          Price (USD) <span className="text-destructive">*</span>
+                          Price (USD){" "}
+                          <span className="text-destructive">*</span>
                         </Label>
                         <Input
                           id="collectible-price"
@@ -522,7 +534,10 @@ function CreateCollectiblePage() {
                           id="card-payments-toggle"
                           checked={collectible.enable_card_payments}
                           onCheckedChange={(checked) =>
-                            handleCollectibleChange("enable_card_payments", checked)
+                            handleCollectibleChange(
+                              "enable_card_payments",
+                              checked
+                            )
                           }
                           className="scale-125"
                         />

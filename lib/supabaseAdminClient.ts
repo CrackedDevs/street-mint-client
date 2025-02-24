@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createFetch, fetchCollectibleById, getCollectionById, getArtistById, Collectible } from "./supabaseClient";
 import { Database } from "./types/database.types";
 import { isSignatureValid } from "./nfcVerificationHellper";
+import Stripe from "stripe";
 
 
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -226,4 +227,31 @@ export async function deleteChipLink(id: number) {
         return false;
     }
     return true;
+}
+
+export async function addStripeTransaction(status:string,sessionId:string,amount:number,session:Stripe.Checkout.Session){
+    const supabaseAdmin = await getSupabaseAdmin();
+const {data,error}=await supabaseAdmin.from('transactions').insert({
+    status,
+    session_id:sessionId,
+    amount,
+    transaction_dump:JSON.parse(JSON.stringify(session)),
+})
+if(error){
+    console.error('Error adding stripe transaction:', error);
+    throw error;
+}
+return data;
+}
+
+export async function updateStripTransaction(sessionId:string,status:string){
+    const supabaseAdmin = await getSupabaseAdmin();
+    const {data,error}=await supabaseAdmin.from('transactions').update({
+        status
+    }).eq('session_id',sessionId)   
+    if(error){
+        console.error('Error updating stripe transaction:', error);
+        throw error;
+    }
+    return data;
 }

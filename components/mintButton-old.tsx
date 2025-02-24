@@ -57,6 +57,7 @@ import { getSolPrice } from "@/lib/services/getSolPrice";
 import { MintStatus } from "./EditionInformation-Old";
 import WaitlistModal from "./modals/PromotionalModal";
 import { Button } from "./ui/button";
+import PaymentMethodDialog from "./modals/PaymentMethodDialog";
 
 interface MintButtonProps {
   collectible: Collectible;
@@ -115,6 +116,7 @@ export default function MintButton({
     { extendedResult: true },
     { immediate: true }
   );
+  const [showPaymentMethodDialog, setShowPaymentMethodDialog] = useState(false);
 
   const TriggerConfetti = (): void => {
     const end = Date.now() + 3 * 1000; // 3 seconds
@@ -252,7 +254,7 @@ export default function MintButton({
     }
   }, []);
 
-  const handlePaymentAndMint = async () => {
+  const handlePaymentAndMint = async (paymentMethod: "card" | "crypto") => {
     const addressToUse = isFreeMint ? walletAddress : publicKey?.toString();
     const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
       (addressToUse || "").trim()
@@ -295,44 +297,91 @@ export default function MintButton({
       setTipLinkUrl(tipLinkUrl);
       if (!isFree && publicKey) {
         // Step 2: Create payment transaction (only for paid mints)
-        const solPrice = await getSolPrice();
-        if (!solPrice) {
-          return;
+        if (paymentMethod === "crypto") {
+          const solPrice = await getSolPrice();
+          if (!solPrice) {
+            return;
+          }
+          const solPriceUSD = solPrice;
+          priceInSol = collectible.price_usd / solPriceUSD;
+          const lamports = Math.round(priceInSol * LAMPORTS_PER_SOL);
+          const instructions = [
+            ComputeBudgetProgram.setComputeUnitLimit({
+              units: 80000,
+            }),
+            SystemProgram.transfer({
+              fromPubkey: publicKey,
+              toPubkey: new PublicKey(artistWalletAddress),
+              lamports: lamports,
+            }),
+          ];
+
+          const { blockhash, lastValidBlockHeight } =
+            await connection.getLatestBlockhash();
+          const messageV0 = new TransactionMessage({
+            payerKey: publicKey,
+            recentBlockhash: blockhash,
+            instructions,
+          }).compileToV0Message();
+
+          const transaction = new VersionedTransaction(messageV0);
+
+          // Sign the transaction
+          if (!signTransaction) {
+            throw new Error("Failed to sign transaction");
+          }
+          let signedTx;
+          // Serialize the signed transaction
+          signedTx = await signTransaction(transaction);
+          signedTransaction = Buffer.from(signedTx.serialize()).toString(
+            "base64"
+          );
+        } else {
+          try {
+            const response = await fetch("/api/checkout_sessions", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                priceId: collectible.stripe_price_id,
+                orderId,
+                tipLinkWalletAddress,
+                signedTransaction,
+                priceInSol,
+                isEmail,
+                nftImageUrl: collectible.primary_image_url,
+                // Add any other necessary data
+              }),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(
+                errorData.error || "Failed to create checkout session"
+              );
+            }
+
+            const { url } = await response.json();
+
+            // Redirect to Stripe Checkout using window.location
+            if (url) {
+              window.location.href = url;
+              return;
+            } else {
+              throw new Error("No checkout URL received");
+            }
+          } catch (error) {
+            console.error("Error creating checkout session:", error);
+            toast({
+              title: "Error",
+              description: "Failed to initialize payment",
+              variant: "destructive",
+            });
+            setIsMinting(false);
+            return;
+          }
         }
-        const solPriceUSD = solPrice;
-        priceInSol = collectible.price_usd / solPriceUSD;
-        const lamports = Math.round(priceInSol * LAMPORTS_PER_SOL);
-        const instructions = [
-          ComputeBudgetProgram.setComputeUnitLimit({
-            units: 80000,
-          }),
-          SystemProgram.transfer({
-            fromPubkey: publicKey,
-            toPubkey: new PublicKey(artistWalletAddress),
-            lamports: lamports,
-          }),
-        ];
-
-        const { blockhash, lastValidBlockHeight } =
-          await connection.getLatestBlockhash();
-        const messageV0 = new TransactionMessage({
-          payerKey: publicKey,
-          recentBlockhash: blockhash,
-          instructions,
-        }).compileToV0Message();
-
-        const transaction = new VersionedTransaction(messageV0);
-
-        // Sign the transaction
-        if (!signTransaction) {
-          throw new Error("Failed to sign transaction");
-        }
-        let signedTx;
-        // Serialize the signed transaction
-        signedTx = await signTransaction(transaction);
-        signedTransaction = Buffer.from(signedTx.serialize()).toString(
-          "base64"
-        );
       }
 
       const processResponse = await fetch("/api/collection/mint/process", {
@@ -412,7 +461,7 @@ export default function MintButton({
     }
   };
 
-  const handleMintClick = async () => {
+  const handleMintClick = async (paymentMethod: "card" | "crypto") => {
     setIsMinting(true);
     await checkEligibilityAndExistingOrder();
     if (isFreeMint) {
@@ -456,7 +505,7 @@ export default function MintButton({
       setIsMinting(false);
       return;
     }
-    await handlePaymentAndMint();
+    await handlePaymentAndMint(paymentMethod);
     if (ctaEnabled) {
       setTimeout(() => {
         setShowSuccessPopUp(false);
@@ -615,7 +664,13 @@ export default function MintButton({
     <WhiteBgShimmerButton
       borderRadius="9999px"
       className="w-full my-4 text-black hover:bg-gray-800 h-[40px] rounded font-bold"
-      onClick={handleMintClick}
+      onClick={() => {
+        if (isFreeMint) {
+          handleMintClick("card");
+        } else {
+          setShowPaymentMethodDialog(true);
+        }
+      }}
       disabled={
         isMinting ||
         !isEligible ||
@@ -673,6 +728,12 @@ export default function MintButton({
         showModal={showWaitlistModal}
         setShowModal={setShowWaitlistModal}
       />
+      <PaymentMethodDialog
+        isOpen={showPaymentMethodDialog}
+        onClose={() => setShowPaymentMethodDialog(false)}
+        onSelectPaymentMethod={handleMintClick}
+        price={collectible.price_usd}
+      />
       {ctaEnabled && showCtaPopUp && (
         <CtaPopUp
           title={collectible.cta_title ?? ""}
@@ -694,38 +755,39 @@ export default function MintButton({
       />
       {(transactionSignature || existingOrder?.status === "completed") &&
         renderCompletedMint()}
-      {mintStatus === "ongoing" && !(transactionSignature || existingOrder?.status === "completed") && (
-        <div className="flex flex-col items-center justify-center w-full">
+      {mintStatus === "ongoing" &&
+        !(transactionSignature || existingOrder?.status === "completed") && (
           <div className="flex flex-col items-center justify-center w-full">
-            {isFreeMint ? (
-              <div className="w-full flex mt-2 gap-4 flex-col items-center justify-center">
-                <Input
-                  type="text"
-                  placeholder="Enter your Email, Wallet or .SOL address"
-                  value={walletAddress}
-                  onChange={(e) => setWalletAddress(e.target.value)}
-                  className="w-full h-12 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
-                />
-                {existingOrder?.status !== "completed" &&
-                  walletAddress &&
-                  renderMintButton()}
-              </div>
-            ) : (
-              <div className="w-full mt-4 flex flex-col items-center justify-center">
-                {renderWalletButton()}
-                <div className="hidden">
-                  <WalletMultiButton />
+            <div className="flex flex-col items-center justify-center w-full">
+              {isFreeMint ? (
+                <div className="w-full flex mt-2 gap-4 flex-col items-center justify-center">
+                  <Input
+                    type="text"
+                    placeholder="Enter your Email, Wallet or .SOL address"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    className="w-full h-12 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
+                  />
+                  {existingOrder?.status !== "completed" &&
+                    walletAddress &&
+                    renderMintButton()}
                 </div>
-                {existingOrder?.status !== "completed" &&
-                  walletAddress &&
-                  renderMintButton()}
-              </div>
-            )}
-          </div>
+              ) : (
+                <div className="w-full mt-4 flex flex-col items-center justify-center">
+                  {renderWalletButton()}
+                  <div className="hidden">
+                    <WalletMultiButton />
+                  </div>
+                  {existingOrder?.status !== "completed" &&
+                    walletAddress &&
+                    renderMintButton()}
+                </div>
+              )}
+            </div>
 
-          {error && <p className="text-red-500 mt-2">{error}</p>}
-        </div>
-      )}
+            {error && <p className="text-red-500 mt-2">{error}</p>}
+          </div>
+        )}
     </div>
   );
 }
