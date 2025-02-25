@@ -109,7 +109,8 @@ export async function POST(req: Request, res: NextApiResponse) {
     isEmail,
     nftImageUrl,
     collectibleId,
-    chipTapData
+    chipTapData,
+    isCardPayment
   } = await req.json();
 
   console.time("Initial Checks Duration"); // Start timing initial checks
@@ -201,7 +202,7 @@ export async function POST(req: Request, res: NextApiResponse) {
     }
 
     // For paid mints, verify and send transaction
-    if (order.price_usd && order.price_usd > 0) {
+    if (order.price_usd && order.price_usd > 0 && !isCardPayment) {
       if (!signedTransaction) {
         throw new Error("Missed transaction signature");
       }

@@ -739,6 +739,7 @@ export default function MintButton({
         onClose={() => setShowPaymentMethodDialog(false)}
         onSelectPaymentMethod={handleMintClick}
         price={collectible.price_usd}
+        isMinting={isMinting}
       />
       {ctaEnabled && showCtaPopUp && (
         <CtaPopUp

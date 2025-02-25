@@ -57,7 +57,9 @@ import WaitlistModal from "./modals/PromotionalModal";
 import { Button } from "./ui/button";
 import { CtaPopUp } from "./CtaPopUp";
 import SuccessPopup from "./modals/SuccessPopup";
-
+import PaymentMethodDialog from "./modals/PaymentMethodDialog";
+import { useSearchParams } from "next/navigation";
+import { PaymentStatusModal } from "./modals/PaymentStatusModal";
 interface MintButtonProps {
   collectible: Collectible;
   collection: Collection;
@@ -85,6 +87,9 @@ export default function MintButton({
   n,
   e,
 }: MintButtonProps) {
+  const searchParams = useSearchParams();
+  const success = searchParams.get("success");
+  const session_id = searchParams.get("session_id");
   const {
     connected,
     connect,
@@ -115,11 +120,20 @@ export default function MintButton({
   const connection = new Connection(process.env.NEXT_PUBLIC_RPC_URL!);
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
   const [showSuccessPopUp, setShowSuccessPopUp] = useState(false);
+  const [showPaymentMethodDialog, setShowPaymentMethodDialog] = useState(false);
+  const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] =
+    useState(false);
 
   const { getData } = useVisitorData(
     { extendedResult: true },
     { immediate: true }
   );
+
+  useEffect(() => {
+    if (success == "true") {
+      setShowPaymentSuccessDialog(true);
+    }
+  }, [success]);
 
   const TriggerConfetti = (): void => {
     const end = Date.now() + 3 * 1000; // 3 seconds
@@ -153,12 +167,12 @@ export default function MintButton({
 
   async function fetchDeviceId() {
     try {
-        const id = await getData({ ignoreCache: true, extendedResult: true });
-        if (!id.visitorId) {
-          return null;
-        }
-        console.log("ID in mintButton.tsx:", id.visitorId, id.browserName);
-        setDeviceId(id.visitorId);
+      const id = await getData({ ignoreCache: true, extendedResult: true });
+      if (!id.visitorId) {
+        return null;
+      }
+      console.log("ID in mintButton.tsx:", id.visitorId, id.browserName);
+      setDeviceId(id.visitorId);
       return id.visitorId;
     } catch (error) {
       setDeviceId(null);
@@ -171,7 +185,8 @@ export default function MintButton({
       if (deviceId === null) {
         toast({
           title: "Warning",
-          description: "Unable to verify device. Please remove the ad blocker and scan the chip again.",
+          description:
+            "Unable to verify device. Please remove the ad blocker and scan the chip again.",
           variant: "destructive",
         });
       } else {
@@ -266,7 +281,7 @@ export default function MintButton({
     }
   }, []);
 
-  const handlePaymentAndMint = async () => {
+  const handlePaymentAndMint = async (paymentMethod: "card" | "crypto") => {
     const addressToUse = isFreeMint ? walletAddress : publicKey?.toString();
     const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
       (addressToUse || "").trim()
@@ -314,44 +329,97 @@ export default function MintButton({
       setTipLinkUrl(tipLinkUrl);
       if (!isFree && publicKey) {
         // Step 2: Create payment transaction (only for paid mints)
-        const solPrice = await getSolPrice();
-        if (!solPrice) {
-          throw new Error("Failed to get SOL price");
+        if (paymentMethod === "crypto") {
+          const solPrice = await getSolPrice();
+          if (!solPrice) {
+            throw new Error("Failed to get SOL price");
+          }
+          const solPriceUSD = solPrice;
+          priceInSol = collectible.price_usd / solPriceUSD;
+          const lamports = Math.round(priceInSol * LAMPORTS_PER_SOL);
+          const instructions = [
+            ComputeBudgetProgram.setComputeUnitLimit({
+              units: 80000,
+            }),
+            SystemProgram.transfer({
+              fromPubkey: publicKey,
+              toPubkey: new PublicKey(artistWalletAddress),
+              lamports: lamports,
+            }),
+          ];
+
+          const { blockhash, lastValidBlockHeight } =
+            await connection.getLatestBlockhash();
+          const messageV0 = new TransactionMessage({
+            payerKey: publicKey,
+            recentBlockhash: blockhash,
+            instructions,
+          }).compileToV0Message();
+
+          const transaction = new VersionedTransaction(messageV0);
+
+          // Sign the transaction
+          if (!signTransaction) {
+            throw new Error("Failed to sign transaction");
+          }
+          let signedTx;
+          // Serialize the signed transaction
+          signedTx = await signTransaction(transaction);
+          signedTransaction = Buffer.from(signedTx.serialize()).toString(
+            "base64"
+          );
+        } else {
+          try {
+            const response = await fetch("/api/checkout_sessions", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                priceId: collectible.stripe_price_id,
+                orderId,
+                tipLinkWalletAddress,
+                signedTransaction,
+                priceInSol,
+                isEmail,
+                nftImageUrl: collectible.primary_image_url,
+                collectibleId: collectible.id,
+                chipTapData: {
+                  x,
+                  n,
+                  e,
+                },
+                isCardPayment: true,
+              }),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(
+                errorData.error || "Failed to create checkout session"
+              );
+            }
+
+            const { url } = await response.json();
+
+            // Redirect to Stripe Checkout using window.location
+            if (url) {
+              window.location.href = url;
+              return;
+            } else {
+              throw new Error("No checkout URL received");
+            }
+          } catch (error) {
+            console.error("Error creating checkout session:", error);
+            toast({
+              title: "Error",
+              description: "Failed to initialize payment",
+              variant: "destructive",
+            });
+            setIsMinting(false);
+            return;
+          }
         }
-        const solPriceUSD = solPrice;
-        priceInSol = collectible.price_usd / solPriceUSD;
-        const lamports = Math.round(priceInSol * LAMPORTS_PER_SOL);
-        const instructions = [
-          ComputeBudgetProgram.setComputeUnitLimit({
-            units: 80000,
-          }),
-          SystemProgram.transfer({
-            fromPubkey: publicKey,
-            toPubkey: new PublicKey(artistWalletAddress),
-            lamports: lamports,
-          }),
-        ];
-
-        const { blockhash, lastValidBlockHeight } =
-          await connection.getLatestBlockhash();
-        const messageV0 = new TransactionMessage({
-          payerKey: publicKey,
-          recentBlockhash: blockhash,
-          instructions,
-        }).compileToV0Message();
-
-        const transaction = new VersionedTransaction(messageV0);
-
-        // Sign the transaction
-        if (!signTransaction) {
-          throw new Error("Failed to sign transaction");
-        }
-        let signedTx;
-        // Serialize the signed transaction
-        signedTx = await signTransaction(transaction);
-        signedTransaction = Buffer.from(signedTx.serialize()).toString(
-          "base64"
-        );
       }
 
       const chipTapData = {
@@ -372,6 +440,7 @@ export default function MintButton({
           nftImageUrl: collectible.primary_image_url,
           collectibleId: collectible.id,
           chipTapData: chipTapData,
+          isCardPayment: false,
         }),
       });
 
@@ -441,7 +510,7 @@ export default function MintButton({
     }
   };
 
-  const handleMintClick = async () => {
+  const handleMintClick = async (paymentMethod: "card" | "crypto") => {
     setIsMinting(true);
     await checkEligibilityAndExistingOrder();
     if (isFreeMint) {
@@ -485,7 +554,7 @@ export default function MintButton({
       setIsMinting(false);
       return;
     }
-    await handlePaymentAndMint();
+    await handlePaymentAndMint(paymentMethod);
     if (ctaEnabled) {
       setTimeout(() => {
         setShowSuccessPopUp(false);
@@ -644,7 +713,13 @@ export default function MintButton({
     <WhiteBgShimmerButton
       borderRadius="9999px"
       className="w-full my-4 text-black hover:bg-gray-800 h-[40px] rounded font-bold"
-      onClick={handleMintClick}
+      onClick={() => {
+        if (isFreeMint) {
+          handleMintClick("crypto");
+        } else {
+          setShowPaymentMethodDialog(true);
+        }
+      }}
       disabled={
         isMinting ||
         !isEligible ||
@@ -678,7 +753,16 @@ export default function MintButton({
 
   if (!isIRLtapped) {
     if (collectible.location)
-      return <LocationButton location={collectible.location} />;
+      return (
+        <>
+          <LocationButton location={collectible.location} />
+          <PaymentStatusModal
+            isOpen={showPaymentSuccessDialog}
+            onClose={() => setShowPaymentSuccessDialog(false)}
+            sessionId={session_id || ""}
+          />
+        </>
+      );
     else {
       return <div></div>;
     }
@@ -702,6 +786,18 @@ export default function MintButton({
       <WaitlistModal
         showModal={showWaitlistModal}
         setShowModal={setShowWaitlistModal}
+      />
+      <PaymentMethodDialog
+        isOpen={showPaymentMethodDialog}
+        onClose={() => setShowPaymentMethodDialog(false)}
+        onSelectPaymentMethod={handleMintClick}
+        price={collectible.price_usd}
+        isMinting={isMinting}
+      />
+      <PaymentStatusModal
+        isOpen={showPaymentSuccessDialog}
+        onClose={() => setShowPaymentSuccessDialog(false)}
+        sessionId={session_id || ""}
       />
       {ctaEnabled && showCtaPopUp && (
         <CtaPopUp

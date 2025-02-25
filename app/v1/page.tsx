@@ -127,6 +127,7 @@ export default async function NFTPage({
               }}
               collectible={{
                 ...collectible,
+                stripe_price_id: collectible.stripe_price_id || undefined,
                 creator_royalty_array: collectible.creator_royalty_array as
                   | {
                       creator_wallet_address: string;

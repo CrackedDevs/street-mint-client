@@ -14,6 +14,7 @@ interface PaymentMethodDialogProps {
   onClose: () => void;
   onSelectPaymentMethod: (method: "crypto" | "card") => void;
   price: number;
+  isMinting: boolean;
 }
 
 export default function PaymentMethodDialog({
@@ -21,6 +22,7 @@ export default function PaymentMethodDialog({
   onClose,
   onSelectPaymentMethod,
   price,
+  isMinting,
 }: PaymentMethodDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -37,8 +39,12 @@ export default function PaymentMethodDialog({
           <div className="grid gap-4">
             <Button
               variant="outline"
+              disabled={isMinting}
               className="bg-white flex items-center justify-start gap-3 px-3 py-8 rounded-lg hover:bg-gray-50 border-gray-200 text-black transition-colors"
-              onClick={() => onSelectPaymentMethod("crypto")}
+              onClick={() => {
+                onSelectPaymentMethod("crypto");
+                onClose();
+              }}
             >
               <Wallet className="h-8 w-8" />
               <div className="flex flex-col items-start">
@@ -51,8 +57,12 @@ export default function PaymentMethodDialog({
 
             <Button
               variant="outline"
+              disabled={isMinting}
               className="bg-white flex items-center justify-start gap-3 px-3 py-8 rounded-lg hover:bg-gray-50 border-gray-200 text-black transition-colors"
-              onClick={() => onSelectPaymentMethod("card")}
+              onClick={() => {
+                onSelectPaymentMethod("card");
+                onClose();
+              }}
             >
               <CreditCard className="h-8 w-8" />
               <div className="flex flex-col items-start">
@@ -67,4 +77,4 @@ export default function PaymentMethodDialog({
       </DialogContent>
     </Dialog>
   );
-} 
+}

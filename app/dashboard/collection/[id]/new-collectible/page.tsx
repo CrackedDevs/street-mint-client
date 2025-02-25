@@ -107,6 +107,28 @@ function CreateCollectiblePage() {
       });
       return;
     }
+
+    if (field === "enable_card_payments" && value === true) {
+      if (collectible.price_usd < 1) {
+        toast({
+          title: "Error",
+          description: "Card payments require a minimum price of $1.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    if (field === "price_usd" && collectible.enable_card_payments && value < 1) {
+      toast({
+        title: "Warning",
+        description: "Card payments will be disabled as price is less than $1.",
+        variant: "default",
+      });
+      setCollectible((prev) => ({ ...prev, enable_card_payments: false, [field]: value }));
+      return;
+    }
+
     setCollectible((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -263,6 +285,14 @@ function CreateCollectiblePage() {
       toast({
         title: "Error",
         description: "Collectible name must not exceed 32 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (collectible.enable_card_payments && collectible.price_usd < 1) {
+      toast({
+        title: "Error",
+        description: "Card payments require a minimum price of $1.",
         variant: "destructive",
       });
       return;
