@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import {
   ArrowLeftIcon,
   MapPinIcon,
@@ -28,6 +29,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import withAuth from "@/app/dashboard/withAuth";
 import { Switch } from "@/components/ui/switch";
+import { formatDate } from "@/helper/date";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -353,7 +355,11 @@ function EditCollectiblePage() {
                   <Input
                     id="mint-start-date"
                     type="datetime-local"
-                    value={collectible.mint_start_date ?? ""}
+                    value={formatDate(
+                      collectible.mint_start_date ?? "",
+                      "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                      "yyyy-MM-dd'T'HH:mm"
+                    )}
                     onChange={(e) =>
                       handleCollectibleChange(
                         "mint_start_date",
@@ -376,7 +382,11 @@ function EditCollectiblePage() {
                   <Input
                     id="mint-end-date"
                     type="datetime-local"
-                    value={collectible.mint_end_date ?? ""}
+                    value={formatDate(
+                      collectible.mint_end_date ?? "",
+                      "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                      "yyyy-MM-dd'T'HH:mm"
+                    )}
                     onChange={(e) =>
                       handleCollectibleChange(
                         "mint_end_date",

@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -40,6 +39,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import Delivery from "@/app/assets/delivery.svg";
 import withAuth from "@/app/dashboard/withAuth";
+import { formatDate } from "@/helper/date";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 interface CreatorRoyalty {
@@ -276,6 +276,8 @@ function CreateCollectiblePage() {
       const uploadedCtaLogoUrl = newCtaLogoImage
         ? await uploadFileToPinata(newCtaLogoImage)
         : null;
+      const mintStartDate = formatDate(collectible.mint_start_date ?? "");
+      const mintEndDate = formatDate(collectible.mint_end_date ?? "");
 
       const newCollectible: Collectible = {
         ...collectible,
@@ -284,6 +286,8 @@ function CreateCollectiblePage() {
         id: NumericUUID(),
         price_usd: isFreeMint ? 0 : collectible.price_usd,
         cta_logo_url: uploadedCtaLogoUrl,
+        mint_start_date: mintStartDate,
+        mint_end_date: mintEndDate,
       };
 
       const createdCollectible = await createCollectible(
@@ -644,7 +648,7 @@ function CreateCollectiblePage() {
                       onChange={(e) => {
                         handleCollectibleChange(
                           "mint_start_date",
-                          new Date(e.target.value + ":00Z").toISOString()
+                          e.target.value
                         );
                       }}
                       className="text-base w-fit"
@@ -665,7 +669,7 @@ function CreateCollectiblePage() {
                       type="datetime-local"
                       value={collectible.mint_end_date ?? ""}
                       onChange={(e) =>
-                        handleCollectibleChange("mint_end_date",  new Date(e.target.value + ":00Z").toISOString())
+                        handleCollectibleChange("mint_end_date", e.target.value)
                       }
                       className="text-base w-fit"
                     />
