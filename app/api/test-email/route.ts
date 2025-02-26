@@ -10,6 +10,7 @@ export async function POST(req: Request) {
     const host = headers().get("host") || "";
     console.log("host", host);
     const isIrlsDomain = host.includes("streetmint.xyz");
+    const platform = isIrlsDomain ? "IRLS" : "STREETMINT";
     console.log("isIrlsDomain", isIrlsDomain);
 
     const { email, nftImageUrl = "https://placeholder.com/image.jpg" } =
@@ -23,7 +24,6 @@ export async function POST(req: Request) {
       );
     }
 
-    const platform = process.env.PLATFORM;
     if (!platform) {
       throw new Error("Platform not found");
     }
