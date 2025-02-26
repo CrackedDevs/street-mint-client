@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { resend } from "@/lib/resendMailer";
 import TipLinkEmailTemplate from "@/components/email/tiplink-template";
+import { headers } from "next/headers";
 
 export async function POST(req: Request) {
   try {
     // Log environment setup
-    console.log("Platform:", process.env.PLATFORM);
+
+    const host = headers().get("host") || "";
+    console.log("host", host);
+    const isIrlsDomain = host.includes("streetmint.xyz");
+    console.log("isIrlsDomain", isIrlsDomain);
 
     const { email, nftImageUrl = "https://placeholder.com/image.jpg" } =
       await req.json();
