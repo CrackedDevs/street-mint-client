@@ -9,7 +9,7 @@ export async function POST(req: Request) {
 
     const host = headers().get("host") || "";
     console.log("host", host);
-    const isIrlsDomain = host.includes("streetmint.xyz");
+    const isIrlsDomain = host == "www.irls.xyz";
     const platform = isIrlsDomain ? "IRLS" : "STREETMINT";
     console.log("isIrlsDomain", isIrlsDomain);
 

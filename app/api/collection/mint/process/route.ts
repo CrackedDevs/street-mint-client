@@ -108,7 +108,7 @@ export async function POST(req: Request, res: NextApiResponse) {
 
   const host = headers().get("host") || "";
   console.log("host", host);
-  const platform = host.includes("streetmint.xyz") ? "STREETMINT" : "IRLS";
+  const platform = host == "www.irls.xyz" ? "IRLS" : "STREETMINT";
   console.log("platform", platform);
 
   const {
