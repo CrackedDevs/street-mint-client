@@ -353,7 +353,7 @@ export async function POST(req: Request, res: NextApiResponse) {
         const fromEmail =
           platform === "STREETMINT"
             ? "StreetMint <Hello@claim.streetmint.xyz>"
-            : "IRLS <Hello@claim.irls.xyz>";
+            : "IRLS <Hello@claim.streetmint.xyz>";
         const emailSubject =
           platform === "STREETMINT"
             ? "Claim your  StreetMint Collectible!"
