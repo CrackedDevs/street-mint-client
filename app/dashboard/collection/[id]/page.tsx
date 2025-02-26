@@ -114,13 +114,23 @@ function Component() {
             >
               <CardContent className="flex pt-5 w-full h-full justify-center flex-col">
                 <div className=" relative">
-                  <Image
-                    width={300}
-                    height={300}
-                    src={collectible.primary_image_url}
-                    alt={collectible.name}
-                    className="object-contain w-full h-full object-center items-center"
-                  />
+                  {collectible.is_video ? (
+                    <video
+                      src={collectible.primary_image_url}
+                      className="object-contain w-full h-full object-center items-center"
+                      autoPlay
+                      loop
+                      muted
+                    />
+                  ) : (
+                    <Image
+                      width={300}
+                      height={300}
+                      src={collectible.primary_image_url}
+                      alt={collectible.name}
+                      className="object-contain w-full h-full object-center items-center"
+                    />
+                  )}
                 </div>
                 <div className="p-4">
                   <h3 className="text-xl font-semibold mb-2 text-gray-900">
