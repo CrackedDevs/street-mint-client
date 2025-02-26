@@ -22,6 +22,7 @@ import {
 } from "@/lib/supabaseAdminClient";
 import TipLinkEmailTemplate from "@/components/email/tiplink-template";
 import { resend } from "@/lib/resendMailer";
+import { headers } from "next/headers";
 
 function verifyTransactionAmount(
   transaction: Transaction | VersionedTransaction,
@@ -104,6 +105,11 @@ const waitForTransactionConfirmation = async (
 
 export async function POST(req: Request, res: NextApiResponse) {
   console.time("POST Request Duration"); // Start timing the entire POST request
+
+  const host = headers().get("host") || "";
+  console.log("host", host);
+  const platform = host.includes("streetmint.xyz") ? "STREETMINT" : "IRLS";
+  console.log("platform", platform);
 
   const {
     orderId,
@@ -340,7 +346,6 @@ export async function POST(req: Request, res: NextApiResponse) {
           );
           return;
         }
-        const platform = process.env.PLATFORM;
 
         if (!platform) {
           throw new Error("Platform not found");
