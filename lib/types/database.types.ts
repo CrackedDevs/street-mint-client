@@ -480,6 +480,33 @@ export type Database = {
           },
         ]
       }
+      transactions: {
+        Row: {
+          amount: number | null
+          created_at: string
+          id: number
+          session_id: string | null
+          status: string | null
+          transaction_dump: Json | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          id?: number
+          session_id?: string | null
+          status?: string | null
+          transaction_dump?: Json | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          id?: number
+          session_id?: string | null
+          status?: string | null
+          transaction_dump?: Json | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

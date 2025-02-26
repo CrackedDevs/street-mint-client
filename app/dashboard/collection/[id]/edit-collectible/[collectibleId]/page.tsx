@@ -355,11 +355,17 @@ function EditCollectiblePage() {
                   <Input
                     id="mint-start-date"
                     type="datetime-local"
-                    value={formatDate(
-                      collectible.mint_start_date ?? "",
-                      "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-                      "yyyy-MM-dd'T'HH:mm"
-                    )}
+                    value={
+                      collectible.mint_start_date
+                        ? formatDate(
+                            collectible.mint_start_date,
+                            collectible.mint_start_date.includes("Z")
+                              ? "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+                              : "yyyy-MM-dd'T'HH:mm",
+                            "yyyy-MM-dd'T'HH:mm"
+                          )
+                        : ""
+                    }
                     onChange={(e) =>
                       handleCollectibleChange(
                         "mint_start_date",
@@ -382,11 +388,17 @@ function EditCollectiblePage() {
                   <Input
                     id="mint-end-date"
                     type="datetime-local"
-                    value={formatDate(
-                      collectible.mint_end_date ?? "",
-                      "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-                      "yyyy-MM-dd'T'HH:mm"
-                    )}
+                    value={
+                      collectible.mint_end_date
+                        ? formatDate(
+                            collectible.mint_end_date,
+                            collectible.mint_end_date.includes("Z")
+                              ? "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+                              : "yyyy-MM-dd'T'HH:mm",
+                            "yyyy-MM-dd'T'HH:mm"
+                          )
+                        : ""
+                    }
                     onChange={(e) =>
                       handleCollectibleChange(
                         "mint_end_date",
