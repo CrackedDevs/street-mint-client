@@ -1,14 +1,21 @@
+/* eslint-disable @next/next/no-img-element */
 import React from "react";
 
 interface TipLinkEmailTemplateProps {
   tiplinkUrl: string;
   nftImageUrl: string;
+  platform: string;
 }
 
 export default function TipLinkEmailTemplate({
   tiplinkUrl,
   nftImageUrl,
+  platform,
 }: TipLinkEmailTemplateProps) {
+  console.log("Platform:", platform);
+  if (!platform) {
+    throw new Error("Platform not found");
+  }
   return (
     <div
       style={{
@@ -30,8 +37,12 @@ export default function TipLinkEmailTemplate({
         }}
       >
         <img
-          src="https://iaulwnqmthzvuxfubnsb.supabase.co/storage/v1/object/public/nft-images/photo_2024-09-12_22-11-09.jpg"
-          alt="IRLS Logo"
+          src={
+            platform === "STREETMINT"
+              ? "https://iaulwnqmthzvuxfubnsb.supabase.co/storage/v1/object/public/nft-images/logo%202.png"
+              : "https://iaulwnqmthzvuxfubnsb.supabase.co/storage/v1/object/public/nft-images/photo_2024-09-12_22-11-09.jpg"
+          }
+          alt={platform === "STREETMINT" ? "StreetMint Logo" : "IRLS Logo"}
           width={150}
           height={70}
           style={{
@@ -48,7 +59,9 @@ export default function TipLinkEmailTemplate({
             marginBottom: "20px",
           }}
         >
-          Congratulations! Your IRL Collectible is ready to be claimed 🎉
+          Congratulations! Your{" "}
+          {platform === "STREETMINT" ? "StreetMint" : "IRLS"} Collectible is
+          ready to be claimed 🎉
         </h2>
         <img
           src={nftImageUrl}
@@ -77,11 +90,14 @@ export default function TipLinkEmailTemplate({
             textTransform: "uppercase",
           }}
         >
-          Claim Your IRL Collectible
+          Claim Your Collectible
         </a>
         <p>
-          This link is your golden ticket to your IRL Collectible. Make sure you
-          claim it to qualify for digital and physical prizes!
+          This link is your golden ticket to your{" "}
+          {platform === "STREETMINT"
+            ? "StreetMint Collectible"
+            : "IRLS Collectible"}
+          . Make sure you claim it to qualify for digital and physical prizes!
         </p>
       </div>
     </div>
