@@ -13,7 +13,7 @@ export async function sendEmail(
   let fromEmail = "";
   let fromName = "";
   let app_password = "";
-  
+
   if (platform == "STREETMINT") {
     fromEmail = "hello@streetmint.xyz";
     fromName = "Street Mint";
@@ -35,7 +35,7 @@ export async function sendEmail(
 
     const mailOptions = {
       from: `${fromName} <${fromEmail}>`,
-      to: "bevatsal1122@gmail.com",
+      to: fromEmail,
       subject: `Query from Contact Us Form - ${brandName}`,
       text: `Name: ${name}\nEmail: ${email}\n\nBody: ${body}`,
     };
