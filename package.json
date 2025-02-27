@@ -61,7 +61,7 @@
     "framer-motion": "^11.3.31",
     "lucide-react": "^0.438.0",
     "next": "14.2.7",
-    "nodemailer": "^6.9.15",
+    "nodemailer": "^6.10.0",
     "papaparse": "^5.4.1",
     "pinata-web3": "^0.5.0",
     "pino-pretty": "^11.2.2",
