@@ -12,7 +12,11 @@ export async function POST(req: NextRequest) {
   // console.log(body);
   // console.log(body.data.object.customer_details, "customer details");
   // console.log(body.data.object.metadata, "metadata");
-  await updateStripTransaction(stripeData.id, stripeData.status!);
+  await updateStripTransaction(
+    stripeData.id,
+    stripeData.status!,
+    stripeData.metadata?.orderId!
+  );
 
   if (stripeData.status === "complete") {
     if (!stripeData.metadata) {
@@ -66,6 +70,12 @@ export async function POST(req: NextRequest) {
 
       throw new Error(errorData.error || "Failed to process minting");
     }
+  } else if (stripeData.status === "expired") {
+    const supabaseAdmin = await getSupabaseAdmin();
+    await supabaseAdmin
+      .from("orders")
+      .update({ status: "failed" })
+      .eq("id", stripeData.metadata?.orderId!);
   }
 
   return NextResponse.json({ message: "Webhook received" });

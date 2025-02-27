@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       ],
       mode: "payment",
       success_url: `${origin}/v1?x=${chipTapData.x}&n=${chipTapData.n}&e=${chipTapData.e}&success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/v1?x=${chipTapData.x}&n=${chipTapData.n}&e=${chipTapData.e}&canceled=true`,
+      cancel_url: `${origin}/v1?x=${chipTapData.x}&n=${chipTapData.n}&e=${chipTapData.e}&canceled=true&orderId=${orderId}`,
       metadata: {
         orderId,
         tipLinkWalletAddress,

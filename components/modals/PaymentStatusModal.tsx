@@ -11,6 +11,9 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import { toast } from "@/hooks/use-toast";
+import { getOrderById } from "@/lib/supabaseAdminClient";
+import { checkMintEligibility, updateOrderAirdropStatus } from "@/lib/supabaseClient";
 import { CheckCircle, Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -18,12 +21,34 @@ interface SuccessPaymentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   sessionId: string;
+  setTransactionSignature: (signature: string) => void;
+  triggerConfetti: () => void;
+  setExistingOrder: (order: any | null) => void;
+  setIsEligible: (eligible: boolean) => void;
+  setShowAirdropModal: (show: boolean) => void;
+  setShowMailSentModal: (show: boolean) => void;
+  setShowSuccessPopUp: (show: boolean) => void;
+  setWalletAddress: (address: string) => void;
+  ctaEnabled: boolean;
+  setShowCtaPopUp: (show: boolean) => void;
+  setIsMinting: (minting: boolean) => void;
 }
 
 export function PaymentStatusModal({
   isOpen,
   onClose,
   sessionId,
+  setTransactionSignature,
+  triggerConfetti,
+  setExistingOrder,
+  setIsEligible,
+  setShowAirdropModal,
+  setShowMailSentModal,
+  setShowSuccessPopUp,
+  setWalletAddress,
+  ctaEnabled,
+  setShowCtaPopUp,
+  setIsMinting,
 }: SuccessPaymentDialogProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -47,9 +72,62 @@ export function PaymentStatusModal({
     }, 5000);
   }, [sessionId]);
 
+  const afterSuccessProcedure = async () => {
+    const order = await getOrderById(sessionId);
+    setTransactionSignature(order?.mint_signature!);
+    triggerConfetti();
+    setExistingOrder({ id: order?.id, status: "completed" });
+    const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
+      (order?.wallet_address || "").trim()
+    );
+    toast({
+      title: isEmail
+        ? "💌 Please check your inbox, your Collectible awaits you!"
+        : "✅ Collectible Minted Successfully",
+    });
+    if (isEmail) {
+      setShowMailSentModal(true);
+    } else {
+      setShowSuccessPopUp(true);
+    }
+    setIsEligible(false);
+    const {
+      eligible,
+      reason,
+      isAirdropEligible: airdropEligible,
+    } = await checkMintEligibility(
+      order?.wallet_address!,
+      order?.collectible_id!,
+      order?.device_id!
+    );
+    if (airdropEligible) {
+      setShowAirdropModal(true);
+      updateOrderAirdropStatus(order?.id!, true);
+    }
+    localStorage.setItem("lastMintInput", order?.wallet_address!);
+    setWalletAddress("");
+
+    if (ctaEnabled) {
+      setTimeout(() => {
+        setShowSuccessPopUp(false);
+        setShowCtaPopUp(true);
+      }, 5000);
+    }
+    setIsMinting(false);
+  };
+
+  useEffect(() => {
+    if (isSuccess) {
+      setTimeout(() => {
+        onClose();
+        afterSuccessProcedure();
+      }, 800);
+    }
+  }, [isSuccess]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-gray-900 border-gray-800 [&_.close-button]:outline-red-500">
+      <DialogContent className="bg-gray-900 border-gray-800 [&>button]:text-white [&>button]:hover:text-white/70 [&>button]:border-0 [&>button]:ring-0">
         <DialogHeader>
           <div className="mx-auto rounded-full bg-green-500/20 p-3 mb-4">
             {isLoading ? (

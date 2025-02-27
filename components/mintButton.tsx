@@ -60,6 +60,8 @@ import SuccessPopup from "./modals/SuccessPopup";
 import PaymentMethodDialog from "./modals/PaymentMethodDialog";
 import { useSearchParams } from "next/navigation";
 import { PaymentStatusModal } from "./modals/PaymentStatusModal";
+import { PaymentCancelledModal } from "./modals/PaymentCancelledModal";
+
 interface MintButtonProps {
   collectible: Collectible;
   collection: Collection;
@@ -90,6 +92,8 @@ export default function MintButton({
   const searchParams = useSearchParams();
   const success = searchParams.get("success");
   const session_id = searchParams.get("session_id");
+  const canceled = searchParams.get("canceled");
+  const orderId = searchParams.get("orderId");
   const {
     connected,
     connect,
@@ -123,6 +127,8 @@ export default function MintButton({
   const [showPaymentMethodDialog, setShowPaymentMethodDialog] = useState(false);
   const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] =
     useState(false);
+  const [showPaymentCancelledDialog, setShowPaymentCancelledDialog] =
+    useState(false);
 
   const { getData } = useVisitorData(
     { extendedResult: true },
@@ -133,7 +139,25 @@ export default function MintButton({
     if (success == "true") {
       setShowPaymentSuccessDialog(true);
     }
-  }, [success]);
+    if (canceled === "true") {
+      setShowPaymentCancelledDialog(true);
+
+      if (orderId) {
+        fetch("/api/orders/update-status", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            orderId,
+            status: "failed",
+          }),
+        }).catch((error) => {
+          console.error("Error updating order status:", error);
+        });
+      }
+    }
+  }, [success, canceled, searchParams]);
 
   const TriggerConfetti = (): void => {
     const end = Date.now() + 3 * 1000; // 3 seconds
@@ -760,6 +784,17 @@ export default function MintButton({
             isOpen={showPaymentSuccessDialog}
             onClose={() => setShowPaymentSuccessDialog(false)}
             sessionId={session_id || ""}
+            setTransactionSignature={setTransactionSignature}
+            triggerConfetti={TriggerConfetti}
+            setExistingOrder={setExistingOrder}
+            setIsEligible={setIsEligible}
+            setShowAirdropModal={setShowAirdropModal}
+            setShowMailSentModal={setShowMailSentModal}
+            setShowSuccessPopUp={setShowSuccessPopUp}
+            setWalletAddress={setWalletAddress}
+            ctaEnabled={ctaEnabled}
+            setShowCtaPopUp={setShowCtaPopUp}
+            setIsMinting={setIsMinting}
           />
         </>
       );
@@ -798,6 +833,25 @@ export default function MintButton({
         isOpen={showPaymentSuccessDialog}
         onClose={() => setShowPaymentSuccessDialog(false)}
         sessionId={session_id || ""}
+        setTransactionSignature={setTransactionSignature}
+        triggerConfetti={TriggerConfetti}
+        setExistingOrder={setExistingOrder}
+        setIsEligible={setIsEligible}
+        setShowAirdropModal={setShowAirdropModal}
+        setShowMailSentModal={setShowMailSentModal}
+        setShowSuccessPopUp={setShowSuccessPopUp}
+        setWalletAddress={setWalletAddress}
+        ctaEnabled={ctaEnabled}
+        setShowCtaPopUp={setShowCtaPopUp}
+        setIsMinting={setIsMinting}
+      />
+      <PaymentCancelledModal
+        isOpen={showPaymentCancelledDialog}
+        onClose={() => setShowPaymentCancelledDialog(false)}
+        onRetry={() => {
+          setShowPaymentCancelledDialog(false);
+          setShowPaymentMethodDialog(true);
+        }}
       />
       {ctaEnabled && showCtaPopUp && (
         <CtaPopUp

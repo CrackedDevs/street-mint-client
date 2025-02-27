@@ -485,6 +485,7 @@ export type Database = {
           amount: number | null
           created_at: string
           id: number
+          order_id: string | null
           session_id: string | null
           status: string | null
           transaction_dump: Json | null
@@ -493,6 +494,7 @@ export type Database = {
           amount?: number | null
           created_at?: string
           id?: number
+          order_id?: string | null
           session_id?: string | null
           status?: string | null
           transaction_dump?: Json | null
@@ -501,6 +503,7 @@ export type Database = {
           amount?: number | null
           created_at?: string
           id?: number
+          order_id?: string | null
           session_id?: string | null
           status?: string | null
           transaction_dump?: Json | null

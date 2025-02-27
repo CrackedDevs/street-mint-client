@@ -327,14 +327,25 @@ if(error){
 return data;
 }
 
-export async function updateStripTransaction(sessionId:string,status:string){
+export async function updateStripTransaction(sessionId:string,status:string,orderId:string){
     const supabaseAdmin = await getSupabaseAdmin();
     const {data,error}=await supabaseAdmin.from('transactions').update({
-        status
+        status,
+        order_id:orderId
     }).eq('session_id',sessionId)   
     if(error){
         console.error('Error updating stripe transaction:', error);
         throw error;
+    }
+    return data;
+}
+
+export async function getOrderById(orderId:string){
+    const supabaseAdmin = await getSupabaseAdmin();
+    const {data,error}=await supabaseAdmin.from('orders').select('*').eq('id',orderId).single();
+    if(error){
+        console.error('Error getting order by id:', error);
+        return null;
     }
     return data;
 }
