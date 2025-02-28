@@ -166,6 +166,7 @@ function Component() {
                         : "Free"}
                     </span>
                   </div>
+                  <div className="flex justify-between items-center mb-4"></div>
                   {collectible.gallery_urls &&
                     collectible.gallery_urls.length > 0 && (
                       <div className="mb-4">
