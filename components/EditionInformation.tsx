@@ -115,6 +115,14 @@ const EditionInformation = ({
               collectible.quantity_type as QuantityType
             )}
           </Badge>
+          {collectible.is_light_version === true && (
+            <Badge
+              variant="outline"
+              className="border-gray-500 text-white text-sm rounded-xl bg-gray-500"
+            >
+              Light Version
+            </Badge>
+          )}
           {collectible.quantity_type === QuantityType.Limited &&
             remainingQuantity !== null && (
               <span className="text-sm font-medium">
