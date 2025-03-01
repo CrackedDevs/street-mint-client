@@ -340,12 +340,30 @@ export async function updateStripTransaction(sessionId:string,status:string,orde
     return data;
 }
 
-export async function getOrderById(orderId:string){
+export async function getOrderById(sessionId:string){
     const supabaseAdmin = await getSupabaseAdmin();
-    const {data,error}=await supabaseAdmin.from('orders').select('*').eq('id',orderId).single();
+    const {data,error}=await supabaseAdmin.from('transactions').select('*').eq('session_id',sessionId).limit(1)
+
     if(error){
-        console.error('Error getting order by id:', error);
+        console.error('Error getting session by id:', error);
         return null;
     }
-    return data;
+    if(!data[0]){
+        console.error("data not found for order")
+    }
+   const orderId = data[0].order_id
+   if(!orderId){
+    console.error("no orderid found")
+    return
+   }
+   const {data:orderData, error:OrderError} = await supabaseAdmin.from('orders').select('*').eq('id',orderId)
+   if(OrderError){
+    console.error('Error getting order by id:', OrderError);
+    return null;
+   }
+   if(!orderData[0]){
+    console.error("no order data found")
+    return null;
+   }
+   return orderData[0];
 }
