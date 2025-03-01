@@ -153,12 +153,12 @@ export default function MintButton({
 
   async function fetchDeviceId() {
     try {
-        const id = await getData({ ignoreCache: true, extendedResult: true });
-        if (!id.visitorId) {
-          return null;
-        }
-        console.log("ID in mintButton.tsx:", id.visitorId, id.browserName);
-        setDeviceId(id.visitorId);
+      const id = await getData({ ignoreCache: true, extendedResult: true });
+      if (!id.visitorId) {
+        return null;
+      }
+      console.log("ID in mintButton.tsx:", id.visitorId, id.browserName);
+      setDeviceId(id.visitorId);
       return id.visitorId;
     } catch (error) {
       setDeviceId(null);
@@ -171,7 +171,8 @@ export default function MintButton({
       if (deviceId === null) {
         toast({
           title: "Warning",
-          description: "Unable to verify device. Please remove the ad blocker and scan the chip again.",
+          description:
+            "Unable to verify device. Please remove the ad blocker and scan the chip again.",
           variant: "destructive",
         });
       } else {

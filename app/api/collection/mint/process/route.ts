@@ -368,13 +368,13 @@ export async function POST(req: Request, res: NextApiResponse) {
         }
 
         var transporter = nodemailer.createTransport({
-          service: 'gmail',
+          service: "gmail",
           auth: {
             user: fromEmail,
-            pass: app_password
-          }
+            pass: app_password,
+          },
         });
-        
+
         var mailOptions = {
           from: `${fromName} <${fromEmail}>`,
           to: wallet_address,
@@ -385,12 +385,12 @@ export async function POST(req: Request, res: NextApiResponse) {
             platform,
           }),
         };
-        
-        transporter.sendMail(mailOptions, function(error: any, info: any){
+
+        transporter.sendMail(mailOptions, function (error: any, info: any) {
           if (error) {
             console.log(error);
           } else {
-            console.log('Email sent: ' + info.response);
+            console.log("Email sent: " + info.response);
           }
         });
 
