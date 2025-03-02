@@ -110,11 +110,11 @@ export async function recordPaidChipTap(x: string, n: string, e: string): Promis
     return true;
 }
 
-export async function recordChipTap(x: string, n: string, e: string, uuid: string): Promise<boolean> {
+export async function recordChipTap(x: string, n: string, e: string, uuid: string, is_light_version: boolean = false): Promise<boolean> {
     const supabaseAdmin = await getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
         .from('chip_taps')
-        .insert({ x, n, e, server_auth: false, last_uuid: uuid });
+        .insert({ x, n, e, server_auth: is_light_version ? true : false, last_uuid: uuid });
 
     console.log("data", data);
     if (error) {
