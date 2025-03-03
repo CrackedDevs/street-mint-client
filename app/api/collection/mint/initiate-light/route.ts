@@ -104,6 +104,7 @@ export async function POST(req: Request, res: NextApiResponse) {
 
       if (insertError) throw insertError;
       order = data;
+      console.log("order", order);
 
       let fromEmail = "";
       let fromName = "";
@@ -140,21 +141,19 @@ export async function POST(req: Request, res: NextApiResponse) {
 
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-
       const { data: existingLightOrder, error: lightOrderError } = await supabase
       .from('light_orders')
-      .select('id, status')
+      .select('id, status', { head: true, count: 'exact' })
       .eq('email', emailAddress)
       .eq('collectible_id', collectibleId)
       .in('status', ['completed', 'pending'])
-      .single();
 
       if (lightOrderError && lightOrderError.code !== "PGRST116")
         throw lightOrderError; // PGRST116 means no rows returned
 
       console.log("existingLightOrder", existingLightOrder);
 
-      if (existingLightOrder) {
+      if (existingLightOrder && existingLightOrder.length > 1) {
         return NextResponse.json(
           {
             success: false,
@@ -194,11 +193,11 @@ export async function POST(req: Request, res: NextApiResponse) {
           .update({ status: "failed" })
           .eq("id", order.id);
       }
-      throw new Error("Failed to create order");
+      throw new Error("Failed to create light order");
     }
 
     if (!order) {
-      throw new Error("Failed to create order");
+      throw new Error("Failed to create light order");
     }
 
     return NextResponse.json(

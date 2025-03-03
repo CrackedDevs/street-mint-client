@@ -325,6 +325,7 @@ export type Database = {
           status: string | null
           transaction_signature: string | null
           updated_at: string | null
+          wallet_address: string | null
         }
         Insert: {
           airdrop_won?: boolean
@@ -347,6 +348,7 @@ export type Database = {
           status?: string | null
           transaction_signature?: string | null
           updated_at?: string | null
+          wallet_address?: string | null
         }
         Update: {
           airdrop_won?: boolean
@@ -369,6 +371,7 @@ export type Database = {
           status?: string | null
           transaction_signature?: string | null
           updated_at?: string | null
+          wallet_address?: string | null
         }
         Relationships: [
           {

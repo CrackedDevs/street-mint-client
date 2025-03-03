@@ -45,6 +45,51 @@ export type ChipTap = {
     last_uuid: string;
 }
 
+// airdrop_won: boolean
+// collectible_id: number | null
+// collection_id: number | null
+// created_at: string | null
+// device_id: string | null
+// email: string
+// email_sent: boolean | null
+// id: string
+// last_uuid: string | null
+// max_supply: number | null
+// mint_address: string | null
+// mint_signature: string | null
+// nft_type: string | null
+// price_sol: number | null
+// price_usd: number | null
+// quantity: number | null
+// signature_code: string | null
+// status: string | null
+// transaction_signature: string | null
+// updated_at: string | null
+
+export type LightOrder = {
+    airdrop_won: boolean;
+    collectible_id: number | null;
+    collection_id: number | null;
+    created_at: string | null;
+    device_id: string | null;
+    email: string;
+    email_sent: boolean | null;
+    id: string;
+    last_uuid: string | null;
+    max_supply: number | null;
+    mint_address: string | null;
+    mint_signature: string | null;
+    nft_type: string | null;
+    price_sol: number | null;
+    price_usd: number | null;
+    quantity: number | null;
+    signature_code: string | null;
+    status: string | null;
+    transaction_signature: string | null;
+    updated_at: string | null;
+    wallet_address: string | null;
+}
+
 export type ChipLinkCreate = Omit<ChipLink, "id" | "created_at">;
 
 export async function getSupabaseAdmin() {
@@ -246,6 +291,21 @@ export async function getChipLinkByChipId(chipId: string) {
         .single();
     if (error) {
         console.error('Error getting chip link by chip id:', error);
+        return null;
+    }
+    return data;
+}
+
+export async function getLightOrderBySignatureCode(signatureCode: string) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { data, error } : { data: LightOrder | null, error: any } = await supabaseAdmin
+        .from('light_orders')
+        .select(`id, signature_code, collectible_id, collection_id, created_at, device_id, email, email_sent, last_uuid, max_supply, mint_address, mint_signature, nft_type, price_sol, price_usd, quantity, status, transaction_signature, updated_at`)
+        .eq('signature_code', signatureCode)
+        .single();
+
+    if (error) {
+        console.error('Error getting light order by signature code:', error);
         return null;
     }
     return data;

@@ -11,18 +11,13 @@ import { supabase } from "@/lib/supabaseClient";
 import {
   CreatorRoyalty,
   mintNFTWithBubbleGumTree,
-  resolveSolDomain,
 } from "../../collection.helper";
 import { v4 as uuidv4 } from "uuid";
 import { NextResponse } from "next/server";
 import {
-  getChipTap,
   getSupabaseAdmin,
-  recordChipTapServerAuth,
 } from "@/lib/supabaseAdminClient";
-import { getEmailTemplateHTML } from "@/components/email/tiplink-template";
 import { headers } from "next/headers";
-import nodemailer from "nodemailer";
 
 function verifyTransactionAmount(
   transaction: Transaction | VersionedTransaction,
@@ -116,7 +111,6 @@ export async function POST(req: Request, res: NextApiResponse) {
     signedTransaction,
     priceInSol,
     walletAddress,
-    nftImageUrl,
     collectibleId,
   } = await req.json();
 
@@ -155,30 +149,31 @@ export async function POST(req: Request, res: NextApiResponse) {
 
     await new Promise((resolve) => setTimeout(resolve, 700));
 
-    const { count, error: countError } = await supabaseAdmin
-      .from("light_orders")
-      .select("id", { count: "exact", head: true })
-      .eq("collectible_id", collectibleId)
-      .eq("email", emailAddress)
-      .eq("wallet_address", walletAddress)
-      .in("status", ["completed", "pending"]);
+    // const { count, error: countError } = await supabaseAdmin
+    //   .from("light_orders")
+    //   .select("id", { count: "exact", head: true })
+    //   .eq("collectible_id", collectibleId)
+    //   .eq("email", emailAddress)
+    //   .eq("wallet_address", walletAddress)
+    //   .in("status", ["completed", "pending"]);
 
-    if (countError) {
-      throw new Error("Failed to get count of existing orders");
-    }
+    // if (countError) {
+    //   console.error("Error getting count of existing orders:", countError);
+    //   throw new Error("Failed to get count of existing orders");
+    // }
 
-    console.log(
-      "Count of existing light orders for collectible of address ",
-      emailAddress,
-      " is ",
-      count
-    );
+    // console.log(
+    //   "Count of existing light orders for collectible of address ",
+    //   emailAddress,
+    //   " is ",
+    //   count
+    // );
 
-    if (count && count > 1) {
-      throw new Error(
-        "More than one light order found for this collectible with same wallet address which is pending or completed"
-      );
-    }
+    // if (count && count > 1) {
+    //   throw new Error(
+    //     "More than one light order found for this collectible with same wallet address which is pending or completed"
+    //   );
+    // }
 
     // For paid mints, verify and send transaction
     if (order.price_usd && order.price_usd > 0) {
@@ -281,6 +276,7 @@ export async function POST(req: Request, res: NextApiResponse) {
       .eq("id", orderId);
 
     if (updateError) {
+      console.error("Error updating order:", updateError);
       throw new Error("Failed to update order");
     }
     console.timeEnd("POST Request Duration"); // End timing the entire POST request

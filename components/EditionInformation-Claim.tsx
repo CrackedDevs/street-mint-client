@@ -8,39 +8,31 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Collectible, Collection, QuantityType } from "@/lib/supabaseClient";
-import MintButton from "@/components/mintButton";
-import SparklesText from "@/components/magicui/sparkles-text";
 import AnimatedShinyText from "@/components/magicui/animated-shiny-text";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Earth, Stars, Clock } from "lucide-react";
 import { TimeService } from "@/lib/services/timeService";
 import { EditionService } from "@/lib/services/editionService";
+import MintButtonClaim from "@/components/mintButtonClaim";
+import { LightOrder } from "@/lib/supabaseAdminClient";
 
 export type MintStatus = "not-started" | "ongoing" | "ended" | "loading";
 
-const EditionInformation = ({
+const EditionInformationClaim = ({
   collection,
   collectible,
   remainingQuantity,
   artistWalletAddress,
   soldCount,
-  isIRLSmint,
-  isIRLtapped,
-  x,
-  n,
-  e,
+  lightOrder,
 }: {
   collection: Collection;
   collectible: Collectible;
   remainingQuantity: number | null;
   artistWalletAddress: string;
   soldCount: number;
-  isIRLtapped: boolean;
-  isIRLSmint?: boolean;
-  x: string;
-  n: string;
-  e: string;
+  lightOrder: LightOrder;
 }) => {
   const [mintingStatus, setMintingStatus] = useState<MintStatus>("loading");
   const [timeLeft, setTimeLeft] = useState<string>("");
@@ -100,9 +92,6 @@ const EditionInformation = ({
     return () => clearInterval(interval);
   }, [collectible.mint_start_date, collectible.mint_end_date]);
 
-  // Determine the effective isIRLtapped value
-  const effectiveIsIRLtapped = collectible.whitelist ? true : isIRLtapped;
-
   return (
     <Card className="w-full md:max-w-[600px] bg-black text-white border border-white/10">
       <CardHeader className="space-y-1">
@@ -134,10 +123,14 @@ const EditionInformation = ({
       <CardContent className="space-y-4 md:space-y-6">
         <div className="md:flex md:justify-between md:items-center pt-4">
           <div className="text-center md:text-left pb-2">
-            <span className="text-3xl md:text-4xl font-bold">
+            <span className="text-2xl md:text-3xl font-bold">
               {collectible.price_usd === 0
                 ? "Free Collectible"
                 : `$${collectible.price_usd.toFixed(2)}`}
+            </span>
+            <br />
+            <span className="text-lg font-medium text-white/70">
+              For {lightOrder.email}
             </span>
           </div>
           <div className="flex justify-between text-sm mt-2 md:mt-0 md:flex-col md:items-end">
@@ -150,44 +143,9 @@ const EditionInformation = ({
             </Badge>
           </div>
         </div>
-        <div className="flex items-center justify-center md:justify-start space-x-2 bg-white/10 rounded-full py-2 px-4">
-          <Badge
-            variant="secondary"
-            className={cn(
-              "font-semibold rounded-xl",
-              mintingStatus === "ongoing" && "bg-green-500 text-black",
-              mintingStatus === "not-started" && "bg-yellow-500 text-black",
-              mintingStatus === "ended" && "bg-red-500 text-black",
-              mintingStatus === "loading" && "bg-gray-500 text-black"
-            )}
-          >
-            {mintingStatus === "ongoing" && "Live"}
-            {mintingStatus === "not-started" && "Upcoming"}
-            {mintingStatus === "ended" && "Ended"}
-            {mintingStatus === "loading" && "Loading..."}
-          </Badge>
-          {timeLeft && (
-            <>
-              <Clock className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                {mintingStatus === "not-started"
-                  ? `Starts in: ${timeLeft}`
-                  : `${timeLeft} left`}
-              </span>
-            </>
-          )}
-        </div>
       </CardContent>
       <CardFooter className="flex flex-col md:flex-row md:justify-between md:items-center space-y-2 md:space-y-0 md:space-x-4">
-        <MintButton
-          x={x}
-          n={n}
-          e={e}
-          isIRLtapped={
-            process.env.NEXT_PUBLIC_NODE_ENV === "development"
-              ? true
-              : effectiveIsIRLtapped
-          }
+        <MintButtonClaim
           artistWalletAddress={artistWalletAddress}
           collectible={{
             ...collectible,
@@ -197,20 +155,21 @@ const EditionInformation = ({
             ...collection,
           }}
           mintStatus={mintingStatus}
+          lightOrder={lightOrder}
         />
         <div className="text-center md:text-right text-sm">
           <AnimatedShinyText className="inline-flex w-fit items-center justify-center px-2 md:px-4 py-1 transition ease-out text-white hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
             <span>✨ Gasless Mint</span>
           </AnimatedShinyText>
-          <p className="text-xs mt-1 text-white/70">
+          {/* <p className="text-xs mt-1 text-white/70">
             {isIRLSmint
               ? "Locate the IRLS Mint station, tap it with your phone to claim your digital collectible."
               : "Locate the Street Mint station, tap it with your phone to claim your digital collectible."}
-          </p>
+          </p> */}
         </div>
       </CardFooter>
     </Card>
   );
 };
 
-export default EditionInformation;
+export default EditionInformationClaim;
