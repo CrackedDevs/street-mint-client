@@ -203,6 +203,7 @@ export async function POST(req: Request, res: NextApiResponse) {
 
     // For paid mints, verify and send transaction
     console.log("isCardPayment", isCardPayment);
+    console.log("Iscarpayment typeof", typeof isCardPayment);
     if (order.price_usd && order.price_usd > 0 && !isCardPayment) {
       console.log("we are in the tx")
       if (!signedTransaction) {
