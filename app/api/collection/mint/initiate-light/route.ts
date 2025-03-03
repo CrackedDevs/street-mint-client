@@ -72,11 +72,11 @@ export async function POST(req: Request, res: NextApiResponse) {
     )
       .map((n) => n % 10)
       .join("");
-    const randomNumber = Math.random() * 10000;
+    const randomNumber = Math.floor(Math.random() * 1000000);
     const dateCode = Date.now().toString().slice(-6);
     const orderIdCode = orderId.replace(/-/g, "");
 
-    const signatureCode = `${randomStringCode}-${randomNumber}-${dateCode}x${orderIdCode}`;
+    const signatureCode = `${randomStringCode}-${randomNumber}-${dateCode}-${orderIdCode}`;
     console.log("Signature Code:", signatureCode);
 
     const platform = collectible.is_irls ? "IRLS" : "STREETMINT";
@@ -205,7 +205,6 @@ export async function POST(req: Request, res: NextApiResponse) {
       {
         success: true,
         orderId: order.id,
-        isFree: order.price_usd === 0,
         signatureCode,
       },
       { status: 200 }

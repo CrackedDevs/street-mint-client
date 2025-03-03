@@ -645,7 +645,6 @@ export async function checkMintEligibility(walletAddress: string, collectibleId:
 export async function checkMintEligibilityForLightVersion(emailAddress: string, collectibleId: number, deviceId: string): Promise<{ eligible: boolean; reason?: string, isAirdropEligible?: boolean }> {
     try {
         // Check if the NFT is still available and get its details
-
         if (!emailAddress) {
             return { eligible: false, reason: 'Email address is required.' };
         }
@@ -698,6 +697,9 @@ export async function checkMintEligibilityForLightVersion(emailAddress: string, 
         }
 
         // Check if the device has been used to mint this NFT before
+        console.log("deviceId", deviceId);
+        console.log("collectibleId", collectibleId);
+        console.log("deviceId", deviceId);
         const { data: existingDeviceMint, error: deviceError } = await supabase
             .from('light_orders')
             .select('id, status')
@@ -705,6 +707,8 @@ export async function checkMintEligibilityForLightVersion(emailAddress: string, 
             .eq('collectible_id', collectibleId)
             .in('status', ['completed', 'pending'])
             .single();
+
+        console.log("existingDeviceMint", existingDeviceMint);
 
         if (deviceError && deviceError.code !== 'PGRST116') throw deviceError;
         if (existingDeviceMint) {
@@ -788,7 +792,30 @@ export async function getExistingOrder(walletAddress: string, collectibleId: num
     }
 }
 
+export async function getExistingLightOrder(emailAddress: string, collectibleId: number) {
+    try {
+        const { data, error } = await supabase
+            .from('light_orders')
+            .select('*')
+            .eq('email', emailAddress)
+            .eq('collectible_id', collectibleId)
+            .eq('status', 'pending')
+            .single();
 
+        if (error) {
+            if (error.code === 'PGRST116') {
+                // No order found
+                return null;
+            }
+            throw error;
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Error fetching existing light order:", error);
+        throw error;
+    }
+}
 
 export async function getCompletedOrdersCount(collectibleId: number): Promise<number> {
     const { count, error } = await supabase
