@@ -330,11 +330,11 @@ export default function MintButton({
   }, [connected]);
 
   useEffect(() => {
-    //Auto fill the wallet address if the user has previously minted
-    // const lastMintInput = localStorage.getItem("lastMintInput");
-    // if (lastMintInput) {
-    //   setWalletAddress(lastMintInput || "");
-    // }
+    // Auto fill the wallet address if the user has previously minted
+    const lastMintInput = localStorage.getItem("lastMintInput");
+    if (lastMintInput) {
+      setWalletAddress(lastMintInput || "");
+    }
   }, []);
 
   const handlePaymentAndMint = async () => {
