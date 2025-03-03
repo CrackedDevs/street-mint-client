@@ -45,27 +45,6 @@ export type ChipTap = {
     last_uuid: string;
 }
 
-// airdrop_won: boolean
-// collectible_id: number | null
-// collection_id: number | null
-// created_at: string | null
-// device_id: string | null
-// email: string
-// email_sent: boolean | null
-// id: string
-// last_uuid: string | null
-// max_supply: number | null
-// mint_address: string | null
-// mint_signature: string | null
-// nft_type: string | null
-// price_sol: number | null
-// price_usd: number | null
-// quantity: number | null
-// signature_code: string | null
-// status: string | null
-// transaction_signature: string | null
-// updated_at: string | null
-
 export type LightOrder = {
     airdrop_won: boolean;
     collectible_id: number | null;
