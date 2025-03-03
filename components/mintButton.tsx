@@ -114,6 +114,7 @@ export default function MintButton({
   const [existingOrder, setExistingOrder] = useState<any | null>(null);
   const isFreeMint = collectible.price_usd === 0;
   const ctaEnabled = collectible.cta_enable;
+  const isCardPaymentEnable = collectible.enable_card_payments || false;
   const [showCtaPopUp, setShowCtaPopUp] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
   const [showDonationModal, setShowDonationModal] = useState(false);
@@ -738,7 +739,7 @@ export default function MintButton({
       borderRadius="9999px"
       className="w-full my-4 text-black hover:bg-gray-800 h-[40px] rounded font-bold"
       onClick={() => {
-        if (isFreeMint) {
+        if (isFreeMint || !isCardPaymentEnable) {
           handleMintClick("crypto");
         } else {
           setShowPaymentMethodDialog(true);

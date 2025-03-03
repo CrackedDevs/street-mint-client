@@ -202,7 +202,9 @@ export async function POST(req: Request, res: NextApiResponse) {
     }
 
     // For paid mints, verify and send transaction
+    console.log("isCardPayment", isCardPayment);
     if (order.price_usd && order.price_usd > 0 && !isCardPayment) {
+      console.log("we are in the tx")
       if (!signedTransaction) {
         throw new Error("Missed transaction signature");
       }
@@ -262,7 +264,7 @@ export async function POST(req: Request, res: NextApiResponse) {
         }
       }
     }
-
+    console.log("we are out of the tx")
     const merkleTreePublicKey = process.env.MERKLE_TREE_PUBLIC_KEY;
     const collectionMintPublicKey = process.env.MEGA_COLLECTION_MINT_PUBLIC_KEY;
 
