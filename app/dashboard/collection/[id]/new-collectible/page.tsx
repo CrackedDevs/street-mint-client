@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Delivery from "@/app/assets/delivery.svg";
 import withAuth from "@/app/dashboard/withAuth";
 import { formatDate } from "@/helper/date";
+import { getChipLinksByArtistId, updateChipLink } from "@/lib/supabaseAdminClient";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 interface CreatorRoyalty {
@@ -58,6 +59,37 @@ function CreateCollectiblePage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [newCtaLogoImage, setNewCtaLogoImage] = useState<File | null>(null);
   const [showCreatorForm, setShowCreatorForm] = useState(false);
+  const [availableChips, setAvailableChips] = useState<Array<{id: number, chip_id: string, active: boolean}>>([]);
+  const [selectedChipId, setSelectedChipId] = useState<number | null>(null);
+  const [isLoadingChips, setIsLoadingChips] = useState(false);
+
+  // Fetch available chips for the artist
+  useEffect(() => {
+    const fetchArtistChips = async () => {
+      if (userProfile?.id) {
+        setIsLoadingChips(true);
+        try {
+          const chips = await getChipLinksByArtistId(userProfile.id);
+          if (chips) {
+            // Filter out chips that are already assigned to collectibles
+            const availableChips = chips.filter(chip => !chip.collectible_id);
+            setAvailableChips(availableChips);
+          }
+        } catch (error) {
+          console.error("Error fetching artist chips:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load your assigned chips. Please try again.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoadingChips(false);
+        }
+      }
+    };
+
+    fetchArtistChips();
+  }, [userProfile?.id, toast]);
 
   const [collectible, setCollectible] = useState<Collectible>({
     id: NumericUUID(),
@@ -300,6 +332,27 @@ function CreateCollectiblePage() {
       );
 
       if (createdCollectible) {
+        // If a chip was selected, update the chip link to associate it with the new collectible
+        if (selectedChipId) {
+          try {
+            await updateChipLink(selectedChipId, {
+              id: selectedChipId,
+              chip_id: availableChips.find(chip => chip.id === selectedChipId)?.chip_id || "",
+              collectible_id: createdCollectible.id,
+              active: true,
+              created_at: new Date().toISOString(),
+              artists_id: userProfile.id
+            });
+          } catch (error) {
+            console.error("Error updating chip link:", error);
+            toast({
+              title: "Warning",
+              description: "Collectible created but failed to link with chip. Please try linking it manually.",
+              variant: "destructive",
+            });
+          }
+        }
+        
         setShowSuccessModal(true);
       } else {
         throw new Error("Failed to create collectible");
@@ -440,6 +493,59 @@ function CreateCollectiblePage() {
                     className="min-h-[120px] text-base"
                     required
                   />
+                </div>
+
+                {/* Chip Selection */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="chip-selection"
+                    className="text-lg font-semibold"
+                  >
+                    Assign NFC Chip
+                  </Label>
+                  {isLoadingChips ? (
+                    <div className="flex items-center space-x-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Loading your assigned chips...</span>
+                    </div>
+                  ) : availableChips.length > 0 ? (
+                    <div className="space-y-2">
+                      <select
+                        id="chip-selection"
+                        value={selectedChipId?.toString() || ""}
+                        onChange={(e) => setSelectedChipId(e.target.value ? Number(e.target.value) : null)}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                      >
+                        <option value="">-- Select a chip --</option>
+                        {availableChips.map((chip) => (
+                          <option key={chip.id} value={chip.id}>
+                            {chip.chip_id}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-sm text-muted-foreground">
+                        Selecting a chip will link this collectible to the physical NFC chip.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-md bg-amber-50 p-4">
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <svg className="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-amber-800">No chips available</h3>
+                          <div className="mt-2 text-sm text-amber-700">
+                            <p>
+                              You don&apos;t have any available chips to assign to this collectible. Please contact an admin to have NFC chips assigned to your account.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">

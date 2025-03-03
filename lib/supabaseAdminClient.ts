@@ -20,7 +20,8 @@ const supabaseAdmin = createClient<Database>(supabaseUrl!, supabaseServiceRoleKe
 export type ChipLink = {
     id: number;
     chip_id: string;
-    collectible_id: number;
+    collectible_id: number | null;
+    artists_id?: number | null;
     active: boolean;
     created_at: string;
 }
@@ -28,8 +29,8 @@ export type ChipLink = {
 export type ChipLinkDetailed = ChipLink & {
     metadata: {
     artist: string;
-    location: string;
-    location_note: string;
+    location: string | null;
+    location_note: string | null;
     collection_id: number;
     collectible_name: string;
     collectible_description: string;
@@ -189,7 +190,7 @@ export async function getAllChipLinks() {
     const supabaseAdmin = await getSupabaseAdmin();
     const { data, error } : { data: ChipLink[] | null, error: any } = await supabaseAdmin
         .from('chip_links')
-        .select(`id, chip_id, collectible_id, active, created_at`)
+        .select(`id, chip_id, collectible_id, artists_id, active, created_at`)
         .order('created_at', { ascending: false });
 
         if (error) {
@@ -203,35 +204,72 @@ export async function getAllChipLinks() {
         }
     
     const allChipLinks : ChipLinkDetailed[] = (await Promise.all(data.map(async (chipLink) => {
-        const collectible = await fetchCollectibleById(chipLink.collectible_id);
-        if (!collectible) {
-            console.error("Error fetching collectible:", collectible);
-            return null;
-        }
-
-        const collection = await getCollectionById(collectible.collection_id);
-        if (!collection) {
-            console.error("Error fetching collection:", collection);
-            return null;
-        }
-
-        const artist = await getArtistById(collection.artist);
-        if (!artist) {
-            console.error("Error fetching artist:", artist);
-            return null;
-        }
-
-        return {
-            ...chipLink,
-            metadata: {
-                collectible_name: collectible.name,
-                collectible_description: collectible.description,
-                artist: artist.username,
-                location: collectible.location,
-                location_note: collectible.location_note,
-                collection_id: collectible.collection_id,
+        // If there's a collectible_id, fetch the collectible details
+        if (chipLink.collectible_id) {
+            const collectible = await fetchCollectibleById(chipLink.collectible_id);
+            if (!collectible) {
+                console.error("Error fetching collectible:", collectible);
+                return null;
             }
-        } as ChipLinkDetailed;
+
+            const collection = await getCollectionById(collectible.collection_id);
+            if (!collection) {
+                console.error("Error fetching collection:", collection);
+                return null;
+            }
+
+            const artist = await getArtistById(collection.artist);
+            if (!artist) {
+                console.error("Error fetching artist:", artist);
+                return null;
+            }
+
+            return {
+                ...chipLink,
+                metadata: {
+                    collectible_name: collectible.name,
+                    collectible_description: collectible.description,
+                    artist: artist.username,
+                    location: collectible.location,
+                    location_note: collectible.location_note,
+                    collection_id: collectible.collection_id,
+                }
+            } as ChipLinkDetailed;
+        } 
+        // If there's an artists_id but no collectible_id, fetch just the artist details
+        else if (chipLink.artists_id) {
+            const artist = await getArtistById(chipLink.artists_id);
+            if (!artist) {
+                console.error("Error fetching artist:", artist);
+                return null;
+            }
+
+            return {
+                ...chipLink,
+                metadata: {
+                    collectible_name: "",
+                    collectible_description: "",
+                    artist: artist.username,
+                    location: null,
+                    location_note: null,
+                    collection_id: 0,
+                }
+            } as ChipLinkDetailed;
+        }
+        // If neither collectible_id nor artists_id, return with default metadata
+        else {
+            return {
+                ...chipLink,
+                metadata: {
+                    collectible_name: "",
+                    collectible_description: "",
+                    artist: "Unassigned",
+                    location: null,
+                    location_note: null,
+                    collection_id: 0,
+                }
+            } as ChipLinkDetailed;
+        }
     }))).filter((item): item is ChipLinkDetailed => item !== null);
 
     return allChipLinks;
@@ -274,6 +312,7 @@ export async function createChipLink(chipLink: ChipLinkCreate): Promise<boolean>
             chip_id: chipLink.chip_id,
             collectible_id: chipLink.collectible_id,
             active: chipLink.active,
+            artists_id: chipLink.artists_id
         });
 
     if (error) {
@@ -303,10 +342,46 @@ export async function updateChipLink(id: number, chipLink: ChipLink) {
 
 export async function deleteChipLink(id: number) {
     const supabaseAdmin = await getSupabaseAdmin();
-    const { error }: { error: any } = await supabaseAdmin.from('chip_links').delete().eq('id', id);
+    const { error } = await supabaseAdmin
+        .from('chip_links')
+        .delete()
+        .eq('id', id);
+    
     if (error) {
         console.error('Error deleting chip link:', error);
         return false;
     }
+    
     return true;
+}
+
+export async function getChipLinksByArtistId(artistId: number) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin
+        .from('chip_links')
+        .select(`id, chip_id, collectible_id, active, created_at, artists_id`)
+        .eq('artists_id', artistId)
+        .order('created_at', { ascending: false });
+    
+    if (error) {
+        console.error('Error getting chip links by artist ID:', error);
+        return null;
+    }
+    
+    return data;
+}
+
+export async function getAllArtists() {
+  const supabaseAdmin = await getSupabaseAdmin();
+  const { data, error } = await supabaseAdmin
+    .from('artists')
+    .select('id, username, email, avatar_url')
+    .order('username');
+
+  if (error) {
+    console.error('Error getting all artists:', error);
+    return null;
+  }
+  
+  return data;
 }

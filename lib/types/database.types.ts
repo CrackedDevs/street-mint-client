@@ -57,26 +57,36 @@ export type Database = {
       chip_links: {
         Row: {
           active: boolean
+          artists_id: number | null
           chip_id: string
-          collectible_id: number
+          collectible_id: number | null
           created_at: string
           id: number
         }
         Insert: {
           active?: boolean
+          artists_id?: number | null
           chip_id: string
-          collectible_id: number
+          collectible_id?: number | null
           created_at?: string
           id?: number
         }
         Update: {
           active?: boolean
+          artists_id?: number | null
           chip_id?: string
-          collectible_id?: number
+          collectible_id?: number | null
           created_at?: string
           id?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "chip_links_artists_id_fkey"
+            columns: ["artists_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chip_links_collectible_id_fkey"
             columns: ["collectible_id"]
@@ -313,6 +323,7 @@ export type Database = {
           email: string
           email_sent: boolean | null
           id: string
+          last_uuid: string | null
           max_supply: number | null
           mint_address: string | null
           mint_signature: string | null
@@ -320,8 +331,8 @@ export type Database = {
           price_sol: number | null
           price_usd: number | null
           quantity: number | null
+          signature_code: string | null
           status: string | null
-          tiplink_url: string | null
           transaction_signature: string | null
           updated_at: string | null
         }
@@ -334,6 +345,7 @@ export type Database = {
           email: string
           email_sent?: boolean | null
           id?: string
+          last_uuid?: string | null
           max_supply?: number | null
           mint_address?: string | null
           mint_signature?: string | null
@@ -341,8 +353,8 @@ export type Database = {
           price_sol?: number | null
           price_usd?: number | null
           quantity?: number | null
+          signature_code?: string | null
           status?: string | null
-          tiplink_url?: string | null
           transaction_signature?: string | null
           updated_at?: string | null
         }
@@ -355,6 +367,7 @@ export type Database = {
           email?: string
           email_sent?: boolean | null
           id?: string
+          last_uuid?: string | null
           max_supply?: number | null
           mint_address?: string | null
           mint_signature?: string | null
@@ -362,8 +375,8 @@ export type Database = {
           price_sol?: number | null
           price_usd?: number | null
           quantity?: number | null
+          signature_code?: string | null
           status?: string | null
-          tiplink_url?: string | null
           transaction_signature?: string | null
           updated_at?: string | null
         }
@@ -485,6 +498,7 @@ export type Database = {
           amount: number | null
           created_at: string
           id: number
+          order_id: string | null
           session_id: string | null
           status: string | null
           transaction_dump: Json | null
@@ -493,6 +507,7 @@ export type Database = {
           amount?: number | null
           created_at?: string
           id?: number
+          order_id?: string | null
           session_id?: string | null
           status?: string | null
           transaction_dump?: Json | null
@@ -501,6 +516,7 @@ export type Database = {
           amount?: number | null
           created_at?: string
           id?: number
+          order_id?: string | null
           session_id?: string | null
           status?: string | null
           transaction_dump?: Json | null

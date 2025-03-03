@@ -61,12 +61,32 @@ export default function AdminLayout({
           <div className="text-white font-bold text-xl">
             StreetMint Admin Panel
           </div>
-          <Button
-            onClick={handleLogout}
-            className="bg-red-500 hover:bg-red-600 text-white"
-          >
-            Logout
-          </Button>
+          <div className="flex space-x-4">
+            <Button
+              onClick={() => router.push("/admin")}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+            >
+              Dashboard
+            </Button>
+            <Button
+              onClick={() => router.push("/admin/collection")}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+            >
+              Collections
+            </Button>
+            <Button
+              onClick={() => router.push("/admin/chips")}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+            >
+              Chips
+            </Button>
+            <Button
+              onClick={handleLogout}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Logout
+            </Button>
+          </div>
         </div>
       )}
       {children}
