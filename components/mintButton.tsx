@@ -153,13 +153,15 @@ export default function MintButton({
 
   async function fetchDeviceId() {
     try {
-        const id = await getData({ ignoreCache: true, extendedResult: true });
-        if (!id.visitorId) {
-          return null;
-        }
-        console.log("ID in mintButton.tsx:", id.visitorId, id.browserName);
-        setDeviceId(id.visitorId);
-      return id.visitorId;
+        // const id = await getData({ ignoreCache: true, extendedResult: true });
+        // if (!id.visitorId) {
+        //   return null;
+        // }
+        // console.log("ID in mintButton.tsx:", id.visitorId, id.browserName);
+        // setDeviceId(id.visitorId);
+      // return id.visitorId;
+      const deviceId = new Date().getTime().toString();
+      return deviceId;
     } catch (error) {
       setDeviceId(null);
       return null;
@@ -260,10 +262,10 @@ export default function MintButton({
 
   useEffect(() => {
     // Auto fill the wallet address if the user has previously minted
-    const lastMintInput = localStorage.getItem("lastMintInput");
-    if (lastMintInput) {
-      setWalletAddress(lastMintInput || "");
-    }
+    // const lastMintInput = localStorage.getItem("lastMintInput");
+    // if (lastMintInput) {
+    //   setWalletAddress(lastMintInput || "");
+    // }
   }, []);
 
   const handlePaymentAndMint = async () => {
