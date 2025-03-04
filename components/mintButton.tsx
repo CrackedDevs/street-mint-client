@@ -134,7 +134,9 @@ export default function MintButton({
     useState(false);
   const [showCardPaymenEmailtDialog, setShowCardPaymentEmailDialog] =
     useState(false);
-  const [cardPaymentAddress, setCardPaymentAddress] = useState("");
+  const [cardPaymentAddress, setCardPaymentAddress] = useState(
+    publicKey?.toString() || ""
+  );
   const [showWalletConnectionPrompt, setShowWalletConnectionPrompt] =
     useState(false);
 
@@ -529,6 +531,13 @@ export default function MintButton({
       } else {
         throw new Error("Minting process failed");
       }
+      if (ctaEnabled) {
+        setTimeout(() => {
+          setShowSuccessPopUp(false);
+          setShowMailSentModal(false);
+          setShowCtaPopUp(true);
+        }, 5000);
+      }
     } catch (error: any) {
       console.error("Error minting NFT:", error);
       toast({
@@ -566,7 +575,6 @@ export default function MintButton({
   };
 
   const handleMintClick = async (paymentMethod: "card" | "crypto") => {
-
     setIsMinting(true);
     await checkEligibilityAndExistingOrder();
 
@@ -617,12 +625,6 @@ export default function MintButton({
 
     await handlePaymentAndMint(paymentMethod);
 
-    if (ctaEnabled) {
-      setTimeout(() => {
-        setShowSuccessPopUp(false);
-        setShowCtaPopUp(true);
-      }, 5000);
-    }
     setIsMinting(false);
   };
 
@@ -895,7 +897,10 @@ export default function MintButton({
       />
       <CheckInboxModal
         showModal={showMailSentModal}
-        setShowModal={setShowMailSentModal}
+        onClose={() => {
+          setShowMailSentModal(false);
+          setShowCtaPopUp(true);
+        }}
       />
       <WaitlistModal
         showModal={showWaitlistModal}

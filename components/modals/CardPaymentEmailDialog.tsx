@@ -93,7 +93,7 @@ export default function CardPaymentEmailDialog({
             </div>
 
             <div className="text-xs space-y-1">
-              <p className="text-gray-500">
+              <p className="text-gray-500 mb-4">
                 We&apos;ll send your NFT to this address after payment is
                 complete
               </p>

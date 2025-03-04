@@ -110,6 +110,7 @@ export function PaymentStatusModal({
     if (ctaEnabled) {
       setTimeout(() => {
         setShowSuccessPopUp(false);
+        setShowMailSentModal(false);
         setShowCtaPopUp(true);
       }, 5000);
     }
