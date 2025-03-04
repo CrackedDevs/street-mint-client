@@ -284,7 +284,7 @@ export default function CollectionOrders() {
           Back
         </Button>
         <h1 className="text-3xl font-bold">
-          Orders for Collectible {collectibleId}
+          {isLightVersion ? "Light" : ""} Orders for Collectible {collectibleId}
         </h1>
       </div>
       <div className="flex items-center py-4">
