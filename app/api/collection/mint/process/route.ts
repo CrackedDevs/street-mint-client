@@ -15,9 +15,14 @@ import {
 } from "../../collection.helper";
 import { v4 as uuidv4 } from "uuid";
 import { NextResponse } from "next/server";
-import { getChipTap, getSupabaseAdmin, recordChipTapServerAuth } from "@/lib/supabaseAdminClient";
-import TipLinkEmailTemplate from "@/components/email/tiplink-template";
-import { resend } from "@/lib/resendMailer";
+import {
+  getChipTap,
+  getSupabaseAdmin,
+  recordChipTapServerAuth,
+} from "@/lib/supabaseAdminClient";
+import { getEmailTemplateHTML } from "@/components/email/tiplink-template";
+import { headers } from "next/headers";
+import nodemailer from "nodemailer";
 
 function verifyTransactionAmount(
   transaction: Transaction | VersionedTransaction,
@@ -101,6 +106,11 @@ const waitForTransactionConfirmation = async (
 export async function POST(req: Request, res: NextApiResponse) {
   console.time("POST Request Duration"); // Start timing the entire POST request
 
+  const host = headers().get("host") || "";
+  console.log("host", host);
+  const platform = host == "www.irls.xyz" ? "IRLS" : "STREETMINT";
+  console.log("platform", platform);
+
   const {
     orderId,
     signedTransaction,
@@ -110,7 +120,7 @@ export async function POST(req: Request, res: NextApiResponse) {
     nftImageUrl,
     collectibleId,
     chipTapData,
-    isCardPayment
+    isCardPayment,
   } = await req.json();
 
   console.time("Initial Checks Duration"); // Start timing initial checks
@@ -133,7 +143,12 @@ export async function POST(req: Request, res: NextApiResponse) {
 
   try {
     const transactionUid = uuidv4();
-    const chipTapDataFromDb = await getChipTap(chipTapData.x, chipTapData.n, chipTapData.e, transactionUid);
+    const chipTapDataFromDb = await getChipTap(
+      chipTapData.x,
+      chipTapData.n,
+      chipTapData.e,
+      transactionUid
+    );
 
     if (!chipTapDataFromDb) {
       throw new Error("Chip tap not found");
@@ -176,29 +191,43 @@ export async function POST(req: Request, res: NextApiResponse) {
 
     const supabaseAdmin = await getSupabaseAdmin();
 
-    await new Promise(resolve => setTimeout(resolve, 700));
+    await new Promise((resolve) => setTimeout(resolve, 700));
 
     const { count, error: countError } = await supabaseAdmin
-    .from('orders')
-    .select('id', { count: 'exact', head: true })
-    .eq('collectible_id', collectibleId)
-    .eq('wallet_address', resolvedWalletAddress)
-    .in('status', ['completed', 'pending']);
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("collectible_id", collectibleId)
+      .eq("wallet_address", resolvedWalletAddress)
+      .in("status", ["completed", "pending"]);
 
     if (countError) {
       throw new Error("Failed to get count of existing orders");
     }
 
-    console.log("Count of existing orders for collectible of address ", resolvedWalletAddress, " is ", count);
+    console.log(
+      "Count of existing orders for collectible of address ",
+      resolvedWalletAddress,
+      " is ",
+      count
+    );
 
-    const recordSuccess = await recordChipTapServerAuth(chipTapData.x, chipTapData.n, chipTapData.e, transactionUid);
+    const recordSuccess = await recordChipTapServerAuth(
+      chipTapData.x,
+      chipTapData.n,
+      chipTapData.e,
+      transactionUid
+    );
 
     if (!recordSuccess) {
-      throw new Error("Failed to record chip tap because it was already used or tried to use it more than once");
+      throw new Error(
+        "Failed to record chip tap because it was already used or tried to use it more than once"
+      );
     }
 
     if (count && count > 1) {
-      throw new Error("More than one order found for this collectible and address which is pending or completed");
+      throw new Error(
+        "More than one order found for this collectible and address which is pending or completed"
+      );
     }
 
     // For paid mints, verify and send transaction
@@ -321,17 +350,53 @@ export async function POST(req: Request, res: NextApiResponse) {
           );
           return;
         }
-        const { data, error } = await resend.emails.send({
-          text: "Claim your Collectible!",
-          from: "Daryl <daryl@mail.irls.xyz>",
-          to: [wallet_address],
-          subject: "Claim IRLS your Collectible!",
-          react: TipLinkEmailTemplate({ tiplinkUrl: tiplink_url, nftImageUrl }),
+
+        if (!platform) {
+          throw new Error("Platform not found");
+        }
+
+        let fromEmail = "";
+        let fromName = "";
+        let emailSubject = "";
+        let app_password = "";
+        if (platform == "STREETMINT") {
+          fromEmail = "hello@streetmint.xyz";
+          fromName = "StreetMint";
+          emailSubject = "Claim your StreetMint Collectible!";
+          app_password = process.env.STREETMINT_NODEMAILER_APP_PASSWORD!;
+        } else {
+          fromEmail = "hello@irls.xyz";
+          fromName = "IRLS";
+          emailSubject = "Claim your IRLS Collectible!";
+          app_password = process.env.IRLS_NODEMAILER_APP_PASSWORD!;
+        }
+
+        var transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: fromEmail,
+            pass: app_password,
+          },
         });
 
-        if (error) {
-          console.log(error);
-        }
+        var mailOptions = {
+          from: `${fromName} <${fromEmail}>`,
+          to: wallet_address,
+          subject: emailSubject,
+          html: getEmailTemplateHTML({
+            tiplinkUrl: tiplink_url,
+            nftImageUrl,
+            platform,
+          }),
+        };
+
+        transporter.sendMail(mailOptions, function (error: any, info: any) {
+          if (error) {
+            console.log(error);
+          } else {
+            console.log("Email sent: " + info.response);
+          }
+        });
 
         console.log("Email sent successfully");
       } catch (emailError) {

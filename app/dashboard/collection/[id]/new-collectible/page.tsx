@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -41,6 +40,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Delivery from "@/app/assets/delivery.svg";
 import withAuth from "@/app/dashboard/withAuth";
 import { createProduct } from "@/helpers/stripe";
+import { formatDate } from "@/helper/date";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 interface CreatorRoyalty {
@@ -314,6 +314,8 @@ function CreateCollectiblePage() {
       const uploadedCtaLogoUrl = newCtaLogoImage
         ? await uploadFileToPinata(newCtaLogoImage)
         : null;
+      const mintStartDate = formatDate(collectible.mint_start_date ?? "");
+      const mintEndDate = formatDate(collectible.mint_end_date ?? "");
 
       let stripePriceId: string | null = null;
       if (collectible.enable_card_payments) {
@@ -331,6 +333,8 @@ function CreateCollectiblePage() {
         price_usd: isFreeMint ? 0 : collectible.price_usd,
         cta_logo_url: uploadedCtaLogoUrl,
         stripe_price_id: stripePriceId || "",
+        mint_start_date: mintStartDate,
+        mint_end_date: mintEndDate,
       };
 
       const createdCollectible = await createCollectible(
@@ -716,12 +720,12 @@ function CreateCollectiblePage() {
                       id="mint-start-date"
                       type="datetime-local"
                       value={collectible.mint_start_date ?? ""}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         handleCollectibleChange(
                           "mint_start_date",
                           e.target.value
-                        )
-                      }
+                        );
+                      }}
                       className="text-base w-fit"
                     />
                   </div>

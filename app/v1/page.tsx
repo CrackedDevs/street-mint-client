@@ -17,7 +17,7 @@ export default async function NFTPage({
   const host = headers().get("host") || "";
   const isIrlsDomain = host.includes("irls.xyz");
   console.log("isIrlsDomain", isIrlsDomain);
-  
+
   const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
 
   const data = await checkAuthStatus(
