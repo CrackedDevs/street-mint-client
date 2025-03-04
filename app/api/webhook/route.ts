@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
-  console.log(req.headers, "headers");
+  // console.log(req.headers, "headers");
   const body = await req.json();
   const stripeData: Stripe.Checkout.Session = body.data.object;
   // console.log(body);

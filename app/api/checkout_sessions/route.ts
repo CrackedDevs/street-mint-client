@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log(session, "session server");
+    // console.log(session, "session server");
     await addStripeTransaction(
       session.status!,
       session.id,
