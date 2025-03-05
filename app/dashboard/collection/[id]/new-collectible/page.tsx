@@ -92,6 +92,7 @@ function CreateCollectiblePage() {
     creator_royalty_array: [],
     is_irls: false,
     is_video: false,
+    is_light_version: false,
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -982,6 +983,74 @@ function CreateCollectiblePage() {
                     </div>
                   )}
                 </div>
+
+                <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
+                  <div>
+                    <Label
+                      htmlFor="free-mint-toggle"
+                      className="text-lg font-semibold"
+                    >
+                      Collectible Version{" "}
+                      <span className="text-destructive">*</span>
+                    </Label>
+                  </div>
+                  <div className="flex gap-4">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleCollectibleChange("is_light_version", false)
+                      }
+                      className={`flex-1 p-4 rounded-lg transition-colors relative ${
+                        collectible.is_light_version === false
+                          ? "bg-primary/20"
+                          : "bg-primary/5 hover:bg-primary/10"
+                      }`}
+                    >
+                      <div className="absolute top-4 right-4 w-5 h-5 rounded-full border-2 border-black flex items-center justify-center">
+                        {collectible.is_light_version === false && (
+                          <div className="w-3 h-3 rounded-full bg-black"></div>
+                        )}
+                      </div>
+                      <h3 className="font-bold mb-2">IRLS STANDARD</h3>
+                      <div className="h-0.5 bg-black/10 mb-4"></div>
+                      <div className="space-y-2">
+                        <div>
+                          Lorem ipsum dolor sit amet consectetur adipisicing
+                          elit. Quisquam, quos. Lorem ipsum dolor sit amet
+                          consectetur adipisicing elit. Quisquam, quos.
+                        </div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleCollectibleChange("is_light_version", true)
+                      }
+                      className={`flex-1 p-4 rounded-lg transition-colors relative ${
+                        collectible.is_light_version === true
+                          ? "bg-primary/20"
+                          : "bg-primary/5 hover:bg-primary/10"
+                      }`}
+                    >
+                      <div className="absolute top-4 right-4 w-5 h-5 rounded-full border-2 border-black flex items-center justify-center">
+                        {collectible.is_light_version === true && (
+                          <div className="w-3 h-3 rounded-full bg-black"></div>
+                        )}
+                      </div>
+                      <h3 className="font-bold mb-2">IRLS LIGHT</h3>
+                      <div className="h-0.5 bg-black/10 mb-4"></div>
+                      <div className="space-y-2">
+                        <div>
+                          Lorem ipsum dolor sit amet consectetur adipisicing
+                          elit. Quisquam, quos. Lorem ipsum dolor sit amet
+                          consectetur adipisicing elit. Quisquam, quos.
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
 
                 <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
                   <div className="flex items-center justify-between">
