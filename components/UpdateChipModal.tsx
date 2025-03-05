@@ -78,7 +78,7 @@ export default function UpdateChipModal({
             </label>
             <Input
               id="collectibleId"
-              value={collectibleId.toString()}
+              value={collectibleId?.toString() || ''}
               onChange={(e) => setCollectibleId(parseInt(e.target.value))}
               required
             />

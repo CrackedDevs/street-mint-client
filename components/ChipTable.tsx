@@ -82,7 +82,7 @@ export default function ChipTable({
       .filter(
         (chip) =>
           chip.chip_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          chip.collectible_id.toString().includes(searchQuery.toLowerCase()) ||
+          (chip.collectible_id?.toString() || '').includes(searchQuery.toLowerCase()) ||
           chip.created_at.toLowerCase().includes(searchQuery.toLowerCase()) ||
           chip.metadata.artist
             .toLowerCase()
@@ -104,9 +104,13 @@ export default function ChipTable({
             .includes(searchQuery.toLowerCase())
       )
       .sort((a, b) => {
-        if (a[sortField] < b[sortField])
+        // Handle null values in sorting
+        const aValue = a[sortField] ?? '';
+        const bValue = b[sortField] ?? '';
+        
+        if (aValue < bValue)
           return sortDirection === "asc" ? -1 : 1;
-        if (a[sortField] > b[sortField])
+        if (aValue > bValue)
           return sortDirection === "asc" ? 1 : -1;
         return 0;
       });

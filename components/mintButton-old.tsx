@@ -726,10 +726,10 @@ export default function MintButton({
         showAirdropModal={showAirdropModal}
         setShowAirdropModal={setShowAirdropModal}
       />
-      <CheckInboxModal
+      {/* <CheckInboxModal
         showModal={showMailSentModal}
         setShowModal={setShowMailSentModal}
-      />
+      /> */}
       <WaitlistModal
         showModal={showWaitlistModal}
         setShowModal={setShowWaitlistModal}

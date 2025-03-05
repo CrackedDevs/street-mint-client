@@ -21,7 +21,7 @@ const supabaseAdmin = createClient<Database>(supabaseUrl!, supabaseServiceRoleKe
 export type ChipLink = {
     id: number;
     chip_id: string;
-    collectible_id: number;
+    collectible_id: number | null;
     active: boolean;
     created_at: string;
 }
@@ -204,6 +204,9 @@ export async function getAllChipLinks() {
         }
     
     const allChipLinks : ChipLinkDetailed[] = (await Promise.all(data.map(async (chipLink) => {
+        if (chipLink.collectible_id === null) {
+            return null;
+        }
         const collectible = await fetchCollectibleById(chipLink.collectible_id);
         if (!collectible) {
             console.error("Error fetching collectible:", collectible);

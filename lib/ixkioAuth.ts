@@ -111,7 +111,7 @@ async function getCollectibleData(tagId: string, scanCount: string) {
     const chipLink = await getChipLinkByChipId(tagId);
     if (!chipLink) return null;
 
-    const collectible = await fetchCollectibleById(chipLink.collectible_id);
+    const collectible = await fetchCollectibleById(chipLink.collectible_id || 0);
     if (!collectible) return null;
   
     // Only fetch SOL price if usdc_price is defined and greater than 0

@@ -182,7 +182,7 @@ export default function CollectionOrders() {
         const { data: ordersData, error: ordersError } = await supabase
           .from("orders")
           .select("*")
-          .eq("collectible_id", collectibleId)
+          .eq("collectible_id", Number(collectibleId))
           .order("created_at", { ascending: false });
 
         if (ordersError) {
@@ -196,7 +196,7 @@ export default function CollectionOrders() {
           await supabase
             .from("collectibles")
             .select("id, cta_email_list, cta_text_list")
-            .eq("id", collectibleId)
+            .eq("id", Number(collectibleId))
             .single();
 
         if (collectibleError) {
