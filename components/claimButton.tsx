@@ -901,7 +901,7 @@ export default function MintButton({
       />
       <CheckInboxModal
         showModal={showMailSentModal}
-        setShowModal={setShowMailSentModal}
+        onClose={() => setShowMailSentModal(false)}
       />
       <WaitlistModal
         showModal={showWaitlistModal}

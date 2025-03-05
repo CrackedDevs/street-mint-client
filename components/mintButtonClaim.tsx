@@ -722,7 +722,7 @@ export default function MintButtonClaim({
       />
       <CheckInboxModal
         showModal={showMailSentModal}
-        setShowModal={setShowMailSentModal}
+        onClose={() => setShowMailSentModal(false)}
       />
       <WaitlistModal
         showModal={showWaitlistModal}
