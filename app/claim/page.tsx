@@ -4,30 +4,25 @@ import Gallery from "@/components/gallery";
 import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
 import EditionInformation from "@/components/EditionInformation";
-import { checkAuthStatus } from "@/lib/ixkioAuth";
-import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { useState, useEffect } from "react";
+import {
+  getLightOrderBySignatureCode,
+  LightOrder,
+} from "@/lib/supabaseAdminClient";
+import { checkLightVersionClaimAuthStatus } from "@/lib/claimAuth";
+import EditionInformationClaim from "@/components/EditionInformation-Claim";
 
 export default async function NFTPage({
   searchParams,
 }: {
-  searchParams: { x: string; n: string; e: string };
+  searchParams: { signatureCode: string };
 }) {
-  // Get hostname from headers
   const host = headers().get("host") || "";
   const isIrlsDomain = host.includes("irls.xyz");
-  console.log("isIrlsDomain", isIrlsDomain);
+  const signatureCode = searchParams.signatureCode;
 
-  const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
-
-  const data = await checkAuthStatus(
-    searchParams.x,
-    searchParams.n,
-    searchParams.e,
-    isIrlsDomain
-  );
-
-  if (!data) {
+  if (!signatureCode) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Image
@@ -41,10 +36,24 @@ export default async function NFTPage({
     );
   }
 
-  if (data.is_irls == true && data.redirectUrl) {
-    redirect(data.redirectUrl);
-  } else if (data.is_irls == true) {
-    alert("IRLS is not available for this moment");
+  const lightOrderData = await checkLightVersionClaimAuthStatus(signatureCode);
+
+  if (
+    !lightOrderData ||
+    !lightOrderData.success ||
+    !lightOrderData.lightOrder
+  ) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Image
+          src={isIrlsDomain ? "/irlLogo.svg" : "/logo.svg"}
+          alt={isIrlsDomain ? "IRLS logo" : "Street mint logo"}
+          width={250}
+          height={100}
+          className="h-20 w-auto animate-pulse"
+        />
+      </div>
+    );
   }
 
   const {
@@ -54,10 +63,9 @@ export default async function NFTPage({
     priceInSOL,
     remainingQuantity,
     soldCount,
-  } = data.collectibleData;
+  } = lightOrderData.collectibleData;
 
-  const isIRLtapped = data.isIRLtapped;
-  const scanCount = data.scanCount;
+  const lightOrder = lightOrderData.lightOrder;
 
   return (
     <div className="min-h-screen bg-white text-black">
@@ -102,20 +110,17 @@ export default async function NFTPage({
           </div>
 
           {/* Right column - Details */}
-          <div>
-            <h1 className="text-3xl font-bold mb-2">{collectible.name}</h1>
-            <p className="text-xl text-gray-600 mb-4">
+          {lightOrder && (
+            <div>
+              <h1 className="text-3xl font-bold mb-2">{collectible.name}</h1>
+              <p className="text-xl text-gray-600 mb-4">
               From the &quot;{collection.name}&quot; Collection
             </p>
             {/* Artist Information */}
             <ArtistInfoComponent artist={artist} />
             {/* Edition Information Section */}
-            <EditionInformation
-              x={searchParams.x}
-              n={searchParams.n}
-              e={searchParams.e}
+            <EditionInformationClaim
               soldCount={soldCount}
-              isIRLtapped={isIRLtapped}
               collection={{
                 ...collection,
                 artist: collection.artist || 0,
@@ -127,7 +132,6 @@ export default async function NFTPage({
               }}
               collectible={{
                 ...collectible,
-                stripe_price_id: collectible.stripe_price_id || undefined,
                 creator_royalty_array: collectible.creator_royalty_array as
                   | {
                       creator_wallet_address: string;
@@ -135,6 +139,8 @@ export default async function NFTPage({
                       name: string;
                     }[]
                   | null,
+                enable_card_payments: collectible.enable_card_payments || false,
+                stripe_price_id: collectible.stripe_price_id || undefined,
                 quantity_type: collectible.quantity_type as QuantityType,
                 whitelist: collectible.whitelist || false,
                 cta_enable: collectible.cta_enable || false,
@@ -147,12 +153,13 @@ export default async function NFTPage({
                 cta_text_list: (collectible.cta_text_list || []) as {
                   [key: string]: string;
                 }[],
-                enable_card_payments: collectible.enable_card_payments || false,
               }}
               remainingQuantity={remainingQuantity}
               artistWalletAddress={artist.wallet_address}
+              lightOrder={lightOrder}
             />
-          </div>
+            </div>
+          )}
         </div>
         <div className="max-w-7xl mt-10  mx-auto w-full bg-black text-white rounded-xl  py-8">
           <div className="max-w-7xl  mx-auto px-4">

@@ -11,18 +11,13 @@ import { supabase } from "@/lib/supabaseClient";
 import {
   CreatorRoyalty,
   mintNFTWithBubbleGumTree,
-  resolveSolDomain,
 } from "../../collection.helper";
 import { v4 as uuidv4 } from "uuid";
 import { NextResponse } from "next/server";
 import {
-  getChipTap,
   getSupabaseAdmin,
-  recordChipTapServerAuth,
 } from "@/lib/supabaseAdminClient";
-import { getEmailTemplateHTML } from "@/components/email/tiplink-template";
 import { headers } from "next/headers";
-import nodemailer from "nodemailer";
 
 function verifyTransactionAmount(
   transaction: Transaction | VersionedTransaction,
@@ -115,18 +110,11 @@ export async function POST(req: Request, res: NextApiResponse) {
     orderId,
     signedTransaction,
     priceInSol,
-    tipLinkWalletAddress,
-    isEmail,
-    nftImageUrl,
+    walletAddress,
     collectibleId,
-    chipTapData,
-    isCardPayment,
   } = await req.json();
 
   console.time("Initial Checks Duration"); // Start timing initial checks
-  //log all
-  console.log("tipLinkWalletAddress", tipLinkWalletAddress);
-  console.log("isEmail", isEmail);
   if (!orderId) {
     console.timeEnd("Initial Checks Duration"); // End timing initial checks
     return NextResponse.json(
@@ -134,34 +122,13 @@ export async function POST(req: Request, res: NextApiResponse) {
       { status: 400 }
     );
   }
-  if (!chipTapData) {
-    return NextResponse.json(
-      { success: false, error: "Chip tap data not found" },
-      { status: 400 }
-    );
-  }
 
   try {
-    const transactionUid = uuidv4();
-    const chipTapDataFromDb = await getChipTap(
-      chipTapData.x,
-      chipTapData.n,
-      chipTapData.e,
-      transactionUid
-    );
-
-    if (!chipTapDataFromDb) {
-      throw new Error("Chip tap not found");
-    }
-
-    if (chipTapDataFromDb.server_auth == true) {
-      throw new Error("Chip tap already exists or used");
-    }
 
     console.time("Fetch Order Duration"); // Start timing order fetch
     // Fetch order
     const { data: order, error: fetchError } = await supabase
-      .from("orders")
+      .from("light_orders")
       .select("*, collectibles(name, metadata_uri, creator_royalty_array)")
       .eq("id", orderId)
       .eq("collectible_id", collectibleId)
@@ -176,65 +143,40 @@ export async function POST(req: Request, res: NextApiResponse) {
       throw new Error("No transaction found");
     }
 
-    let resolvedWalletAddress = order.wallet_address;
-    if (order.wallet_address.endsWith(".sol")) {
-      try {
-        resolvedWalletAddress = await resolveSolDomain(
-          connection,
-          order.wallet_address
-        );
-      } catch (error) {
-        throw new Error("Failed to resolve .sol domain");
-      }
-    }
-    console.log("Resolved Wallet Address:", resolvedWalletAddress);
+    let emailAddress = order.email;
 
     const supabaseAdmin = await getSupabaseAdmin();
 
     await new Promise((resolve) => setTimeout(resolve, 700));
 
-    const { count, error: countError } = await supabaseAdmin
-      .from("orders")
-      .select("id", { count: "exact", head: true })
-      .eq("collectible_id", collectibleId)
-      .eq("wallet_address", resolvedWalletAddress)
-      .in("status", ["completed", "pending"]);
+    // const { count, error: countError } = await supabaseAdmin
+    //   .from("light_orders")
+    //   .select("id", { count: "exact", head: true })
+    //   .eq("collectible_id", collectibleId)
+    //   .eq("email", emailAddress)
+    //   .eq("wallet_address", walletAddress)
+    //   .in("status", ["completed", "pending"]);
 
-    if (countError) {
-      throw new Error("Failed to get count of existing orders");
-    }
+    // if (countError) {
+    //   console.error("Error getting count of existing orders:", countError);
+    //   throw new Error("Failed to get count of existing orders");
+    // }
 
-    console.log(
-      "Count of existing orders for collectible of address ",
-      resolvedWalletAddress,
-      " is ",
-      count
-    );
+    // console.log(
+    //   "Count of existing light orders for collectible of address ",
+    //   emailAddress,
+    //   " is ",
+    //   count
+    // );
 
-    const recordSuccess = await recordChipTapServerAuth(
-      chipTapData.x,
-      chipTapData.n,
-      chipTapData.e,
-      transactionUid
-    );
-
-    if (!recordSuccess) {
-      throw new Error(
-        "Failed to record chip tap because it was already used or tried to use it more than once"
-      );
-    }
-
-    if (count && count > 1) {
-      throw new Error(
-        "More than one order found for this collectible and address which is pending or completed"
-      );
-    }
+    // if (count && count > 1) {
+    //   throw new Error(
+    //     "More than one light order found for this collectible with same wallet address which is pending or completed"
+    //   );
+    // }
 
     // For paid mints, verify and send transaction
-    console.log("isCardPayment", isCardPayment);
-    console.log("Iscarpayment typeof", typeof isCardPayment);
-    if (order.price_usd && order.price_usd > 0 && !isCardPayment) {
-      console.log("we are in the tx")
+    if (order.price_usd && order.price_usd > 0) {
       if (!signedTransaction) {
         throw new Error("Missed transaction signature");
       }
@@ -294,7 +236,7 @@ export async function POST(req: Request, res: NextApiResponse) {
         }
       }
     }
-    console.log("we are out of the tx")
+
     const merkleTreePublicKey = process.env.MERKLE_TREE_PUBLIC_KEY;
     const collectionMintPublicKey = process.env.MEGA_COLLECTION_MINT_PUBLIC_KEY;
 
@@ -312,9 +254,7 @@ export async function POST(req: Request, res: NextApiResponse) {
     const mintResult = await mintNFTWithBubbleGumTree(
       merkleTreePublicKey,
       collectionMintPublicKey,
-      isEmail && tipLinkWalletAddress
-        ? tipLinkWalletAddress
-        : resolvedWalletAddress,
+      walletAddress,
       order.collectibles.name,
       order.collectibles.metadata_uri,
       order.collectibles.creator_royalty_array as unknown as CreatorRoyalty[]
@@ -327,84 +267,17 @@ export async function POST(req: Request, res: NextApiResponse) {
     }
     // Update order status
     const { error: updateError } = await supabaseAdmin
-      .from("orders")
+      .from("light_orders")
       .update({
         status: "completed",
         mint_signature: mintResult.signature,
-        wallet_address: resolvedWalletAddress,
+        wallet_address: walletAddress,
       })
       .eq("id", orderId);
 
     if (updateError) {
+      console.error("Error updating order:", updateError);
       throw new Error("Failed to update order");
-    }
-
-    if (isEmail && tipLinkWalletAddress) {
-      //send email
-      console.time("Email Sending Duration"); // Start timing email sending
-      try {
-        const { wallet_address, tiplink_url } = order;
-        if (!wallet_address || !tiplink_url) {
-          console.log(
-            "Missing wallet_address or tiplink_url for email sending"
-          );
-          return;
-        }
-
-        if (!platform) {
-          throw new Error("Platform not found");
-        }
-
-        let fromEmail = "";
-        let fromName = "";
-        let emailSubject = "";
-        let app_password = "";
-        if (platform == "STREETMINT") {
-          fromEmail = "hello@streetmint.xyz";
-          fromName = "StreetMint";
-          emailSubject = "Claim your StreetMint Collectible!";
-          app_password = process.env.STREETMINT_NODEMAILER_APP_PASSWORD!;
-        } else {
-          fromEmail = "hello@irls.xyz";
-          fromName = "IRLS";
-          emailSubject = "Claim your IRLS Collectible!";
-          app_password = process.env.IRLS_NODEMAILER_APP_PASSWORD!;
-        }
-
-        var transporter = nodemailer.createTransport({
-          service: "gmail",
-          port: 465,
-          secure: true,
-          auth: {
-            user: fromEmail,
-            pass: app_password,
-          },
-        });
-
-        var mailOptions = {
-          from: `${fromName} <${fromEmail}>`,
-          to: wallet_address,
-          subject: emailSubject,
-          html: getEmailTemplateHTML({
-            tiplinkUrl: tiplink_url,
-            nftImageUrl,
-            platform,
-          }),
-        };
-
-        transporter.sendMail(mailOptions, function (error: any, info: any) {
-          if (error) {
-            console.log(error);
-          } else {
-            console.log("Email sent: " + info.response);
-          }
-        });
-
-        console.log("Email sent successfully");
-      } catch (emailError) {
-        console.error("Error sending email:", emailError);
-      }
-      console.timeEnd("Email Sending Duration"); // End timing email sending
     }
     console.timeEnd("POST Request Duration"); // End timing the entire POST request
     return NextResponse.json(
@@ -419,7 +292,7 @@ export async function POST(req: Request, res: NextApiResponse) {
     // Update order status to failed
     const supabaseAdmin = await getSupabaseAdmin();
     await supabaseAdmin
-      .from("orders")
+      .from("light_orders")
       .update({ status: "failed" })
       .eq("id", orderId);
     console.timeEnd("POST Request Duration"); // End timing the entire POST request

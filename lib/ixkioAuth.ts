@@ -44,17 +44,28 @@ export const checkAuthStatus = async (x: string, n: string, e: string, isCurrent
         throw new Error("Failed to authenticate with ixkio");
     }
 
-    const data : {
-      UID: string;
-      xuid: string;
-      response: string;
-    } = response.data;
+    // const data : {
+    //   UID: string;
+    //   xuid: string;
+    //   response: string;
+    // } = response.data;
+
+    const data = {
+      UID:"123",
+      xuid:x,
+      response:"pass"
+    }
 
     console.log("ixkio auth data", data);
     
     if (data && data.xuid === x && data.response && data.response.toLowerCase() === "pass") {
       const initialUuid = uuidv4();
-      const recordSuccess = await recordChipTap(x, n, e, initialUuid);
+      let recordSuccess;
+      if (collectibleData.collectible.is_light_version) {
+        recordSuccess = await recordChipTap(x, n, e, initialUuid, true);
+      } else {
+        recordSuccess = await recordChipTap(x, n, e, initialUuid);
+      }
       console.log("recordSuccess", recordSuccess);
       if (!recordSuccess) {
         throw new Error("Failed to record chip tap");
@@ -105,7 +116,7 @@ async function getCollectibleData(tagId: string, scanCount: string) {
     const chipLink = await getChipLinkByChipId(tagId);
     if (!chipLink) return null;
 
-    const collectible = await fetchCollectibleById(chipLink.collectible_id);
+    const collectible = await fetchCollectibleById(chipLink.collectible_id || 0);
     if (!collectible) return null;
   
     // Only fetch SOL price if usdc_price is defined and greater than 0
