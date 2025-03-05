@@ -139,6 +139,8 @@ export default async function NFTPage({
                       name: string;
                     }[]
                   | null,
+                enable_card_payments: collectible.enable_card_payments || false,
+                stripe_price_id: collectible.stripe_price_id || undefined,
                 quantity_type: collectible.quantity_type as QuantityType,
                 whitelist: collectible.whitelist || false,
                 cta_enable: collectible.cta_enable || false,
