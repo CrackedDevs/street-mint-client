@@ -20,9 +20,9 @@ import {
   getSupabaseAdmin,
   recordChipTapServerAuth,
 } from "@/lib/supabaseAdminClient";
-import TipLinkEmailTemplate from "@/components/email/tiplink-template";
-import { resend } from "@/lib/resendMailer";
+import { getEmailTemplateHTML } from "@/components/email/tiplink-template";
 import { headers } from "next/headers";
+import nodemailer from "nodemailer";
 
 function verifyTransactionAmount(
   transaction: Transaction | VersionedTransaction,
@@ -120,6 +120,7 @@ export async function POST(req: Request, res: NextApiResponse) {
     nftImageUrl,
     collectibleId,
     chipTapData,
+    isCardPayment,
   } = await req.json();
 
   console.time("Initial Checks Duration"); // Start timing initial checks
@@ -230,7 +231,10 @@ export async function POST(req: Request, res: NextApiResponse) {
     }
 
     // For paid mints, verify and send transaction
-    if (order.price_usd && order.price_usd > 0) {
+    console.log("isCardPayment", isCardPayment);
+    console.log("Iscarpayment typeof", typeof isCardPayment);
+    if (order.price_usd && order.price_usd > 0 && !isCardPayment) {
+      console.log("we are in the tx")
       if (!signedTransaction) {
         throw new Error("Missed transaction signature");
       }
@@ -290,7 +294,7 @@ export async function POST(req: Request, res: NextApiResponse) {
         }
       }
     }
-
+    console.log("we are out of the tx")
     const merkleTreePublicKey = process.env.MERKLE_TREE_PUBLIC_KEY;
     const collectionMintPublicKey = process.env.MEGA_COLLECTION_MINT_PUBLIC_KEY;
 
@@ -350,30 +354,49 @@ export async function POST(req: Request, res: NextApiResponse) {
         if (!platform) {
           throw new Error("Platform not found");
         }
-        const fromEmail =
-          platform === "STREETMINT"
-            ? "StreetMint <Hello@claim.streetmint.xyz>"
-            : "IRLS <Hello@claim.irls.xyz>";
-        const emailSubject =
-          platform === "STREETMINT"
-            ? "Claim your  StreetMint Collectible!"
-            : "Claim your IRLS Collectible!";
 
-        const { data, error } = await resend.emails.send({
-          text: "Claim your Collectible!",
-          from: fromEmail,
-          to: [wallet_address],
+        let fromEmail = "";
+        let fromName = "";
+        let emailSubject = "";
+        let app_password = "";
+        if (platform == "STREETMINT") {
+          fromEmail = "hello@streetmint.xyz";
+          fromName = "StreetMint";
+          emailSubject = "Claim your StreetMint Collectible!";
+          app_password = process.env.STREETMINT_NODEMAILER_APP_PASSWORD!;
+        } else {
+          fromEmail = "hello@irls.xyz";
+          fromName = "IRLS";
+          emailSubject = "Claim your IRLS Collectible!";
+          app_password = process.env.IRLS_NODEMAILER_APP_PASSWORD!;
+        }
+
+        var transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: fromEmail,
+            pass: app_password,
+          },
+        });
+
+        var mailOptions = {
+          from: `${fromName} <${fromEmail}>`,
+          to: wallet_address,
           subject: emailSubject,
-          react: TipLinkEmailTemplate({
+          html: getEmailTemplateHTML({
             tiplinkUrl: tiplink_url,
             nftImageUrl,
             platform,
           }),
-        });
+        };
 
-        if (error) {
-          console.log(error);
-        }
+        transporter.sendMail(mailOptions, function (error: any, info: any) {
+          if (error) {
+            console.log(error);
+          } else {
+            console.log("Email sent: " + info.response);
+          }
+        });
 
         console.log("Email sent successfully");
       } catch (emailError) {

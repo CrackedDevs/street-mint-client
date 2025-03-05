@@ -27,7 +27,7 @@ export default function ContactForm() {
     e.preventDefault();
     try {
       setIsLoading(true);
-      const result = await sendEmail(name, email, body);
+      const result = await sendEmail(BRAND_NAME, name, email, body);
       setStatus(result);
       if (result.success) {
         setName("");

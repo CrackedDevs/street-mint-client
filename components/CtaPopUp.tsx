@@ -92,15 +92,15 @@ CtaPopUpProps) {
       if (data.success) {
         if (hasEmailCapture && hasTextCapture) {
           toast({
-            title: "Email and text added to list",
+            title: "Thank you :)",
           });
         } else if (hasEmailCapture) {
           toast({
-            title: "Email added to list",
+            title: "Thank you :)",
           });
         } else if (hasTextCapture) {
           toast({
-            title: "Text added to list",
+            title: "Thank you :)",
           });
         }
       } else {
@@ -158,23 +158,23 @@ CtaPopUpProps) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {hasEmailCapture && (
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2  focus:outline-none text-black"
-              required
-            />
-          )}
-
           {hasTextCapture && (
             <input
               type="text"
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Enter your text"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2  focus:outline-none text-black"
+              required
+            />
+          )}
+
+          {hasEmailCapture && (
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
               className="w-full rounded-lg border border-gray-300 px-4 py-2  focus:outline-none text-black"
               required
             />

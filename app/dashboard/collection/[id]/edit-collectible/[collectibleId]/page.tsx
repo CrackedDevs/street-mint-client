@@ -71,6 +71,8 @@ function EditCollectiblePage() {
           cta_text_list: (fetchedCollectible.cta_text_list || []) as {
             [key: string]: string;
           }[],
+          enable_card_payments: fetchedCollectible.enable_card_payments || false,
+          stripe_price_id: fetchedCollectible.stripe_price_id || undefined,
         });
       } else {
         toast({

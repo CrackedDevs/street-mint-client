@@ -6,6 +6,7 @@ import { resolveSolDomain } from '@/app/api/collection/collection.helper';
 import { Connection } from '@solana/web3.js';
 import { pinata } from './pinataConfig';
 
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -61,6 +62,8 @@ export type Collectible = {
     cta_has_text_capture: boolean;
     cta_email_list: { [key: string]: string }[];
     cta_text_list: { [key: string]: string }[];
+    enable_card_payments?: boolean;
+    stripe_price_id?:string
     is_irls: boolean | null;
     is_video: boolean | null;
 };

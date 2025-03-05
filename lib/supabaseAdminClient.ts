@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createFetch, fetchCollectibleById, getCollectionById, getArtistById, Collectible } from "./supabaseClient";
 import { Database } from "./types/database.types";
 import { isSignatureValid } from "./nfcVerificationHellper";
+import Stripe from "stripe";
 
 
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -20,7 +21,7 @@ const supabaseAdmin = createClient<Database>(supabaseUrl!, supabaseServiceRoleKe
 export type ChipLink = {
     id: number;
     chip_id: string;
-    collectible_id: number;
+    collectible_id: number | null;
     active: boolean;
     created_at: string;
 }
@@ -203,6 +204,9 @@ export async function getAllChipLinks() {
         }
     
     const allChipLinks : ChipLinkDetailed[] = (await Promise.all(data.map(async (chipLink) => {
+        if (chipLink.collectible_id === null) {
+            return null;
+        }
         const collectible = await fetchCollectibleById(chipLink.collectible_id);
         if (!collectible) {
             console.error("Error fetching collectible:", collectible);
@@ -309,4 +313,60 @@ export async function deleteChipLink(id: number) {
         return false;
     }
     return true;
+}
+
+export async function addStripeTransaction(status:string,sessionId:string,amount:number,session:Stripe.Checkout.Session){
+    const supabaseAdmin = await getSupabaseAdmin();
+const {data,error}=await supabaseAdmin.from('transactions').insert({
+    status,
+    session_id:sessionId,
+    amount,
+    transaction_dump:JSON.parse(JSON.stringify(session)),
+})
+if(error){
+    console.error('Error adding stripe transaction:', error);
+    throw error;
+}
+return data;
+}
+
+export async function updateStripTransaction(sessionId:string,status:string,orderId:string){
+    const supabaseAdmin = await getSupabaseAdmin();
+    const {data,error}=await supabaseAdmin.from('transactions').update({
+        status,
+        order_id:orderId
+    }).eq('session_id',sessionId)   
+    if(error){
+        console.error('Error updating stripe transaction:', error);
+        throw error;
+    }
+    return data;
+}
+
+export async function getOrderById(sessionId:string){
+    const supabaseAdmin = await getSupabaseAdmin();
+    const {data,error}=await supabaseAdmin.from('transactions').select('*').eq('session_id',sessionId).limit(1)
+
+    if(error){
+        console.error('Error getting session by id:', error);
+        return null;
+    }
+    if(!data[0]){
+        console.error("data not found for order")
+    }
+   const orderId = data[0].order_id
+   if(!orderId){
+    console.error("no orderid found")
+    return
+   }
+   const {data:orderData, error:OrderError} = await supabaseAdmin.from('orders').select('*').eq('id',orderId)
+   if(OrderError){
+    console.error('Error getting order by id:', OrderError);
+    return null;
+   }
+   if(!orderData[0]){
+    console.error("no order data found")
+    return null;
+   }
+   return orderData[0];
 }
