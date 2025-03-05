@@ -39,6 +39,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import Delivery from "@/app/assets/delivery.svg";
 import withAuth from "@/app/dashboard/withAuth";
+import { createProduct } from "@/helpers/stripe";
 import { formatDate } from "@/helper/date";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -86,6 +87,8 @@ function CreateCollectiblePage() {
     cta_email_list: [],
     cta_has_text_capture: false,
     cta_text_list: [],
+    enable_card_payments: false,
+    stripe_price_id: "",
     creator_royalty_array: [],
     is_irls: false,
     is_video: false,
@@ -105,6 +108,28 @@ function CreateCollectiblePage() {
       });
       return;
     }
+
+    if (field === "enable_card_payments" && value === true) {
+      if (collectible.price_usd < 1) {
+        toast({
+          title: "Error",
+          description: "Card payments require a minimum price of $1.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    if (field === "price_usd" && collectible.enable_card_payments && value < 1) {
+      toast({
+        title: "Warning",
+        description: "Card payments will be disabled as price is less than $1.",
+        variant: "default",
+      });
+      setCollectible((prev) => ({ ...prev, enable_card_payments: false, [field]: value }));
+      return;
+    }
+
     setCollectible((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -160,6 +185,7 @@ function CreateCollectiblePage() {
     setIsFreeMint(checked);
     if (checked) {
       handleCollectibleChange("price_usd", 0);
+      handleCollectibleChange("enable_card_payments", false);
     }
   };
 
@@ -264,6 +290,14 @@ function CreateCollectiblePage() {
       });
       return;
     }
+    if (collectible.enable_card_payments && collectible.price_usd < 1) {
+      toast({
+        title: "Error",
+        description: "Card payments require a minimum price of $1.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsSubmitting(true);
     try {
       let primaryImageUrl = "";
@@ -284,6 +318,14 @@ function CreateCollectiblePage() {
       const mintStartDate = formatDate(collectible.mint_start_date ?? "");
       const mintEndDate = formatDate(collectible.mint_end_date ?? "");
 
+      let stripePriceId: string | null = null;
+      if (collectible.enable_card_payments) {
+        stripePriceId = await createProduct(
+          collectible.name,
+          collectible.price_usd
+        );
+      }
+
       const newCollectible: Collectible = {
         ...collectible,
         primary_image_url: primaryImageUrl,
@@ -291,6 +333,7 @@ function CreateCollectiblePage() {
         id: NumericUUID(),
         price_usd: isFreeMint ? 0 : collectible.price_usd,
         cta_logo_url: uploadedCtaLogoUrl,
+        stripe_price_id: stripePriceId || "",
         mint_start_date: mintStartDate,
         mint_end_date: mintEndDate,
       };
@@ -570,28 +613,56 @@ function CreateCollectiblePage() {
                     />
                   </div>
                   {!isFreeMint && (
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="collectible-price"
-                        className="text-lg font-semibold"
-                      >
-                        Price (USD) <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="collectible-price"
-                        type="number"
-                        value={collectible.price_usd}
-                        onChange={(e) =>
-                          handleCollectibleChange(
-                            "price_usd",
-                            parseFloat(e.target.value)
-                          )
-                        }
-                        placeholder="Enter price in USD"
-                        required
-                        className="text-base"
-                      />
-                    </div>
+                    <>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="collectible-price"
+                          className="text-lg font-semibold"
+                        >
+                          Price (USD){" "}
+                          <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id="collectible-price"
+                          type="number"
+                          value={collectible.price_usd}
+                          onChange={(e) =>
+                            handleCollectibleChange(
+                              "price_usd",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          placeholder="Enter price in USD"
+                          required
+                          className="text-base"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <div>
+                          <Label
+                            htmlFor="card-payments-toggle"
+                            className="text-lg font-semibold"
+                          >
+                            Enable Card Payments
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Allow users to pay with credit/debit cards
+                          </p>
+                        </div>
+                        <Switch
+                          id="card-payments-toggle"
+                          checked={collectible.enable_card_payments}
+                          onCheckedChange={(checked) =>
+                            handleCollectibleChange(
+                              "enable_card_payments",
+                              checked
+                            )
+                          }
+                          className="scale-125"
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
 

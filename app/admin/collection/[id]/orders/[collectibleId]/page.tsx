@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { Collectible, supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Copy } from "lucide-react";
 import {
@@ -37,6 +37,7 @@ import { SolanaFMService } from "@/lib/services/solanaExplorerService";
 import { toast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import Papa from "papaparse";
+import { Json } from "@/lib/types/database.types";
 
 interface Order {
   id: string;
@@ -72,6 +73,7 @@ export default function CollectionOrders() {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLightVersion, setIsLightVersion] = useState<boolean>(false);
+  const [collectible, setCollectible] = useState<Collectible | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -196,20 +198,34 @@ export default function CollectionOrders() {
           console.error("Error fetching collectible:", collectibleError);
           return;
         }
-
+          
         setIsLightVersion(collectibleData.is_light_version);
 
         // Then fetch orders from the appropriate table
         const { data, error } = await supabase
           .from(collectibleData.is_light_version ? "light_orders" : "orders")
           .select("*")
-          .eq("collectible_id", collectibleId)
+          .eq("collectible_id", Number(collectibleId))
           .order("created_at", { ascending: false });
 
-        if (error) {
-          console.error("Error fetching orders:", error);
+        if (ordersError) {
+          console.error("Error fetching orders:", ordersError);
         } else {
-          setOrders(data || []);
+          setOrders(ordersData || []);
+        }
+
+        // Fetch collectible data
+        const { data: collectibleData, error: collectibleError } =
+          await supabase
+            .from("collectibles")
+            .select("id, cta_email_list, cta_text_list")
+            .eq("id", Number(collectibleId))
+            .single();
+
+        if (collectibleError) {
+          console.error("Error fetching collectible:", collectibleError);
+        } else {
+          setCollectible(collectibleData as Collectible);
         }
       }
     }
@@ -267,6 +283,61 @@ export default function CollectionOrders() {
       "download",
       `${isLightVersion ? "light-" : ""}orders-${collectibleId}.csv`
     );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportCtaData = () => {
+    if (!collectible) {
+      toast({
+        title: "Error",
+        description: "No collectible data available",
+      });
+      return;
+    }
+
+    const emailList = collectible.cta_email_list || [];
+    const textList = collectible.cta_text_list || [];
+
+    const csvData = {
+      emails: emailList.map((entry) => {
+        const obj = entry as { [key: string]: string };
+        const [walletAddress, email] = Object.entries(obj)[0] || ["", ""];
+        return { walletAddress, value: email };
+      }),
+      texts: textList.map((entry) => {
+        const obj = entry as { [key: string]: string };
+        const [walletAddress, text] = Object.entries(obj)[0] || ["", ""];
+        return { walletAddress, value: text };
+      }),
+    };
+
+    const csv = Papa.unparse({
+      fields: [
+        "Wallet Address",
+        "Email Address",
+        // "Wallet Address",
+        "Text Response",
+      ],
+      data: Array.from(
+        { length: Math.max(csvData.emails.length, csvData.texts.length) },
+        (_, i) => [
+          csvData.emails[i]?.walletAddress ||
+            csvData.texts[i]?.walletAddress ||
+            "",
+          csvData.emails[i]?.value || "",
+          // csvData.texts[i]?.walletAddress || "",
+          csvData.texts[i]?.value || "",
+        ]
+      ),
+    });
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `cta-data-collectible-${collectibleId}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -393,6 +464,9 @@ export default function CollectionOrders() {
         </div>
         <Button variant="outline" onClick={() => exportToCSV()}>
           Export to CSV
+        </Button>
+        <Button variant="outline" onClick={exportCtaData}>
+          Export CTA Data
         </Button>
         <div className="space-x-2 flex items-center">
           <Button

@@ -57,26 +57,36 @@ export type Database = {
       chip_links: {
         Row: {
           active: boolean
+          artists_id: number | null
           chip_id: string
-          collectible_id: number
+          collectible_id: number | null
           created_at: string
           id: number
         }
         Insert: {
           active?: boolean
+          artists_id?: number | null
           chip_id: string
-          collectible_id: number
+          collectible_id?: number | null
           created_at?: string
           id?: number
         }
         Update: {
           active?: boolean
+          artists_id?: number | null
           chip_id?: string
-          collectible_id?: number
+          collectible_id?: number | null
           created_at?: string
           id?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "chip_links_artists_id_fkey"
+            columns: ["artists_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chip_links_collectible_id_fkey"
             columns: ["collectible_id"]

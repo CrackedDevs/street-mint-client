@@ -150,7 +150,9 @@ export function getEmailTemplateHTML({
             text-align: center;
             margin-bottom: 20px;"
         >
-          Congratulations! Your ${platform === "STREETMINT" ? "StreetMint" : "IRLS"} Collectible is
+          Congratulations! Your ${
+            platform === "STREETMINT" ? "StreetMint" : "IRLS"
+          } Collectible is
           ready to be claimed 🎉
         </h2>
         <img

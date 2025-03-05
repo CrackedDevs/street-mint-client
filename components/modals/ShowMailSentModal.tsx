@@ -7,15 +7,15 @@ import { Mail } from "lucide-react";
 
 const CheckInboxModal = ({
   showModal,
-  setShowModal,
+  onClose,
 }: {
   showModal: boolean;
-  setShowModal: (show: boolean) => void;
+  onClose: () => void;
 }) => {
   if (!showModal) return null;
 
   return (
-    <Dialog open={showModal} onOpenChange={setShowModal}>
+    <Dialog open={showModal} onOpenChange={onClose}>
       <DialogContent>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -50,7 +50,7 @@ const CheckInboxModal = ({
           </p>
 
           <Button
-            onClick={() => setShowModal(false)}
+            onClick={onClose}
             className="bg-primary text-white px-6 py-2 rounded-full hover:bg-primary-dark transition-colors duration-200"
           >
             Got it, thanks!

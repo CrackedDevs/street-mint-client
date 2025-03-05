@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { PopulatedCollection } from "@/lib/supabaseClient";
 import CollectionCard from "@/components/collectionCard";
-import { loginAdmin } from "./actions";
+import { loginAdmin, checkAdminSession } from "./actions";
 import { Button } from "@/components/ui/button";
 import AddChipForm from "@/components/AddChipForm";
 import ChipTable from "@/components/ChipTable";
@@ -23,7 +24,9 @@ enum Section {
 }
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [password, setPassword] = useState("");
   const [collections, setCollections] = useState<PopulatedCollection[]>([]);
   const [selectedSection, setSelectedSection] = useState<Section>(
@@ -31,15 +34,35 @@ export default function AdminDashboard() {
   );
   const [chipLinks, setChipLinks] = useState<ChipLinkDetailed[]>([]);
 
+  useEffect(() => {
+    const checkSession = async () => {
+      const { isLoggedIn, collections } = await checkAdminSession();
+      setIsLoggedIn(isLoggedIn);
+      if (isLoggedIn && collections) {
+        setCollections(collections);
+        fetchChipLinks();
+      }
+      setIsLoading(false);
+    };
+
+    checkSession();
+  }, []);
+
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsLoading(true);
     const result = await loginAdmin(password);
+
     if (result.success) {
       setIsLoggedIn(true);
       setCollections(result.collections);
+      fetchChipLinks();
+      // Navigate to a protected route after successful login
+      router.push("/admin/collection");
     } else {
       alert("Incorrect password");
     }
+    setIsLoading(false);
   };
 
   const fetchChipLinks = async () => {
@@ -49,12 +72,6 @@ export default function AdminDashboard() {
       setChipLinks(links);
     }
   };
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      fetchChipLinks();
-    }
-  }, [isLoggedIn]);
 
   const addChipLink = async (chipLink: ChipLinkCreate) => {
     const result = await createChipLink(chipLink);
@@ -72,6 +89,14 @@ export default function AdminDashboard() {
     await updateChipLink(id, chipLink);
     fetchChipLinks();
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   if (!isLoggedIn) {
     return (

@@ -120,6 +120,7 @@ export async function POST(req: Request, res: NextApiResponse) {
     nftImageUrl,
     collectibleId,
     chipTapData,
+    isCardPayment,
   } = await req.json();
 
   console.time("Initial Checks Duration"); // Start timing initial checks
@@ -230,7 +231,10 @@ export async function POST(req: Request, res: NextApiResponse) {
     }
 
     // For paid mints, verify and send transaction
-    if (order.price_usd && order.price_usd > 0) {
+    console.log("isCardPayment", isCardPayment);
+    console.log("Iscarpayment typeof", typeof isCardPayment);
+    if (order.price_usd && order.price_usd > 0 && !isCardPayment) {
+      console.log("we are in the tx")
       if (!signedTransaction) {
         throw new Error("Missed transaction signature");
       }
@@ -290,7 +294,7 @@ export async function POST(req: Request, res: NextApiResponse) {
         }
       }
     }
-
+    console.log("we are out of the tx")
     const merkleTreePublicKey = process.env.MERKLE_TREE_PUBLIC_KEY;
     const collectionMintPublicKey = process.env.MEGA_COLLECTION_MINT_PUBLIC_KEY;
 
@@ -368,13 +372,13 @@ export async function POST(req: Request, res: NextApiResponse) {
         }
 
         var transporter = nodemailer.createTransport({
-          service: 'gmail',
+          service: "gmail",
           auth: {
             user: fromEmail,
-            pass: app_password
-          }
+            pass: app_password,
+          },
         });
-        
+
         var mailOptions = {
           from: `${fromName} <${fromEmail}>`,
           to: wallet_address,
@@ -385,12 +389,12 @@ export async function POST(req: Request, res: NextApiResponse) {
             platform,
           }),
         };
-        
-        transporter.sendMail(mailOptions, function(error: any, info: any){
+
+        transporter.sendMail(mailOptions, function (error: any, info: any) {
           if (error) {
             console.log(error);
           } else {
-            console.log('Email sent: ' + info.response);
+            console.log("Email sent: " + info.response);
           }
         });
 

@@ -77,7 +77,10 @@ export default function LandingPage() {
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-900 font-semibold">
               Want to work with {BRAND_NAME}?{" "}
-              <Link href="/contact-us" className="underline hover:text-gray-700 transition-colors">
+              <Link
+                href="/contact-us"
+                className="underline hover:text-gray-700 transition-colors"
+              >
                 Reach out here
               </Link>
             </p>

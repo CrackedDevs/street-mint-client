@@ -17,7 +17,7 @@ export default async function NFTPage({
   const host = headers().get("host") || "";
   const isIrlsDomain = host.includes("irls.xyz");
   console.log("isIrlsDomain", isIrlsDomain);
-  
+
   const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
 
   const data = await checkAuthStatus(
@@ -127,6 +127,7 @@ export default async function NFTPage({
               }}
               collectible={{
                 ...collectible,
+                stripe_price_id: collectible.stripe_price_id || undefined,
                 creator_royalty_array: collectible.creator_royalty_array as
                   | {
                       creator_wallet_address: string;
@@ -146,6 +147,7 @@ export default async function NFTPage({
                 cta_text_list: (collectible.cta_text_list || []) as {
                   [key: string]: string;
                 }[],
+                enable_card_payments: collectible.enable_card_payments || false,
               }}
               remainingQuantity={remainingQuantity}
               artistWalletAddress={artist.wallet_address}
