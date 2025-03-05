@@ -198,7 +198,8 @@ export default function CollectionOrders() {
           console.error("Error fetching collectible:", collectibleError);
           return;
         }
-          
+
+        setCollectible(collectibleData as Collectible);
         setIsLightVersion(collectibleData.is_light_version);
 
         // Then fetch orders from the appropriate table
@@ -208,24 +209,10 @@ export default function CollectionOrders() {
           .eq("collectible_id", Number(collectibleId))
           .order("created_at", { ascending: false });
 
-        if (ordersError) {
-          console.error("Error fetching orders:", ordersError);
+        if (error) {
+          console.error("Error fetching orders:", error);
         } else {
-          setOrders(ordersData || []);
-        }
-
-        // Fetch collectible data
-        const { data: collectibleData, error: collectibleError } =
-          await supabase
-            .from("collectibles")
-            .select("id, cta_email_list, cta_text_list")
-            .eq("id", Number(collectibleId))
-            .single();
-
-        if (collectibleError) {
-          console.error("Error fetching collectible:", collectibleError);
-        } else {
-          setCollectible(collectibleData as Collectible);
+          setOrders(data || []);
         }
       }
     }
