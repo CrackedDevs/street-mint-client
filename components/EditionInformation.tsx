@@ -141,7 +141,7 @@ const EditionInformation = ({
             </span>
           </div>
           <div className="flex justify-between text-sm mt-2 md:mt-0 md:flex-col md:items-end">
-            {soldCount > 0 && <span>Minted: {soldCount}</span>}
+            {soldCount > 0 && <span>Collected: {soldCount}</span>}
             <Badge
               variant="outline"
               className="border-white/20 text-white md:mt-2 rounded-xl"
