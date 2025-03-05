@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,9 +52,6 @@ interface CreatorRoyalty {
 function CreateCollectiblePage() {
   const router = useRouter();
   const { id: collectionId } = useParams();
-  const searchParams = useSearchParams();
-  const isCardParam = searchParams.get("isCard");
-  const showCardToggle = isCardParam?.toLowerCase() === "true" && true;
 
   const { toast } = useToast();
   const { publicKey } = useWallet();
@@ -650,32 +647,30 @@ function CreateCollectiblePage() {
                         />
                       </div>
 
-                      {showCardToggle && (
-                        <div className="flex items-center justify-between pt-4 border-t">
-                          <div>
-                            <Label
-                              htmlFor="card-payments-toggle"
-                              className="text-lg font-semibold"
-                            >
-                              Enable Card Payments
-                            </Label>
-                            <p className="text-sm text-muted-foreground">
-                              Allow users to pay with credit/debit cards
-                            </p>
-                          </div>
-                          <Switch
-                            id="card-payments-toggle"
-                            checked={collectible.enable_card_payments}
-                            onCheckedChange={(checked) =>
-                              handleCollectibleChange(
-                                "enable_card_payments",
-                                checked
-                              )
-                            }
-                            className="scale-125"
-                          />
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <div>
+                          <Label
+                            htmlFor="card-payments-toggle"
+                            className="text-lg font-semibold"
+                          >
+                            Enable Card Payments
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Allow users to pay with credit/debit cards
+                          </p>
                         </div>
-                      )}
+                        <Switch
+                          id="card-payments-toggle"
+                          checked={collectible.enable_card_payments}
+                          onCheckedChange={(checked) =>
+                            handleCollectibleChange(
+                              "enable_card_payments",
+                              checked
+                            )
+                          }
+                          className="scale-125"
+                        />
+                      </div>
                     </>
                   )}
                 </div>
