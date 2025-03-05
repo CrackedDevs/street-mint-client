@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,10 @@ interface CreatorRoyalty {
 function CreateCollectiblePage() {
   const router = useRouter();
   const { id: collectionId } = useParams();
+  const searchParams = useSearchParams();
+  const isCardParam = searchParams.get("isCard");
+  const showCardToggle = isCardParam?.toLowerCase() === "true" && true;
+
   const { toast } = useToast();
   const { publicKey } = useWallet();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -120,13 +124,21 @@ function CreateCollectiblePage() {
       }
     }
 
-    if (field === "price_usd" && collectible.enable_card_payments && value < 1) {
+    if (
+      field === "price_usd" &&
+      collectible.enable_card_payments &&
+      value < 1
+    ) {
       toast({
         title: "Warning",
         description: "Card payments will be disabled as price is less than $1.",
         variant: "default",
       });
-      setCollectible((prev) => ({ ...prev, enable_card_payments: false, [field]: value }));
+      setCollectible((prev) => ({
+        ...prev,
+        enable_card_payments: false,
+        [field]: value,
+      }));
       return;
     }
 
@@ -638,30 +650,32 @@ function CreateCollectiblePage() {
                         />
                       </div>
 
-                      <div className="flex items-center justify-between pt-4 border-t">
-                        <div>
-                          <Label
-                            htmlFor="card-payments-toggle"
-                            className="text-lg font-semibold"
-                          >
-                            Enable Card Payments
-                          </Label>
-                          <p className="text-sm text-muted-foreground">
-                            Allow users to pay with credit/debit cards
-                          </p>
+                      {showCardToggle && (
+                        <div className="flex items-center justify-between pt-4 border-t">
+                          <div>
+                            <Label
+                              htmlFor="card-payments-toggle"
+                              className="text-lg font-semibold"
+                            >
+                              Enable Card Payments
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                              Allow users to pay with credit/debit cards
+                            </p>
+                          </div>
+                          <Switch
+                            id="card-payments-toggle"
+                            checked={collectible.enable_card_payments}
+                            onCheckedChange={(checked) =>
+                              handleCollectibleChange(
+                                "enable_card_payments",
+                                checked
+                              )
+                            }
+                            className="scale-125"
+                          />
                         </div>
-                        <Switch
-                          id="card-payments-toggle"
-                          checked={collectible.enable_card_payments}
-                          onCheckedChange={(checked) =>
-                            handleCollectibleChange(
-                              "enable_card_payments",
-                              checked
-                            )
-                          }
-                          className="scale-125"
-                        />
-                      </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -1050,7 +1064,6 @@ function CreateCollectiblePage() {
                     </button>
                   </div>
                 </div>
-
 
                 <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
                   <div className="flex items-center justify-between">
