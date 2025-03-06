@@ -115,14 +115,9 @@ const EditionInformation = ({
               collectible.quantity_type as QuantityType
             )}
           </Badge>
-          {collectible.is_light_version === true && (
-            <Badge
-              variant="outline"
-              className="border-gray-500 text-white text-sm rounded-xl bg-gray-500"
-            >
-              Light Version
-            </Badge>
-          )}
+          <div className="text-sm">
+            {soldCount > 0 && <span>Collected: {soldCount}</span>}
+          </div>
           {collectible.quantity_type === QuantityType.Limited &&
             remainingQuantity !== null && (
               <span className="text-sm font-medium">
@@ -132,24 +127,13 @@ const EditionInformation = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-4 md:space-y-6">
-        <div className="md:flex md:justify-between md:items-center pt-4">
-          <div className="text-center md:text-left pb-2">
+          <div className="text-center md:text-left py-2 md:py-4">
             <span className="text-3xl md:text-4xl font-bold">
               {collectible.price_usd === 0
                 ? "Free Collectible"
                 : `$${collectible.price_usd.toFixed(2)}`}
             </span>
           </div>
-          <div className="flex justify-between text-sm mt-2 md:mt-0 md:flex-col md:items-end">
-            {soldCount > 0 && <span>Collected: {soldCount}</span>}
-            <Badge
-              variant="outline"
-              className="border-white/20 text-white md:mt-2 rounded-xl"
-            >
-              EXCLUSIVELY IRL ONLY <Earth className="ml-2 w-4 h-4" />
-            </Badge>
-          </div>
-        </div>
         <div className="flex items-center justify-center md:justify-start space-x-2 bg-white/10 rounded-full py-2 px-4">
           <Badge
             variant="secondary"
@@ -178,35 +162,35 @@ const EditionInformation = ({
           )}
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col md:flex-row md:justify-between md:items-center space-y-2 md:space-y-0 md:space-x-4">
-        <MintButton
-          x={x}
-          n={n}
-          e={e}
-          isIRLtapped={
-            process.env.NEXT_PUBLIC_NODE_ENV === "development"
-              ? true
-              : effectiveIsIRLtapped
-          }
-          artistWalletAddress={artistWalletAddress}
-          collectible={{
-            ...collectible,
-            quantity_type: collectible.quantity_type as QuantityType,
-          }}
-          collection={{
-            ...collection,
-          }}
-          mintStatus={mintingStatus}
-        />
-        <div className="text-center md:text-right text-sm">
-          <AnimatedShinyText className="inline-flex w-fit items-center justify-center px-2 md:px-4 py-1 transition ease-out text-white hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
-            <span>✨ Gasless Mint</span>
-          </AnimatedShinyText>
-          <p className="text-xs mt-1 text-white/70">
-            {isIRLSmint
-              ? "Locate the IRLS Mint station, tap it with your phone to claim your digital collectible."
-              : "Locate the Street Mint station, tap it with your phone to claim your digital collectible."}
-          </p>
+      <CardFooter className="w-full flex flex-col md:items-center space-y-6 md:space-y-6">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0 md:space-x-4 w-full">
+          <MintButton
+            x={x}
+            n={n}
+            e={e}
+            isIRLtapped={
+              process.env.NEXT_PUBLIC_NODE_ENV === "development"
+                ? true
+                : effectiveIsIRLtapped
+            }
+            artistWalletAddress={artistWalletAddress}
+            collectible={{
+              ...collectible,
+              quantity_type: collectible.quantity_type as QuantityType,
+            }}
+            collection={{
+              ...collection,
+            }}
+            mintStatus={mintingStatus}
+          />
+          {!collectible.is_light_version && <div className="text-center md:text-right text-sm">
+            <AnimatedShinyText className="inline-flex w-fit items-center justify-center px-2 md:px-4 pt-2 transition ease-out text-white hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
+              <span>✨ Gasless Mint</span>
+            </AnimatedShinyText>
+          </div>}
+        </div>
+        <div className="text-center text-sm font-semibold">
+          ONLY AVAILABLE IRL
         </div>
       </CardFooter>
     </Card>

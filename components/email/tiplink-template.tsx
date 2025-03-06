@@ -149,11 +149,7 @@ export function getEmailTemplateHTML({
             color: #4a4a4a;
             text-align: center;
             margin-bottom: 20px;"
-        >
-          Congratulations! Your ${
-            platform === "STREETMINT" ? "StreetMint" : "IRLS"
-          } Collectible is
-          ready to be claimed 🎉
+        >${platform === "STREETMINT" ? `Congrats on becoming the owner of this rare piece of street art history 🏙️  This link is your golden ticket to your unique collectible.  It will always be here in your inbox, so you're all set.` : `Success! This IRLS Collectible is now officially yours.`}
         </h2>
         <img
           src="${nftImageUrl}"
@@ -165,7 +161,7 @@ export function getEmailTemplateHTML({
             margin: 0 auto 20px;
             border-radius: 10px;"
         />
-        <p>Hey there! Your awesome Collectible is minted and ready to go.</p>
+        <p>${platform === "STREETMINT" ? `If you would like to transfer ownership or trade your collectible on a secondary marketplace, just click the claim button below.` : `This link is your golden ticket to your unique collectible.  It will always be here in your inbox, so you're all set. If you would like to transfer ownership or trade your collectible on a secondary marketplace, just click the claim button below. `}</p>
         <a
           href="${tiplinkUrl}"
           style="
@@ -180,14 +176,19 @@ export function getEmailTemplateHTML({
             font-weight: bold;
             text-transform: uppercase;"
         >
-          Claim Your Collectible
+          ✨ Claim  ✨
         </a>
-        <p>
-          This link is your golden ticket to your ${
+        <p>${
             platform === "STREETMINT"
-              ? "StreetMint Collectible"
-              : "IRLS Collectible"
-          }. Make sure you claim it to qualify for digital and physical prizes!
+              ? `P.S. Want to learn more about Street Mint and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://streetmint.xyz/faq">https://streetmint.xyz/faq</a>`
+              : `P.S. Want to learn more about IRLS and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://irls.xyz/faq">https://irls.xyz/faq</a>`
+          }
+        </p>
+        <p>${
+            platform === "STREETMINT"
+              ? `P.P.S. Show off your latest find! Share your new collectible on social media with #StreetMint and tag us <a href="https://www.instagram.com/streetmint.xyz">https://www.instagram.com/streetmint.xyz</a>`
+              : `P.P.S. Show off your latest find! Share your new collectible on social media with #StreetMint and tag us <a href="https://www.instagram.com/streetmint.xyz">https://www.instagram.com/streetmint.xyz</a>`
+          }
         </p>
       </div>
     </div>`;

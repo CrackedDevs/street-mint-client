@@ -30,7 +30,7 @@ export default function RootLayout({
           <UserProfileProvider>
             <FpjsProvider
               loadOptions={{
-                apiKey: "eWFatM86xt5behmgNQd3",
+                apiKey: process.env.NEXT_PUBLIC_FINGERPRINT_API_KEY || "",
                 // region: "us",
               }}
             >
