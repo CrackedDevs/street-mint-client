@@ -334,9 +334,10 @@ export default function MintButtonClaim({
     if (isEmail) {
       toast({
         title: "Error",
-        description: "Please enter a valid email address",
+        description: "Please enter a valid wallet address",
         variant: "destructive",
       });
+      return;
     }
     console.log("isEmail", isEmail);
     console.log("addressToUse", addressToUse);
