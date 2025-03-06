@@ -1205,7 +1205,7 @@ export default function MintButton({
                     renderLightVersionMintButton()}
                 </div>
               )}
-              {!isLightVersion && isFreeMint ? (
+              {!isLightVersion && (isFreeMint ? (
                 <div className="w-full flex mt-2 gap-4 flex-col items-center justify-center">
                   <Input
                     type="text"
@@ -1237,7 +1237,7 @@ export default function MintButton({
                     renderMintButton()}
                   {isCardPaymentEnable && !connected && renderMintButton()}
                 </div>
-              )}
+              ))}
             </div>
 
             {error && <p className="text-red-500 mt-2">{error}</p>}
