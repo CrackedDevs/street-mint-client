@@ -118,14 +118,6 @@ const EditionInformation = ({
           <div className="text-sm">
             {soldCount > 0 && <span>Collected: {soldCount}</span>}
           </div>
-          {collectible.is_light_version === true && (
-            <Badge
-              variant="outline"
-              className="border-gray-500 text-white text-sm rounded-xl bg-gray-500"
-            >
-              Light Version
-            </Badge>
-          )}
           {collectible.quantity_type === QuantityType.Limited &&
             remainingQuantity !== null && (
               <span className="text-sm font-medium">
@@ -170,7 +162,7 @@ const EditionInformation = ({
           )}
         </div>
       </CardContent>
-      <CardFooter className="w-full flex flex-col md:items-center space-y-4 md:space-y-6">
+      <CardFooter className="w-full flex flex-col md:items-center space-y-6 md:space-y-6">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0 md:space-x-4 w-full">
           <MintButton
             x={x}
@@ -191,11 +183,11 @@ const EditionInformation = ({
             }}
             mintStatus={mintingStatus}
           />
-          <div className="text-center md:text-right text-sm">
-            <AnimatedShinyText className="inline-flex w-fit items-center justify-center px-2 md:px-4 py-1 transition ease-out text-white hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
+          {!collectible.is_light_version && <div className="text-center md:text-right text-sm">
+            <AnimatedShinyText className="inline-flex w-fit items-center justify-center px-2 md:px-4 pt-2 transition ease-out text-white hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
               <span>✨ Gasless Mint</span>
             </AnimatedShinyText>
-          </div>
+          </div>}
         </div>
         <div className="text-center text-sm font-semibold">
           ONLY AVAILABLE IRL
