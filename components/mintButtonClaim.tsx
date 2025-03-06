@@ -660,7 +660,7 @@ export default function MintButtonClaim({
   const renderMintButton = () => (
     <WhiteBgShimmerButton
       borderRadius="9999px"
-      className="w-full my-4 text-black hover:bg-gray-800 h-[40px] rounded font-bold"
+      className="w-full my-4 text-black hover:bg-gray-800 h-[44px] rounded font-bold"
       onClick={handleMintClick}
       disabled={isMinting || existingOrder?.status === "completed" || isLoading}
     >
@@ -671,7 +671,7 @@ export default function MintButtonClaim({
   const renderLightVersionMintButton = () => (
     <WhiteBgShimmerButton
       borderRadius="9999px"
-      className="w-full my-4 text-black hover:bg-gray-800 h-[40px] rounded font-bold"
+      className="w-full my-4 text-black hover:bg-gray-800 h-[44px] rounded font-bold"
       onClick={handleLightVersionClaim}
       disabled={isMinting || existingOrder?.status === "completed" || isLoading}
     >
