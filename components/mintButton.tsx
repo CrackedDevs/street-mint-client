@@ -278,7 +278,7 @@ export default function MintButton({
 
         const order = await getExistingLightOrder(
           addressToCheck,
-          collectible.id,
+          collectible.id
         );
         setExistingOrder(order);
         if (order) {
@@ -356,7 +356,6 @@ export default function MintButton({
   }
 
   useEffect(() => {
-
     if (collectible.is_light_version) {
       console.log("collectible.is_light_version", collectible.is_light_version);
       checkEligibilityAndExistingLightOrder();
@@ -981,18 +980,6 @@ export default function MintButton({
     </WhiteBgShimmerButton>
   );
 
-  useEffect(() => {
-    console.log("existingOrder", existingOrder);
-  }, [existingOrder]);
-
-  useEffect(() => {
-    console.log("transactionSignature", transactionSignature);
-  }, [transactionSignature]);
-
-  useEffect(() => {
-    console.log("isLightVersion", isLightVersion);
-  }, [isLightVersion]);
-
   const renderLightVersionMintButton = () => (
     <WhiteBgShimmerButton
       borderRadius="9999px"
@@ -1196,10 +1183,10 @@ export default function MintButton({
           setShowCtaPopUp(true);
         }}
       />
-      {!isLightVersion && (transactionSignature || existingOrder?.status === "completed") &&
+      {!isLightVersion &&
+        (transactionSignature || existingOrder?.status === "completed") &&
         renderCompletedMint()}
-      {isLightVersion && signatureCode &&
-        renderCompletedClaim()}
+      {isLightVersion && signatureCode && renderCompletedClaim()}
       {mintStatus === "ongoing" &&
         !(transactionSignature || existingOrder?.status === "completed") && (
           <div className="flex flex-col items-center justify-center w-full">
@@ -1217,8 +1204,8 @@ export default function MintButton({
                     walletAddress &&
                     renderLightVersionMintButton()}
                 </div>
-              )} 
-              {!isLightVersion ? isFreeMint ? (
+              )}
+              {!isLightVersion && isFreeMint ? (
                 <div className="w-full flex mt-2 gap-4 flex-col items-center justify-center">
                   <Input
                     type="text"
@@ -1250,7 +1237,7 @@ export default function MintButton({
                     renderMintButton()}
                   {isCardPaymentEnable && !connected && renderMintButton()}
                 </div>
-              ) : <></>}
+              )}
             </div>
 
             {error && <p className="text-red-500 mt-2">{error}</p>}
