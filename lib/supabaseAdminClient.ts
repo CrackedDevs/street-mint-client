@@ -409,3 +409,25 @@ export async function getOrderById(sessionId:string){
    }
    return orderData[0];
 }
+
+export async function getLightOrdersByEmail(email: string, page: number = 0, pageSize: number = 20) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const start = page * pageSize;
+    
+    const { data, error, count } = await supabaseAdmin
+        .from('light_orders')
+        .select('*, collectibles(name, primary_image_url)', { count: 'exact' })
+        .eq('email', email)
+        .order('created_at', { ascending: false })
+        .range(start, start + pageSize - 1);
+
+    if (error) {
+        console.error('Error getting light orders by email:', error);
+        return { orders: null, total: 0 };
+    }
+
+    return { 
+        orders: data, 
+        total: count || 0 
+    };
+}

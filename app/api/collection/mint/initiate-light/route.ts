@@ -141,7 +141,7 @@ export async function POST(req: Request, res: NextApiResponse) {
         }),
       };
 
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 400));
 
       const { data: existingLightOrder, error: lightOrderError } = await supabase
       .from('light_orders')

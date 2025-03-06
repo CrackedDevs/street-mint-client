@@ -362,12 +362,12 @@ export async function POST(req: Request, res: NextApiResponse) {
         if (platform == "STREETMINT") {
           fromEmail = "hello@streetmint.xyz";
           fromName = "StreetMint";
-          emailSubject = "Claim your StreetMint Collectible!";
+          emailSubject = "🎉 You now own a Street Mint Collectible! 🎉";
           app_password = process.env.STREETMINT_NODEMAILER_APP_PASSWORD!;
         } else {
           fromEmail = "hello@irls.xyz";
           fromName = "IRLS";
-          emailSubject = "Claim your IRLS Collectible!";
+          emailSubject = "Congrats! You now own an IRLS Collectible";
           app_password = process.env.IRLS_NODEMAILER_APP_PASSWORD!;
         }
 
