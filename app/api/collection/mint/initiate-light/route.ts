@@ -128,6 +128,8 @@ export async function POST(req: Request, res: NextApiResponse) {
           user: fromEmail,
           pass: app_password,
         },
+        debug: true,
+        logger: true,
       });
 
       const mailOptions = {

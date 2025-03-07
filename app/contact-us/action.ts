@@ -33,6 +33,8 @@ export async function sendEmail(
         user: fromEmail,
         pass: app_password,
       },
+      debug: true,
+      logger: true,
     });
 
     const mailOptions = {
