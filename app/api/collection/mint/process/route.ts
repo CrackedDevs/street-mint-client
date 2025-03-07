@@ -234,7 +234,7 @@ export async function POST(req: Request, res: NextApiResponse) {
     console.log("isCardPayment", isCardPayment);
     console.log("Iscarpayment typeof", typeof isCardPayment);
     if (order.price_usd && order.price_usd > 0 && !isCardPayment) {
-      console.log("we are in the tx")
+      console.log("we are in the tx");
       if (!signedTransaction) {
         throw new Error("Missed transaction signature");
       }
@@ -294,7 +294,7 @@ export async function POST(req: Request, res: NextApiResponse) {
         }
       }
     }
-    console.log("we are out of the tx")
+    console.log("we are out of the tx");
     const merkleTreePublicKey = process.env.MERKLE_TREE_PUBLIC_KEY;
     const collectionMintPublicKey = process.env.MEGA_COLLECTION_MINT_PUBLIC_KEY;
 
@@ -394,14 +394,8 @@ export async function POST(req: Request, res: NextApiResponse) {
           }),
         };
 
-        transporter.sendMail(mailOptions, function (error: any, info: any) {
-          if (error) {
-            console.log(error);
-          } else {
-            console.log("Email sent: " + info.response);
-          }
-        });
-
+        const temp = await transporter.sendMail(mailOptions);
+        console.log("temp", temp);
         console.log("Email sent successfully");
       } catch (emailError) {
         console.error("Error sending email:", emailError);
