@@ -33,8 +33,6 @@ export async function sendEmail(
         user: fromEmail,
         pass: app_password,
       },
-      debug: true,
-      logger: true,
     });
 
     const mailOptions = {
@@ -44,13 +42,8 @@ export async function sendEmail(
       text: `Name: ${name}\nEmail: ${email}\n\nBody: ${body}`,
     };
 
-    transporter.sendMail(mailOptions, function (error: any, info: any) {
-      if (error) {
-        console.log(error);
-      } else {
-        console.log("Email sent: " + info.response);
-      }
-    });
+    const temp = await transporter.sendMail(mailOptions);
+    console.log("temp", temp);
     return { success: true, message: "Email sent successfully" };
   } catch (emailError) {
     console.error("Error sending email:", emailError);
