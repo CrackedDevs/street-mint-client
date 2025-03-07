@@ -58,7 +58,7 @@ export default function AdminDashboard() {
       setCollections(result.collections);
       fetchChipLinks();
       // Navigate to a protected route after successful login
-      router.push("/admin/collection");
+      router.push("/admin");
     } else {
       alert("Incorrect password");
     }
