@@ -130,6 +130,7 @@ export default function MintButton({
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
   const [showSuccessPopUp, setShowSuccessPopUp] = useState(false);
   const [isLightVersion, setIsLightVersion] = useState(false);
+  const [signatureCode, setSignatureCode] = useState<string | null>(null);
   const [showPaymentMethodDialog, setShowPaymentMethodDialog] = useState(false);
   const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] =
     useState(false);
@@ -277,7 +278,7 @@ export default function MintButton({
 
         const order = await getExistingLightOrder(
           addressToCheck,
-          collectible.id,
+          collectible.id
         );
         setExistingOrder(order);
         if (order) {
@@ -355,7 +356,6 @@ export default function MintButton({
   }
 
   useEffect(() => {
-
     if (collectible.is_light_version) {
       console.log("collectible.is_light_version", collectible.is_light_version);
       checkEligibilityAndExistingLightOrder();
@@ -684,15 +684,14 @@ export default function MintButton({
         const errorData = await initResponse.json();
         throw new Error(errorData.error || "Failed to initiate claiming");
       }
-      let priceInSol = 0;
       const { success, signatureCode, orderId } = await initResponse.json();
 
       newOrderId = orderId;
 
       if (success) {
-        setTransactionSignature(signatureCode);
+        setSignatureCode(signatureCode);
         TriggerConfetti();
-        setExistingOrder({ id: orderId, status: "completed" });
+        setExistingOrder({ id: orderId, status: "pending" });
         toast({
           title: isEmail
             ? "💌 Please check your inbox, your Collectible awaits you!"
@@ -984,7 +983,7 @@ export default function MintButton({
   const renderLightVersionMintButton = () => (
     <WhiteBgShimmerButton
       borderRadius="9999px"
-      className="w-full my-4 text-black hover:bg-gray-800 h-[40px] rounded font-bold"
+      className="w-full my-4 text-black hover:bg-gray-800 h-[44px] rounded font-bold"
       onClick={handleLightVersionClaim}
       disabled={
         isMinting ||
@@ -1009,7 +1008,7 @@ export default function MintButton({
       >
         <WhiteBgShimmerButton
           borderRadius="6px"
-          className="w-full mb-4 hover:bg-gray-800 h-[45px] text-black rounded font-bold"
+          className="w-full mb-4 hover:bg-gray-800 h-[44px] text-black rounded font-bold"
         >
           VIEW TRANSACTION
         </WhiteBgShimmerButton>
@@ -1021,7 +1020,7 @@ export default function MintButton({
     <div className="flex flex-col items-center my-3 w-full">
       <WhiteBgShimmerButton
         borderRadius="6px"
-        className="w-full mb-4 hover:bg-gray-800 h-[45px] text-black rounded font-bold"
+        className="w-full mb-4 hover:bg-gray-800 h-[44px] text-black rounded font-bold"
       >
         ALREADY CLAIMED
       </WhiteBgShimmerButton>
@@ -1184,15 +1183,15 @@ export default function MintButton({
           setShowCtaPopUp(true);
         }}
       />
-      {(transactionSignature || existingOrder?.status === "completed") &&
+      {!isLightVersion &&
+        (transactionSignature || existingOrder?.status === "completed") &&
         renderCompletedMint()}
-      {isLightVersion && existingOrder?.status === "pending" &&
-        renderCompletedClaim()}
+      {isLightVersion && signatureCode && renderCompletedClaim()}
       {mintStatus === "ongoing" &&
         !(transactionSignature || existingOrder?.status === "completed") && (
           <div className="flex flex-col items-center justify-center w-full">
             <div className="flex flex-col items-center justify-center w-full">
-              {isLightVersion ? (
+              {isLightVersion && !signatureCode && (
                 <div className="w-full flex mt-2 gap-4 flex-col items-center justify-center">
                   <Input
                     type="text"
@@ -1205,7 +1204,8 @@ export default function MintButton({
                     walletAddress &&
                     renderLightVersionMintButton()}
                 </div>
-              ) : isFreeMint ? (
+              )}
+              {!isLightVersion && (isFreeMint ? (
                 <div className="w-full flex mt-2 gap-4 flex-col items-center justify-center">
                   <Input
                     type="text"
@@ -1237,7 +1237,7 @@ export default function MintButton({
                     renderMintButton()}
                   {isCardPaymentEnable && !connected && renderMintButton()}
                 </div>
-              )}
+              ))}
             </div>
 
             {error && <p className="text-red-500 mt-2">{error}</p>}
