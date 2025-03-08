@@ -126,14 +126,14 @@ const EditionInformation = ({
             )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 md:space-y-6">
-          <div className="text-center md:text-left py-2 md:py-4">
-            <span className="text-3xl md:text-4xl font-bold">
-              {collectible.price_usd === 0
-                ? "Free Collectible"
-                : `$${collectible.price_usd.toFixed(2)}`}
-            </span>
-          </div>
+      <CardContent className="space-y-4 md:space-y-4">
+        <div className="text-center md:text-left py-2 md:py-2">
+          <span className="text-3xl md:text-4xl font-bold">
+            {collectible.price_usd === 0
+              ? "Free Collectible"
+              : `$${collectible.price_usd.toFixed(2)}`}
+          </span>
+        </div>
         <div className="flex items-center justify-center md:justify-start space-x-2 bg-white/10 rounded-full py-2 px-4">
           <Badge
             variant="secondary"
@@ -163,7 +163,7 @@ const EditionInformation = ({
         </div>
       </CardContent>
       <CardFooter className="w-full flex flex-col md:items-center space-y-6 md:space-y-6">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0 md:space-x-4 w-full">
+        <div className="w-full">
           <MintButton
             x={x}
             n={n}
@@ -183,15 +183,17 @@ const EditionInformation = ({
             }}
             mintStatus={mintingStatus}
           />
-          {!collectible.is_light_version && <div className="text-center md:text-right text-sm">
-            <AnimatedShinyText className="inline-flex w-fit items-center justify-center px-2 md:px-4 pt-2 transition ease-out text-white hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
-              <span>✨ Gasless Mint</span>
-            </AnimatedShinyText>
-          </div>}
         </div>
         <div className="text-center text-sm font-semibold">
           ONLY AVAILABLE IRL
         </div>
+        {!collectible.is_light_version && (
+          <div className="text-center md:text-right text-sm">
+            <AnimatedShinyText className="inline-flex w-fit items-center justify-center px-2 md:px-4 py-1 transition ease-out text-white hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
+              <span>✨ Gasless Mint</span>
+            </AnimatedShinyText>
+          </div>
+        )}
       </CardFooter>
     </Card>
   );

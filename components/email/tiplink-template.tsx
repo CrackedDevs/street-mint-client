@@ -133,7 +133,7 @@ export function getEmailTemplateHTML({
           src="${
             platform === "STREETMINT"
               ? "https://iaulwnqmthzvuxfubnsb.supabase.co/storage/v1/object/public/nft-images/logo%202.png"
-              : "https://iaulwnqmthzvuxfubnsb.supabase.co/storage/v1/object/public/nft-images/photo_2024-09-12_22-11-09.jpg"
+              : "https://iaulwnqmthzvuxfubnsb.supabase.co/storage/v1/object/public/nft-images/irls-logo.png"  
           }"
           alt="${platform === "STREETMINT" ? "StreetMint Logo" : "IRLS Logo"}"
           width="150"
@@ -149,7 +149,7 @@ export function getEmailTemplateHTML({
             color: #4a4a4a;
             text-align: center;
             margin-bottom: 20px;"
-        >${platform === "STREETMINT" ? `Congrats on becoming the owner of this rare piece of street art history 🏙️  This link is your golden ticket to your unique collectible.  It will always be here in your inbox, so you're all set.` : `Success! This IRLS Collectible is now officially yours.`}
+        >${platform === "STREETMINT" ? `Congrats on becoming the owner of this rare piece of street art history. This link is your golden ticket to your unique collectible.  It will always be here in your inbox, so you're all set.` : `Success! This IRLS Collectible is now officially yours.`}
         </h2>
         <img
           src="${nftImageUrl}"
@@ -166,7 +166,7 @@ export function getEmailTemplateHTML({
           href="${tiplinkUrl}"
           style="
             display: block;
-            background-color: #3498db;
+            background-color: black;
             color: white;
             text-decoration: none;
             padding: 15px 20px;

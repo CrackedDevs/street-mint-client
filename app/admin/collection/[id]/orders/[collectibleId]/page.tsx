@@ -120,9 +120,18 @@ export default function CollectionOrders() {
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("status")}</div>
-      ),
+      cell: ({ row }) => {
+        let status = row.getValue("status") as string;
+        if (isLightVersion) {
+          status = status === "pending" ? "Unclaimed" : status === "completed" ? "Claimed" : status ?? "N/A";
+        }
+
+        return (
+          <div className="capitalize">
+            {status}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "created_at",
@@ -244,7 +253,14 @@ export default function CollectionOrders() {
   });
 
   const exportToCSV = () => {
-    const csvData = orders.map((order) => ({
+    const csvData = orders.map((order) => {
+
+      let status = order.status;
+      if (isLightVersion) {
+        status = order.status === "pending" ? "Unclaimed" : order.status === "completed" ? "Claimed" : order.status ?? "N/A";
+      }
+      
+      return {
       id: order.id,
       wallet_address: order.wallet_address ?? "N/A",
       ...(isLightVersion && {
@@ -252,14 +268,15 @@ export default function CollectionOrders() {
         email_sent: order.email_sent ? "Yes" : "No",
       }),
       tiplink_url: order.tiplink_url ?? "N/A",
-      status: order.status ?? "N/A",
+      status: status,
       transaction: order.transaction_signature
         ? SolanaFMService.getTransaction(order.transaction_signature)
         : "N/A",
       mint: order.mint_signature
         ? SolanaFMService.getTransaction(order.mint_signature)
         : "N/A",
-    }));
+      };
+    });
 
     const csv = Papa.unparse(csvData);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
