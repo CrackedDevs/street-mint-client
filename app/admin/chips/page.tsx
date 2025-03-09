@@ -25,12 +25,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical, Trash2, ArrowUpDown, Search } from "lucide-react";
-import { 
-  getAllArtists, 
-  createChipLink, 
-  getAllChipLinks, 
+import {
+  getAllArtists,
+  createChipLink,
+  getAllChipLinks,
   deleteChipLink,
-  ChipLinkDetailed
+  ChipLinkDetailed,
 } from "@/lib/supabaseAdminClient";
 
 export default function ChipsManagementPage() {
@@ -69,23 +69,23 @@ export default function ChipsManagementPage() {
     // Split the input by commas, new lines, or spaces and filter out empty strings
     const chipIdArray = chipIds
       .split(/[\n,\s]+/)
-      .map(id => id.trim())
-      .filter(id => id.length > 0);
-    
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0);
+
     if (chipIdArray.length === 0) return;
-    
+
     setIsLoading(true);
-    
+
     // Process each chip ID
     for (const chipId of chipIdArray) {
       await createChipLink({
         chip_id: chipId,
         collectible_id: null,
         active: true,
-        artists_id: selectedArtistId
+        artists_id: selectedArtistId,
       });
     }
-    
+
     setChipIds("");
     setSelectedArtistId(null);
     await fetchChipLinks();
@@ -103,7 +103,9 @@ export default function ChipsManagementPage() {
   const filteredChipLinks = chipLinks.filter(
     (chip) =>
       chip.chip_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (chip.metadata?.artist || "").toLowerCase().includes(searchQuery.toLowerCase())
+      (chip.metadata?.artist || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
   );
 
   // Group chip links by artist
@@ -136,7 +138,7 @@ export default function ChipsManagementPage() {
             required
           />
         </div>
-        
+
         <div className="flex space-x-4">
           <Select
             value={selectedArtistId?.toString() || ""}
@@ -153,9 +155,9 @@ export default function ChipsManagementPage() {
               ))}
             </SelectContent>
           </Select>
-          
-          <Button 
-            type="submit" 
+
+          <Button
+            type="submit"
             className="min-w-24 font-semibold"
             size="lg"
             disabled={isLoading || !chipIds || !selectedArtistId}
@@ -181,15 +183,25 @@ export default function ChipsManagementPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold text-gray-600">Artist</TableHead>
-              <TableHead className="font-semibold text-gray-600">Chip ID</TableHead>
-              <TableHead className="font-semibold text-gray-600">Collectible</TableHead>
-              <TableHead className="font-semibold text-gray-600">Status</TableHead>
-              <TableHead className="font-semibold text-gray-600">Actions</TableHead>
+              <TableHead className="font-semibold text-gray-600">
+                Artist
+              </TableHead>
+              <TableHead className="font-semibold text-gray-600">
+                Chip ID
+              </TableHead>
+              <TableHead className="font-semibold text-gray-600">
+                Collectible
+              </TableHead>
+              <TableHead className="font-semibold text-gray-600">
+                Status
+              </TableHead>
+              <TableHead className="font-semibold text-gray-600">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Object.entries(chipsByArtist).map(([artistName, chips]) => (
+            {Object.entries(chipsByArtist).map(([artistName, chips]) =>
               chips.map((chip, index) => (
                 <TableRow
                   key={chip.id}
@@ -203,20 +215,22 @@ export default function ChipsManagementPage() {
                   <TableCell>{chip.chip_id}</TableCell>
                   <TableCell>
                     {chip.collectible_id ? (
-                      <a
-                        href={`/mint/${chip.collectible_id}`}
-                        target="_blank"
-                        className="text-indigo-600 hover:text-indigo-800 hover:underline transition-colors duration-200"
-                      >
+                      <div className=" transition-colors underline duration-200">
                         {chip.metadata?.collectible_name || chip.collectible_id}
-                      </a>
+                      </div>
                     ) : (
                       <span className="text-gray-500">Not assigned</span>
                     )}
                   </TableCell>
                   <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs ${chip.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {chip.active ? 'Active' : 'Inactive'}
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${
+                        chip.active
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {chip.active ? "Active" : "Inactive"}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -228,7 +242,9 @@ export default function ChipsManagementPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() => window.open(`/chip/${chip.chip_id}`, '_blank')}
+                          onClick={() =>
+                            window.open(`/chip/${chip.chip_id}`, "_blank")
+                          }
                           className="cursor-pointer"
                         >
                           <span>View Chip URL</span>
@@ -245,10 +261,13 @@ export default function ChipsManagementPage() {
                   </TableCell>
                 </TableRow>
               ))
-            ))}
+            )}
             {Object.keys(chipsByArtist).length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                <TableCell
+                  colSpan={5}
+                  className="text-center py-8 text-gray-500"
+                >
                   No chip assignments found. Add a new chip assignment above.
                 </TableCell>
               </TableRow>
@@ -258,4 +277,4 @@ export default function ChipsManagementPage() {
       </div>
     </div>
   );
-} 
+}

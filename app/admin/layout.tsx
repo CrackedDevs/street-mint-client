@@ -68,12 +68,12 @@ export default function AdminLayout({
             >
               Dashboard
             </Button>
-            <Button
+            {/* <Button
               onClick={() => router.push("/admin/collection")}
               className="bg-blue-500 hover:bg-blue-600 text-white"
             >
               Collections
-            </Button>
+            </Button> */}
             <Button
               onClick={() => router.push("/admin/chips")}
               className="bg-blue-500 hover:bg-blue-600 text-white"

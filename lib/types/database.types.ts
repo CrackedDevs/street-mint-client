@@ -150,6 +150,41 @@ export type Database = {
         }
         Relationships: []
       }
+      collectible_schedule: {
+        Row: {
+          chip_id: string | null
+          collectible_id: number | null
+          created_at: string
+          executed: boolean | null
+          id: number
+          schedule_unix: number | null
+        }
+        Insert: {
+          chip_id?: string | null
+          collectible_id?: number | null
+          created_at?: string
+          executed?: boolean | null
+          id?: number
+          schedule_unix?: number | null
+        }
+        Update: {
+          chip_id?: string | null
+          collectible_id?: number | null
+          created_at?: string
+          executed?: boolean | null
+          id?: number
+          schedule_unix?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collectible_schedule_collectible_id_fkey"
+            columns: ["collectible_id"]
+            isOneToOne: false
+            referencedRelation: "collectibles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collectibles: {
         Row: {
           airdrop_eligibility_index: number | null
@@ -335,6 +370,7 @@ export type Database = {
           status: string | null
           transaction_signature: string | null
           updated_at: string | null
+          wallet_address: string | null
         }
         Insert: {
           airdrop_won?: boolean
@@ -357,6 +393,7 @@ export type Database = {
           status?: string | null
           transaction_signature?: string | null
           updated_at?: string | null
+          wallet_address?: string | null
         }
         Update: {
           airdrop_won?: boolean
@@ -379,6 +416,7 @@ export type Database = {
           status?: string | null
           transaction_signature?: string | null
           updated_at?: string | null
+          wallet_address?: string | null
         }
         Relationships: [
           {

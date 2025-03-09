@@ -48,6 +48,15 @@ export type ChipTap = {
 
 export type ChipLinkCreate = Omit<ChipLink, "id" | "created_at">;
 
+export type ScheduledCollectibleChange = {
+    id: number;
+    chip_id: string | null;
+    collectible_id: number | null;
+    schedule_unix: number | null;
+    executed: boolean | null;
+    created_at: string;
+}
+
 export async function getSupabaseAdmin() {
     return supabaseAdmin;
 }
@@ -384,4 +393,89 @@ export async function getAllArtists() {
   }
   
   return data;
+}
+
+export async function getScheduledCollectibleChanges(chipId?: string) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    
+    let query = supabaseAdmin
+        .from('collectible_schedule')
+        .select('*')
+        .eq('executed', false);
+    
+    if (chipId) {
+        query = query.eq('chip_id', chipId);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) {
+        console.error('Error getting scheduled collectible changes:', error);
+        return null;
+    }
+    
+    return data;
+}
+
+export async function scheduleCollectibleChange(chipId: string, collectibleId: number, scheduleUnix: number) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    
+    // First, check if there are any existing scheduled changes for this chip
+    const { data: existingSchedules, error: fetchError } = await supabaseAdmin
+        .from('collectible_schedule')
+        .select('id')
+        .eq('chip_id', chipId)
+        .eq('executed', false);
+    
+    if (fetchError) {
+        console.error('Error checking for existing scheduled changes:', fetchError);
+        return null;
+    }
+    
+    // If there are existing scheduled changes, delete them
+    if (existingSchedules && existingSchedules.length > 0) {
+        const existingIds = existingSchedules.map(schedule => schedule.id);
+        const { error: deleteError } = await supabaseAdmin
+            .from('collectible_schedule')
+            .delete()
+            .in('id', existingIds);
+        
+        if (deleteError) {
+            console.error('Error deleting existing scheduled changes:', deleteError);
+            return null;
+        }
+    }
+    
+    // Now insert the new scheduled change
+    const { data, error } = await supabaseAdmin
+        .from('collectible_schedule')
+        .insert({
+            chip_id: chipId,
+            collectible_id: collectibleId,
+            schedule_unix: scheduleUnix,
+            executed: false
+        });
+    
+    if (error) {
+        console.error('Error scheduling collectible change:', error);
+        return null;
+    }
+    
+    return data;
+}
+
+export async function deleteScheduledCollectibleChange(id: number) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    
+    const { data, error } = await supabaseAdmin
+        .from('collectible_schedule')
+        .delete()
+        .eq('id', id);
+    
+    if (error) {
+        console.error('Error deleting scheduled collectible change:', error);
+        return false;
+    }
+    
+    return true;
 }
