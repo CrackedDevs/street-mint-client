@@ -74,9 +74,9 @@ export function PaymentStatusModal({
 
   const afterSuccessProcedure = async () => {
     const order = await getOrderById(sessionId);
+    setExistingOrder({ id: order?.id, status: "completed" });
     setTransactionSignature(order?.mint_signature!);
     triggerConfetti();
-    setExistingOrder({ id: order?.id, status: "completed" });
     const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
       (order?.wallet_address || "").trim()
     );
