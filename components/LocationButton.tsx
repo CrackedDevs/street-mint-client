@@ -18,7 +18,7 @@ const LocationButton: React.FC<LocationButtonProps> = ({ location }) => {
   return (
     <WhiteBgShimmerButton
       borderRadius="9999px"
-      className="w-full text-black flex hover:bg-gray-200 h-[44px] rounded font-bold"
+      className="w-full text-black flex hover:bg-gray-200 h-[44px] rounded font-bold my-2"
       onClick={handleLocationClick}
       disabled={!location}
     >
