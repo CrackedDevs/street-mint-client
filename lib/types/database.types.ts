@@ -150,6 +150,41 @@ export type Database = {
         }
         Relationships: []
       }
+      collectible_schedule: {
+        Row: {
+          chip_id: string | null
+          collectible_id: number | null
+          created_at: string
+          executed: boolean | null
+          id: number
+          schedule_unix: number | null
+        }
+        Insert: {
+          chip_id?: string | null
+          collectible_id?: number | null
+          created_at?: string
+          executed?: boolean | null
+          id?: number
+          schedule_unix?: number | null
+        }
+        Update: {
+          chip_id?: string | null
+          collectible_id?: number | null
+          created_at?: string
+          executed?: boolean | null
+          id?: number
+          schedule_unix?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collectible_schedule_collectible_id_fkey"
+            columns: ["collectible_id"]
+            isOneToOne: false
+            referencedRelation: "collectibles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collectibles: {
         Row: {
           airdrop_eligibility_index: number | null
@@ -424,6 +459,8 @@ export type Database = {
           collectible_id: number | null
           collection_id: number | null
           created_at: string | null
+          cta_email: string | null
+          cta_text: string | null
           device_id: string | null
           id: string
           max_supply: number | null
@@ -444,6 +481,8 @@ export type Database = {
           collectible_id?: number | null
           collection_id?: number | null
           created_at?: string | null
+          cta_email?: string | null
+          cta_text?: string | null
           device_id?: string | null
           id?: string
           max_supply?: number | null
@@ -464,6 +503,8 @@ export type Database = {
           collectible_id?: number | null
           collection_id?: number | null
           created_at?: string | null
+          cta_email?: string | null
+          cta_text?: string | null
           device_id?: string | null
           id?: string
           max_supply?: number | null

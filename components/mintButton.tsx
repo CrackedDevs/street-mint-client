@@ -1174,6 +1174,7 @@ export default function MintButton({
           onClose={() => setShowCtaPopUp(false)}
           collectible={collectible}
           publicKey={publicKey?.toString() ?? ""}
+          existingOrderId={existingOrder?.id ?? ""}
         />
       )}
       <SuccessPopup

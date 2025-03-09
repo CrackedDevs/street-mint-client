@@ -60,6 +60,8 @@ interface Order {
   tiplink_url?: string | null;
   email?: string | null;
   email_sent?: boolean | null;
+  cta_email?: string | null;
+  cta_text?: string | null;
 }
 
 const formatAddress = (address: string | null) => {
@@ -83,21 +85,23 @@ export default function CollectionOrders() {
     {
       accessorKey: "id",
       header: "Order ID",
-      cell: ({ row }) => <div className="font-medium">{row.getValue("id")}</div>,
+      cell: ({ row }) => (
+        <div className="font-medium">{row.getValue("id")}</div>
+      ),
     },
     {
       accessorKey: "wallet_address",
       header: "Wallet Address",
       cell: ({ row }) => {
         const address = row.getValue("wallet_address") as string;
-  
+
         const copyToClipboard = () => {
           navigator.clipboard.writeText(address);
           toast({
             title: "Copied to clipboard",
           });
         };
-  
+
         return (
           <div className="flex items-center space-x-2">
             <span>{formatAddress(address)}</span>
@@ -112,11 +116,17 @@ export default function CollectionOrders() {
         return cellValue?.toLowerCase().includes(value.toLowerCase()) ?? false;
       },
     },
-    ...(isLightVersion ? [{
-      accessorKey: "email",
-      header: "Email",
-      cell: ({ row }: { row: Row<Order> }) => <div>{row.getValue("email") || "N/A"}</div>,
-    }] : []),
+    ...(isLightVersion
+      ? [
+          {
+            accessorKey: "email",
+            header: "Email",
+            cell: ({ row }: { row: Row<Order> }) => (
+              <div>{row.getValue("email") || "N/A"}</div>
+            ),
+          },
+        ]
+      : []),
     {
       accessorKey: "status",
       header: "Status",
@@ -131,8 +141,10 @@ export default function CollectionOrders() {
         const createdAt = row.getValue("created_at") as string;
         const date = new Date(createdAt).toISOString();
         return (
-          <div className="capitalize">{date.slice(0, 19).replace("T", " ")}</div>
-        )
+          <div className="capitalize">
+            {date.slice(0, 19).replace("T", " ")}
+          </div>
+        );
       },
     },
     {
@@ -188,11 +200,17 @@ export default function CollectionOrders() {
     async function fetchCollectibleAndOrders() {
       if (collectibleId) {
         // First fetch the collectible to check is_light_version
-        const { data: collectibleData, error: collectibleError } = await supabase
-          .from("collectibles")
-          .select("is_light_version")
-          .eq("id", collectibleId)
-          .single();
+        const { data: collectibleData, error: collectibleError } =
+          await supabase
+            .from("collectibles")
+            .select("is_light_version")
+            .eq(
+              "id",
+              Array.isArray(collectibleId)
+                ? Number(collectibleId[0])
+                : Number(collectibleId)
+            )
+            .single();
 
         if (collectibleError) {
           console.error("Error fetching collectible:", collectibleError);
@@ -246,6 +264,7 @@ export default function CollectionOrders() {
   const exportToCSV = () => {
     const csvData = orders.map((order) => ({
       id: order.id,
+      created_at: order.created_at ?? "N/A",
       wallet_address: order.wallet_address ?? "N/A",
       ...(isLightVersion && {
         email: order.email ?? "N/A",
@@ -259,6 +278,8 @@ export default function CollectionOrders() {
       mint: order.mint_signature
         ? SolanaFMService.getTransaction(order.mint_signature)
         : "N/A",
+      cta_email: order.cta_email ?? "N/A",
+      cta_text: order.cta_text ?? "N/A",
     }));
 
     const csv = Papa.unparse(csvData);
@@ -452,9 +473,9 @@ export default function CollectionOrders() {
         <Button variant="outline" onClick={() => exportToCSV()}>
           Export to CSV
         </Button>
-        <Button variant="outline" onClick={exportCtaData}>
+        {/* <Button variant="outline" onClick={exportCtaData}>
           Export CTA Data
-        </Button>
+        </Button> */}
         <div className="space-x-2 flex items-center">
           <Button
             variant="outline"

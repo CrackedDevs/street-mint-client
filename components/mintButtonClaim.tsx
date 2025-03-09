@@ -742,6 +742,7 @@ export default function MintButtonClaim({
           onClose={() => setShowCtaPopUp(false)}
           collectible={collectible}
           publicKey={publicKey?.toString() ?? ""}
+          existingOrderId={existingOrder?.id ?? ""}
         />
       )}
       <SuccessPopup
