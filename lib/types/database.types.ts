@@ -459,6 +459,8 @@ export type Database = {
           collectible_id: number | null
           collection_id: number | null
           created_at: string | null
+          cta_email: string | null
+          cta_text: string | null
           device_id: string | null
           id: string
           max_supply: number | null
@@ -479,6 +481,8 @@ export type Database = {
           collectible_id?: number | null
           collection_id?: number | null
           created_at?: string | null
+          cta_email?: string | null
+          cta_text?: string | null
           device_id?: string | null
           id?: string
           max_supply?: number | null
@@ -499,6 +503,8 @@ export type Database = {
           collectible_id?: number | null
           collection_id?: number | null
           created_at?: string | null
+          cta_email?: string | null
+          cta_text?: string | null
           device_id?: string | null
           id?: string
           max_supply?: number | null
