@@ -39,6 +39,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import Delivery from "@/app/assets/delivery.svg";
 import withAuth from "@/app/dashboard/withAuth";
+import { createProduct } from "@/helpers/stripe";
 import { formatDate } from "@/helper/date";
 import { getChipLinksByArtistId, updateChipLink } from "@/lib/supabaseAdminClient";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -52,6 +53,7 @@ interface CreatorRoyalty {
 function CreateCollectiblePage() {
   const router = useRouter();
   const { id: collectionId } = useParams();
+
   const { toast } = useToast();
   const { publicKey } = useWallet();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -118,9 +120,12 @@ function CreateCollectiblePage() {
     cta_email_list: [],
     cta_has_text_capture: false,
     cta_text_list: [],
+    enable_card_payments: false,
+    stripe_price_id: "",
     creator_royalty_array: [],
     is_irls: false,
     is_video: false,
+    is_light_version: false,
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -136,6 +141,36 @@ function CreateCollectiblePage() {
       });
       return;
     }
+
+    if (field === "enable_card_payments" && value === true) {
+      if (collectible.price_usd < 1) {
+        toast({
+          title: "Error",
+          description: "Card payments require a minimum price of $1.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    if (
+      field === "price_usd" &&
+      collectible.enable_card_payments &&
+      value < 1
+    ) {
+      toast({
+        title: "Warning",
+        description: "Card payments will be disabled as price is less than $1.",
+        variant: "default",
+      });
+      setCollectible((prev) => ({
+        ...prev,
+        enable_card_payments: false,
+        [field]: value,
+      }));
+      return;
+    }
+
     setCollectible((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -191,6 +226,7 @@ function CreateCollectiblePage() {
     setIsFreeMint(checked);
     if (checked) {
       handleCollectibleChange("price_usd", 0);
+      handleCollectibleChange("enable_card_payments", false);
     }
   };
 
@@ -295,6 +331,14 @@ function CreateCollectiblePage() {
       });
       return;
     }
+    if (collectible.enable_card_payments && collectible.price_usd < 1) {
+      toast({
+        title: "Error",
+        description: "Card payments require a minimum price of $1.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsSubmitting(true);
     try {
       let primaryImageUrl = "";
@@ -315,6 +359,14 @@ function CreateCollectiblePage() {
       const mintStartDate = formatDate(collectible.mint_start_date ?? "");
       const mintEndDate = formatDate(collectible.mint_end_date ?? "");
 
+      let stripePriceId: string | null = null;
+      if (collectible.enable_card_payments) {
+        stripePriceId = await createProduct(
+          collectible.name,
+          collectible.price_usd
+        );
+      }
+
       const newCollectible: Collectible = {
         ...collectible,
         primary_image_url: primaryImageUrl,
@@ -322,6 +374,7 @@ function CreateCollectiblePage() {
         id: NumericUUID(),
         price_usd: isFreeMint ? 0 : collectible.price_usd,
         cta_logo_url: uploadedCtaLogoUrl,
+        stripe_price_id: stripePriceId || "",
         mint_start_date: mintStartDate,
         mint_end_date: mintEndDate,
       };
@@ -691,28 +744,56 @@ function CreateCollectiblePage() {
                     />
                   </div>
                   {!isFreeMint && (
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="collectible-price"
-                        className="text-lg font-semibold"
-                      >
-                        Price (USD) <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="collectible-price"
-                        type="number"
-                        value={collectible.price_usd}
-                        onChange={(e) =>
-                          handleCollectibleChange(
-                            "price_usd",
-                            parseFloat(e.target.value)
-                          )
-                        }
-                        placeholder="Enter price in USD"
-                        required
-                        className="text-base"
-                      />
-                    </div>
+                    <>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="collectible-price"
+                          className="text-lg font-semibold"
+                        >
+                          Price (USD){" "}
+                          <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id="collectible-price"
+                          type="number"
+                          value={collectible.price_usd}
+                          onChange={(e) =>
+                            handleCollectibleChange(
+                              "price_usd",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          placeholder="Enter price in USD"
+                          required
+                          className="text-base"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <div>
+                          <Label
+                            htmlFor="card-payments-toggle"
+                            className="text-lg font-semibold"
+                          >
+                            Enable Card Payments
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Allow users to pay with credit/debit cards
+                          </p>
+                        </div>
+                        <Switch
+                          id="card-payments-toggle"
+                          checked={collectible.enable_card_payments}
+                          onCheckedChange={(checked) =>
+                            handleCollectibleChange(
+                              "enable_card_payments",
+                              checked
+                            )
+                          }
+                          className="scale-125"
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
 
@@ -1032,6 +1113,73 @@ function CreateCollectiblePage() {
                       </div>
                     </div>
                   )}
+                </div>
+
+                <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
+                  <div>
+                    <Label
+                      htmlFor="free-mint-toggle"
+                      className="text-lg font-semibold"
+                    >
+                      Collectible Version{" "}
+                      <span className="text-destructive">*</span>
+                    </Label>
+                  </div>
+                  <div className="flex gap-4">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleCollectibleChange("is_light_version", false)
+                      }
+                      className={`flex-1 p-4 rounded-lg transition-colors relative ${
+                        collectible.is_light_version === false
+                          ? "bg-primary/20"
+                          : "bg-primary/5 hover:bg-primary/10"
+                      }`}
+                    >
+                      <div className="absolute top-4 right-4 w-5 h-5 rounded-full border-2 border-black flex items-center justify-center">
+                        {collectible.is_light_version === false && (
+                          <div className="w-3 h-3 rounded-full bg-black"></div>
+                        )}
+                      </div>
+                      <h3 className="font-bold mb-2">IRLS STANDARD</h3>
+                      <div className="h-0.5 bg-black/10 mb-4"></div>
+                      <div className="space-y-2">
+                        <div>
+                          Lorem ipsum dolor sit amet consectetur adipisicing
+                          elit. Quisquam, quos. Lorem ipsum dolor sit amet
+                          consectetur adipisicing elit. Quisquam, quos.
+                        </div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleCollectibleChange("is_light_version", true)
+                      }
+                      className={`flex-1 p-4 rounded-lg transition-colors relative ${
+                        collectible.is_light_version === true
+                          ? "bg-primary/20"
+                          : "bg-primary/5 hover:bg-primary/10"
+                      }`}
+                    >
+                      <div className="absolute top-4 right-4 w-5 h-5 rounded-full border-2 border-black flex items-center justify-center">
+                        {collectible.is_light_version === true && (
+                          <div className="w-3 h-3 rounded-full bg-black"></div>
+                        )}
+                      </div>
+                      <h3 className="font-bold mb-2">IRLS LIGHT</h3>
+                      <div className="h-0.5 bg-black/10 mb-4"></div>
+                      <div className="space-y-2">
+                        <div>
+                          Lorem ipsum dolor sit amet consectetur adipisicing
+                          elit. Quisquam, quos. Lorem ipsum dolor sit amet
+                          consectetur adipisicing elit. Quisquam, quos.
+                        </div>
+                      </div>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">

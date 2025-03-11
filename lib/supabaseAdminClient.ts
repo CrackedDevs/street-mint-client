@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createFetch, fetchCollectibleById, getCollectionById, getArtistById, Collectible } from "./supabaseClient";
 import { Database } from "./types/database.types";
 import { isSignatureValid } from "./nfcVerificationHellper";
+import Stripe from "stripe";
 
 
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -21,7 +22,7 @@ export type ChipLink = {
     id: number;
     chip_id: string;
     collectible_id: number | null;
-    artists_id?: number | null;
+    artists_id?: number | null | null;
     active: boolean;
     created_at: string;
 }
@@ -44,6 +45,30 @@ export type ChipTap = {
     e: string;
     server_auth: boolean;
     last_uuid: string;
+}
+
+export type LightOrder = {
+    airdrop_won: boolean;
+    collectible_id: number | null;
+    collection_id: number | null;
+    created_at: string | null;
+    device_id: string | null;
+    email: string;
+    email_sent: boolean | null;
+    id: string;
+    last_uuid: string | null;
+    max_supply: number | null;
+    mint_address: string | null;
+    mint_signature: string | null;
+    nft_type: string | null;
+    price_sol: number | null;
+    price_usd: number | null;
+    quantity: number | null;
+    signature_code: string | null;
+    status: string | null;
+    transaction_signature: string | null;
+    updated_at: string | null;
+    wallet_address: string | null;
 }
 
 export type ChipLinkCreate = Omit<ChipLink, "id" | "created_at">;
@@ -120,11 +145,11 @@ export async function recordPaidChipTap(x: string, n: string, e: string): Promis
     return true;
 }
 
-export async function recordChipTap(x: string, n: string, e: string, uuid: string): Promise<boolean> {
+export async function recordChipTap(x: string, n: string, e: string, uuid: string, is_light_version: boolean = false): Promise<boolean> {
     const supabaseAdmin = await getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
         .from('chip_taps')
-        .insert({ x, n, e, server_auth: false, last_uuid: uuid });
+        .insert({ x, n, e, server_auth: is_light_version ? true : false, last_uuid: uuid });
 
     console.log("data", data);
     if (error) {
@@ -215,7 +240,10 @@ export async function getAllChipLinks() {
     const allChipLinks : ChipLinkDetailed[] = (await Promise.all(data.map(async (chipLink) => {
         // If there's a collectible_id, fetch the collectible details
         if (chipLink.collectible_id) {
-            const collectible = await fetchCollectibleById(chipLink.collectible_id);
+            if (chipLink.collectible_id === null) {
+            return null;
+        }
+        const collectible = await fetchCollectibleById(chipLink.collectible_id);
             if (!collectible) {
                 console.error("Error fetching collectible:", collectible);
                 return null;
@@ -293,6 +321,21 @@ export async function getChipLinkByChipId(chipId: string) {
         .single();
     if (error) {
         console.error('Error getting chip link by chip id:', error);
+        return null;
+    }
+    return data;
+}
+
+export async function getLightOrderBySignatureCode(signatureCode: string) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { data, error } : { data: LightOrder | null, error: any } = await supabaseAdmin
+        .from('light_orders')
+        .select(`id, signature_code, collectible_id, collection_id, created_at, device_id, email, email_sent, last_uuid, max_supply, mint_address, mint_signature, nft_type, price_sol, price_usd, quantity, status, transaction_signature, updated_at`)
+        .eq('signature_code', signatureCode)
+        .single();
+
+    if (error) {
+        console.error('Error getting light order by signature code:', error);
         return null;
     }
     return data;
@@ -478,4 +521,82 @@ export async function deleteScheduledCollectibleChange(id: number) {
     }
     
     return true;
+}
+
+export async function addStripeTransaction(status:string,sessionId:string,amount:number,session:Stripe.Checkout.Session){
+    const supabaseAdmin = await getSupabaseAdmin();
+const {data,error}=await supabaseAdmin.from('transactions').insert({
+    status,
+    session_id:sessionId,
+    amount,
+    transaction_dump:JSON.parse(JSON.stringify(session)),
+})
+if(error){
+    console.error('Error adding stripe transaction:', error);
+    throw error;
+}
+return data;
+}
+
+export async function updateStripTransaction(sessionId:string,status:string,orderId:string){
+    const supabaseAdmin = await getSupabaseAdmin();
+    const {data,error}=await supabaseAdmin.from('transactions').update({
+        status,
+        order_id:orderId
+    }).eq('session_id',sessionId)   
+    if(error){
+        console.error('Error updating stripe transaction:', error);
+        throw error;
+    }
+    return data;
+}
+
+export async function getOrderById(sessionId:string){
+    const supabaseAdmin = await getSupabaseAdmin();
+    const {data,error}=await supabaseAdmin.from('transactions').select('*').eq('session_id',sessionId).limit(1)
+
+    if(error){
+        console.error('Error getting session by id:', error);
+        return null;
+    }
+    if(!data[0]){
+        console.error("data not found for order")
+    }
+   const orderId = data[0].order_id
+   if(!orderId){
+    console.error("no orderid found")
+    return
+   }
+   const {data:orderData, error:OrderError} = await supabaseAdmin.from('orders').select('*').eq('id',orderId)
+   if(OrderError){
+    console.error('Error getting order by id:', OrderError);
+    return null;
+   }
+   if(!orderData[0]){
+    console.error("no order data found")
+    return null;
+   }
+   return orderData[0];
+}
+
+export async function getLightOrdersByEmail(email: string, page: number = 0, pageSize: number = 20) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const start = page * pageSize;
+    
+    const { data, error, count } = await supabaseAdmin
+        .from('light_orders')
+        .select('*, collectibles(name, primary_image_url)', { count: 'exact' })
+        .eq('email', email)
+        .order('created_at', { ascending: false })
+        .range(start, start + pageSize - 1);
+
+    if (error) {
+        console.error('Error getting light orders by email:', error);
+        return { orders: null, total: 0 };
+    }
+
+    return { 
+        orders: data, 
+        total: count || 0 
+    };
 }

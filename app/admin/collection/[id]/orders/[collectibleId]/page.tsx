@@ -24,6 +24,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  Row,
 } from "@tanstack/react-table";
 import {
   DropdownMenu,
@@ -55,8 +56,12 @@ interface Order {
   collectible_id: number | null;
   device_id: string | null;
   nft_type: string | null;
-  airdrop_won: boolean | null;
-  tiplink_url: string | null;
+  airdrop_won: boolean;
+  tiplink_url?: string | null;
+  email?: string | null;
+  email_sent?: boolean | null;
+  cta_email?: string | null;
+  cta_text?: string | null;
 }
 
 const formatAddress = (address: string | null) => {
@@ -64,149 +69,182 @@ const formatAddress = (address: string | null) => {
   return `${address.slice(0, 5)}...${address.slice(-5)}`;
 };
 
-const columns: ColumnDef<Order>[] = [
-  {
-    accessorKey: "id",
-    header: "Order ID",
-    cell: ({ row }) => <div className="font-medium">{row.getValue("id")}</div>,
-  },
-  {
-    accessorKey: "wallet_address",
-    header: "Wallet Address",
-    cell: ({ row }) => {
-      const address = row.getValue("wallet_address") as string;
-
-      const copyToClipboard = () => {
-        navigator.clipboard.writeText(address);
-        toast({
-          title: "Copied to clipboard",
-        });
-      };
-
-      return (
-        <div className="flex items-center space-x-2">
-          <span>{formatAddress(address)}</span>
-          <Button variant="ghost" size="icon" onClick={copyToClipboard}>
-            <Copy className="h-4 w-4" />
-          </Button>
-        </div>
-      );
-    },
-    filterFn: (row, id, value) => {
-      const cellValue = row.getValue(id) as string | undefined;
-      return cellValue?.toLowerCase().includes(value.toLowerCase()) ?? false;
-    },
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("status")}</div>
-    ),
-  },
-  {
-    accessorKey: "created_at",
-    header: "Timestamp",
-    cell: ({ row }) => {
-      const createdAt = row.getValue("created_at") as string;
-      const date = new Date(createdAt).toISOString();
-      return (
-        <div className="capitalize">{date.slice(0, 19).replace("T", " ")}</div>
-      );
-    },
-  },
-  {
-    accessorKey: "airdrop_won",
-    header: "Airdrop Won",
-    cell: ({ row }) => (
-      <div className="capitalize">
-        {row.getValue("airdrop_won") ? "Yes" : "No"}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "transaction_signature",
-    header: "Transaction",
-    cell: ({ row }) => {
-      const signature = row.getValue("transaction_signature") as string;
-      return signature ? (
-        <a
-          href={SolanaFMService.getTransaction(signature)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 hover:underline"
-        >
-          View Transaction
-        </a>
-      ) : (
-        "N/A"
-      );
-    },
-  },
-  {
-    accessorKey: "mint_signature",
-    header: "Mint",
-    cell: ({ row }) => {
-      const signature = row.getValue("mint_signature") as string;
-      return signature ? (
-        <a
-          href={SolanaFMService.getTransaction(signature)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 hover:underline"
-        >
-          View Mint
-        </a>
-      ) : (
-        "N/A"
-      );
-    },
-  },
-];
-
 export default function CollectionOrders() {
   const router = useRouter();
   const { id: collectionId, collectibleId } = useParams();
 
   const [orders, setOrders] = useState<Order[]>([]);
+  const [isLightVersion, setIsLightVersion] = useState<boolean>(false);
   const [collectible, setCollectible] = useState<Collectible | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
 
-  useEffect(() => {
-    async function fetchData() {
-      if (collectibleId) {
-        // Fetch orders
-        const { data: ordersData, error: ordersError } = await supabase
-          .from("orders")
-          .select("*")
-          .eq("collectible_id", Number(collectibleId))
-          .order("created_at", { ascending: false });
+  const columns: ColumnDef<Order>[] = [
+    {
+      accessorKey: "id",
+      header: "Order ID",
+      cell: ({ row }) => (
+        <div className="font-medium">{row.getValue("id")}</div>
+      ),
+    },
+    {
+      accessorKey: "wallet_address",
+      header: "Wallet Address",
+      cell: ({ row }) => {
+        const address = row.getValue("wallet_address") as string;
 
-        if (ordersError) {
-          console.error("Error fetching orders:", ordersError);
-        } else {
-          setOrders(ordersData || []);
+        const copyToClipboard = () => {
+          navigator.clipboard.writeText(address);
+          toast({
+            title: "Copied to clipboard",
+          });
+        };
+
+        return (
+          <div className="flex items-center space-x-2">
+            <span>{formatAddress(address)}</span>
+            <Button variant="ghost" size="icon" onClick={copyToClipboard}>
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+      filterFn: (row, id, value) => {
+        const cellValue = row.getValue(id) as string | undefined;
+        return cellValue?.toLowerCase().includes(value.toLowerCase()) ?? false;
+      },
+    },
+    ...(isLightVersion
+      ? [
+          {
+            accessorKey: "email",
+            header: "Email",
+            cell: ({ row }: { row: Row<Order> }) => (
+              <div>{row.getValue("email") || "N/A"}</div>
+            ),
+          },
+        ]
+      : []),
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        let status = row.getValue("status") as string;
+        if (isLightVersion) {
+          status =
+            status === "pending"
+              ? "Unclaimed"
+              : status === "completed"
+              ? "Claimed"
+              : status ?? "N/A";
         }
 
-        // Fetch collectible data
+        return <div className="capitalize">{status}</div>;
+      },
+    },
+    {
+      accessorKey: "created_at",
+      header: "Timestamp",
+      cell: ({ row }) => {
+        const createdAt = row.getValue("created_at") as string;
+        const date = new Date(createdAt).toISOString();
+        return (
+          <div className="capitalize">
+            {date.slice(0, 19).replace("T", " ")}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "airdrop_won",
+      header: "Airdrop Won",
+      cell: ({ row }) => (
+        <div className="capitalize">
+          {row.getValue("airdrop_won") ? "Yes" : "No"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "transaction_signature",
+      header: "Transaction",
+      cell: ({ row }) => {
+        const signature = row.getValue("transaction_signature") as string;
+        return signature ? (
+          <a
+            href={SolanaFMService.getTransaction(signature)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            View Transaction
+          </a>
+        ) : (
+          "N/A"
+        );
+      },
+    },
+    {
+      accessorKey: "mint_signature",
+      header: "Mint",
+      cell: ({ row }) => {
+        const signature = row.getValue("mint_signature") as string;
+        return signature ? (
+          <a
+            href={SolanaFMService.getTransaction(signature)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            View Mint
+          </a>
+        ) : (
+          "N/A"
+        );
+      },
+    },
+  ];
+
+  useEffect(() => {
+    async function fetchCollectibleAndOrders() {
+      if (collectibleId) {
+        // First fetch the collectible to check is_light_version
         const { data: collectibleData, error: collectibleError } =
           await supabase
             .from("collectibles")
-            .select("id, cta_email_list, cta_text_list")
-            .eq("id", Number(collectibleId))
+            .select("is_light_version")
+            .eq(
+              "id",
+              Array.isArray(collectibleId)
+                ? Number(collectibleId[0])
+                : Number(collectibleId)
+            )
             .single();
 
         if (collectibleError) {
           console.error("Error fetching collectible:", collectibleError);
+          return;
+        }
+
+        setCollectible(collectibleData as Collectible);
+        setIsLightVersion(collectibleData.is_light_version);
+
+        // Then fetch orders from the appropriate table
+        const { data, error } = await supabase
+          .from(collectibleData.is_light_version ? "light_orders" : "orders")
+          .select("*")
+          .eq("collectible_id", Number(collectibleId))
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error fetching orders:", error);
         } else {
-          setCollectible(collectibleData as Collectible);
+          setOrders(data || []);
         }
       }
     }
-    fetchData();
+    fetchCollectibleAndOrders();
   }, [collectibleId]);
 
   const table = useReactTable({
@@ -234,25 +272,47 @@ export default function CollectionOrders() {
   });
 
   const exportToCSV = () => {
-    const csvData = orders.map((order) => ({
-      id: order.id,
-      wallet_address: order.wallet_address ?? "N/A",
-      tiplink_url: order.tiplink_url ?? "N/A",
-      status: order.status ?? "N/A",
-      transaction: order.transaction_signature
-        ? SolanaFMService.getTransaction(order.transaction_signature)
-        : "N/A",
-      mint: order.mint_signature
-        ? SolanaFMService.getTransaction(order.mint_signature)
-        : "N/A",
-    }));
+    const csvData = orders.map((order) => {
+      let status = order.status;
+      if (isLightVersion) {
+        status =
+          order.status === "pending"
+            ? "Unclaimed"
+            : order.status === "completed"
+            ? "Claimed"
+            : order.status ?? "N/A";
+      }
+
+      return {
+        id: order.id,
+        created_at: order.created_at ?? "N/A",
+        wallet_address: order.wallet_address ?? "N/A",
+        ...(isLightVersion && {
+          email: order.email ?? "N/A",
+          email_sent: order.email_sent ? "Yes" : "No",
+        }),
+        tiplink_url: order.tiplink_url ?? "N/A",
+        status: status,
+        transaction: order.transaction_signature
+          ? SolanaFMService.getTransaction(order.transaction_signature)
+          : "N/A",
+        mint: order.mint_signature
+          ? SolanaFMService.getTransaction(order.mint_signature)
+          : "N/A",
+        cta_email: order.cta_email ?? "N/A",
+        cta_text: order.cta_text ?? "N/A",
+      };
+    });
 
     const csv = Papa.unparse(csvData);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `orders-${collectibleId}.csv`);
+    link.setAttribute(
+      "download",
+      `${isLightVersion ? "light-" : ""}orders-${collectibleId}.csv`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -325,7 +385,7 @@ export default function CollectionOrders() {
           Back
         </Button>
         <h1 className="text-3xl font-bold">
-          Orders for Collectible {collectibleId}
+          {isLightVersion ? "Light" : ""} Orders for Collectible {collectibleId}
         </h1>
       </div>
       <div className="flex items-center py-4">
@@ -435,9 +495,9 @@ export default function CollectionOrders() {
         <Button variant="outline" onClick={() => exportToCSV()}>
           Export to CSV
         </Button>
-        <Button variant="outline" onClick={exportCtaData}>
+        {/* <Button variant="outline" onClick={exportCtaData}>
           Export CTA Data
-        </Button>
+        </Button> */}
         <div className="space-x-2 flex items-center">
           <Button
             variant="outline"

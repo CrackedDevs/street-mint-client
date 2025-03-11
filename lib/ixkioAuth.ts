@@ -54,7 +54,12 @@ export const checkAuthStatus = async (x: string, n: string, e: string, isCurrent
     
     if (data && data.xuid === x && data.response && data.response.toLowerCase() === "pass") {
       const initialUuid = uuidv4();
-      const recordSuccess = await recordChipTap(x, n, e, initialUuid);
+      let recordSuccess;
+      if (collectibleData.collectible.is_light_version) {
+        recordSuccess = await recordChipTap(x, n, e, initialUuid, true);
+      } else {
+        recordSuccess = await recordChipTap(x, n, e, initialUuid);
+      }
       console.log("recordSuccess", recordSuccess);
       if (!recordSuccess) {
         throw new Error("Failed to record chip tap");

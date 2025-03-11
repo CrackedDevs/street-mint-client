@@ -56,6 +56,7 @@ function EditCollectiblePage() {
       if (fetchedCollectible) {
         setCollectible({
           ...fetchedCollectible,
+          is_light_version: fetchedCollectible.is_light_version || false,
           quantity_type: fetchedCollectible.quantity_type as QuantityType,
           whitelist: fetchedCollectible.whitelist || false,
           cta_enable: fetchedCollectible.cta_enable || false,
@@ -71,6 +72,8 @@ function EditCollectiblePage() {
           cta_text_list: (fetchedCollectible.cta_text_list || []) as {
             [key: string]: string;
           }[],
+          enable_card_payments: fetchedCollectible.enable_card_payments || false,
+          stripe_price_id: fetchedCollectible.stripe_price_id || undefined,
         });
       } else {
         toast({
@@ -341,6 +344,18 @@ function EditCollectiblePage() {
                   />
                 </div>
               </div>
+
+              <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
+                  <div>
+                    <Label
+                      htmlFor="free-mint-toggle"
+                      className="text-lg font-semibold"
+                    >
+                      Collectible Version{" "}
+                      <span className="text-destructive">*</span>
+                    </Label>
+                  </div>
+                </div>
 
               <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
                 <div className="space-y-2">

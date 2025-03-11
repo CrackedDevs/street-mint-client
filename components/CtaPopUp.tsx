@@ -20,6 +20,7 @@ interface CtaPopUpProps {
   hasTextCapture: boolean;
   collectible: Collectible;
   publicKey: string;
+  existingOrderId: string;
   // onSubmit?: (data: { email?: string; text?: string }) => void;
 }
 
@@ -36,6 +37,7 @@ function CtaPopUp({
   hasTextCapture = false,
   collectible,
   publicKey,
+  existingOrderId,
 }: // onSubmit,
 CtaPopUpProps) {
   const [email, setEmail] = useState("");
@@ -86,26 +88,31 @@ CtaPopUpProps) {
     if (hasEmailCapture || hasTextCapture) {
       const response = await fetch("/api/cta/save-cta-data", {
         method: "PUT",
-        body: JSON.stringify(updatedCollectible),
+        body: JSON.stringify({
+          collectible: updatedCollectible,
+          orderId: existingOrderId,
+          text: text,
+          email: email,
+        }),
       });
       const data = await response.json();
       if (data.success) {
         if (hasEmailCapture && hasTextCapture) {
           toast({
-            title: "Email and text added to list",
+            title: "Thank you :)",
           });
         } else if (hasEmailCapture) {
           toast({
-            title: "Email added to list",
+            title: "Thank you :)",
           });
         } else if (hasTextCapture) {
           toast({
-            title: "Text added to list",
+            title: "Thank you :)",
           });
         }
       } else {
         toast({
-          title: "Failed to update list",
+          title: "Failed to update. Please try again.",
           description: data.error,
         });
       }
@@ -158,23 +165,23 @@ CtaPopUpProps) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {hasEmailCapture && (
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2  focus:outline-none text-black"
-              required
-            />
-          )}
-
           {hasTextCapture && (
             <input
               type="text"
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Enter your text"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2  focus:outline-none text-black"
+              required
+            />
+          )}
+
+          {hasEmailCapture && (
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
               className="w-full rounded-lg border border-gray-300 px-4 py-2  focus:outline-none text-black"
               required
             />

@@ -103,10 +103,14 @@ export default function ChipTable({
             .includes(searchQuery.toLowerCase())
       )
       .sort((a, b) => {
-        const aVal = a[sortField] || '';
-        const bVal = b[sortField] || '';
-        if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
-        if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+        // Handle null values in sorting
+        const aValue = a[sortField] ?? '';
+        const bValue = b[sortField] ?? '';
+        
+        if (aValue < bValue)
+          return sortDirection === "asc" ? -1 : 1;
+        if (aValue > bValue)
+          return sortDirection === "asc" ? 1 : -1;
         return 0;
       });
   }, [chipLinks, searchQuery, sortField, sortDirection]);

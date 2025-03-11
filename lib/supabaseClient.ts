@@ -6,6 +6,7 @@ import { resolveSolDomain } from '@/app/api/collection/collection.helper';
 import { Connection } from '@solana/web3.js';
 import { pinata } from './pinataConfig';
 
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -61,8 +62,11 @@ export type Collectible = {
     cta_has_text_capture: boolean;
     cta_email_list: { [key: string]: string }[];
     cta_text_list: { [key: string]: string }[];
+    enable_card_payments?: boolean;
+    stripe_price_id?:string
     is_irls: boolean | null;
     is_video: boolean | null;
+    is_light_version: boolean;
 };
 
 interface Order {
@@ -496,7 +500,8 @@ export const fetchAllCollectibles = async (offset: number = 0, limit: number = 1
             cta_email_list,
             cta_text_list,
             is_irls,
-            is_video
+            is_video,
+            is_light_version
         `)
         .range(offset, offset + limit - 1)
         .order('created_at', { ascending: false });
@@ -640,6 +645,108 @@ export async function checkMintEligibility(walletAddress: string, collectibleId:
     }
 }
 
+export async function checkMintEligibilityForLightVersion(emailAddress: string, collectibleId: number, deviceId: string): Promise<{ eligible: boolean; reason?: string, isAirdropEligible?: boolean }> {
+    try {
+        // Check if the NFT is still available and get its details
+        if (!emailAddress) {
+            return { eligible: false, reason: 'Email address is required.' };
+        }
+
+        // Use the resolved wallet address for the rest of the checks
+        const { data: collectible, error: collectibleError } = await supabase
+            .from('collectibles')
+            .select('quantity, quantity_type, mint_start_date, mint_end_date,airdrop_eligibility_index')
+            .eq('id', collectibleId)
+            .single();
+
+        if (collectibleError) throw collectibleError;
+        // Get the count of existing orders for this collectible
+        const { count, error: countError } = await supabase
+            .from('light_orders')
+            .select('id', { count: 'exact', head: true })
+            .eq('collectible_id', collectibleId)
+            .eq('status', 'completed');
+
+        console.log("Count of existing orders for collectible ", collectibleId, " is ", count);
+
+        if (countError) throw countError;
+
+        // Check availability based on NFT type
+        if (collectible.quantity_type === 'single') {
+            if (count && count > 0) {
+                return { eligible: false, reason: 'This 1 of 1 collectible has already been claimed.' };
+            }
+        } else if (collectible.quantity_type === 'limited') {
+            if (collectible.quantity && count && count >= collectible.quantity) {
+                return { eligible: false, reason: 'All editions of this limited NFT have been claimed.' };
+            }
+        }
+
+        // Check if the email has already minted this NFT
+        const { data: existingOrder, error: orderError } = await supabase
+            .from('light_orders')
+            .select('id, status')
+            .eq('email', emailAddress)
+            .eq('collectible_id', collectibleId)
+            .in('status', ['completed', 'pending'])
+            .single();
+
+        if (orderError && orderError.code !== 'PGRST116') throw orderError; // PGRST116 means no rows returned
+
+        console.log("existingOrder", existingOrder);
+
+        if (existingOrder) {
+            return { eligible: false, reason: 'You have already claimed this NFT.' };
+        }
+
+        // Check if the device has been used to mint this NFT before
+        console.log("deviceId", deviceId);
+        console.log("collectibleId", collectibleId);
+        console.log("deviceId", deviceId);
+        const { data: existingDeviceMint, error: deviceError } = await supabase
+            .from('light_orders')
+            .select('id, status')
+            .eq('device_id', deviceId)
+            .eq('collectible_id', collectibleId)
+            .in('status', ['completed', 'pending'])
+            .single();
+
+        console.log("existingDeviceMint", existingDeviceMint);
+
+        if (deviceError && deviceError.code !== 'PGRST116') throw deviceError;
+        if (existingDeviceMint) {
+            console.log("Device has already been used to claim this NFT", { "deviceID": deviceId, "emailAddress": emailAddress, "collectibleId": collectibleId });
+            return { eligible: false, reason: 'This device has already been used to claim this NFT.' };
+        }
+
+        //CHECK FOR MINT START AND END DATE
+        const mintStartDateUTC = collectible.mint_start_date ? new Date(collectible.mint_start_date) : null;
+        const mintEndDateUTC = collectible.mint_end_date ? new Date(collectible.mint_end_date) : null;
+
+        const nowUTC = new Date();
+
+        // Check if minting has started
+        if (mintStartDateUTC && nowUTC < mintStartDateUTC) {
+            return { eligible: false, reason: 'Claiming not started yet.' };
+        }
+
+        // Check if the minting period has ended
+        if (mintEndDateUTC && nowUTC > mintEndDateUTC) {
+            return { eligible: false, reason: 'Claiming period has ended.' };
+        }
+
+        let isAirdropEligible = false;
+        if (collectible.airdrop_eligibility_index) {
+            isAirdropEligible = collectible.airdrop_eligibility_index === count! + 1;
+        }
+
+        // If all checks pass, the user is eligible to mint
+        return { eligible: true, isAirdropEligible };
+    } catch (error) {
+        return { eligible: false, reason: 'Error checking claim eligibility.' };
+    }
+}
+
 export async function updateOrderAirdropStatus(orderId: string, airdropWon: boolean) {
     try {
         const { data, error } = await supabase
@@ -688,7 +795,30 @@ export async function getExistingOrder(walletAddress: string, collectibleId: num
     }
 }
 
+export async function getExistingLightOrder(emailAddress: string, collectibleId: number) {
+    try {
+        const { data, error } = await supabase
+            .from('light_orders')
+            .select('*')
+            .eq('email', emailAddress)
+            .eq('collectible_id', collectibleId)
+            .eq('status', 'pending')
+            .single();
 
+        if (error) {
+            if (error.code === 'PGRST116') {
+                // No order found
+                return null;
+            }
+            throw error;
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Error fetching existing light order:", error);
+        throw error;
+    }
+}
 
 export async function getCompletedOrdersCount(collectibleId: number): Promise<number> {
     const { count, error } = await supabase
