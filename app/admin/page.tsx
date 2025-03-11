@@ -58,7 +58,7 @@ export default function AdminDashboard() {
       setCollections(result.collections);
       fetchChipLinks();
       // Navigate to a protected route after successful login
-      router.push("/admin");
+      router.push("/admin/chips");
     } else {
       alert("Incorrect password");
     }
@@ -127,10 +127,10 @@ export default function AdminDashboard() {
   return (
     <div>
       <nav className="bg-gray-800 p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="text-white font-bold text-xl">
+        <div className="container mx-auto flex justify-end items-center">
+          {/* <div className="text-white font-bold text-xl">
             StreetMint Admin Panel
-          </div>
+          </div> */}
           <div className="space-x-4">
             <Button
               onClick={() => setSelectedSection(Section.Library)}

@@ -356,9 +356,50 @@ export async function getChipLinkByCollectibleId(collectibleId: number) {
     return data;
 }
 
-export async function createChipLink(chipLink: ChipLinkCreate): Promise<boolean> {
+export async function createChipLink(chipLink: ChipLinkCreate): Promise<{ success: boolean; error?: string }> {
     const supabaseAdmin = await getSupabaseAdmin();
-    const { error }: { error: any } = await supabaseAdmin
+    
+    // First, check if the chip ID already exists
+    const { data: existingChip, error: checkError } = await supabaseAdmin
+        .from('chip_links')
+        .select('id, chip_id, artists_id')
+        .eq('chip_id', chipLink.chip_id)
+        .single();
+    
+    if (checkError && checkError.code !== 'PGRST116') {
+        // PGRST116 means no rows returned, which is what we want
+        console.error('Error checking existing chip link:', checkError);
+        return { success: false, error: 'Error checking if chip ID already exists' };
+    }
+    
+    if (existingChip) {
+        // Chip ID already exists, get the artist's username
+        let artistInfo = "unknown artist";
+        
+        if (existingChip.artists_id) {
+            // Fetch the artist's username
+            const { data: artistData, error: artistError } = await supabaseAdmin
+                .from('artists')
+                .select('username')
+                .eq('id', existingChip.artists_id)
+                .single();
+                
+            if (!artistError && artistData) {
+                artistInfo = `${artistData.username} (ID: ${existingChip.artists_id})`;
+            } else {
+                artistInfo = `artist ID ${existingChip.artists_id}`;
+            }
+        }
+        
+        console.log('Chip ID already exists:', existingChip);
+        return { 
+            success: false, 
+            error: `Chip ID ${chipLink.chip_id} is already assigned to ${artistInfo}` 
+        };
+    }
+    
+    // If we get here, the chip ID doesn't exist, so create it
+    const { error: insertError } = await supabaseAdmin
         .from('chip_links')
         .insert({
             chip_id: chipLink.chip_id,
@@ -367,11 +408,12 @@ export async function createChipLink(chipLink: ChipLinkCreate): Promise<boolean>
             artists_id: chipLink.artists_id
         });
 
-    if (error) {
-        console.error('Error creating chip link:', error);
-        return false;
+    if (insertError) {
+        console.error('Error creating chip link:', insertError);
+        return { success: false, error: 'Error creating chip link' };
     }
-    return true;
+    
+    return { success: true };
 }
 
 export async function updateChipLink(id: number, chipLink: ChipLink) {
