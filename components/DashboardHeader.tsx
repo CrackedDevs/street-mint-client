@@ -39,6 +39,12 @@ const DashboardHeader: React.FC = () => {
                       Collections
                     </Button>
                   </Link>
+                  <Link href="/dashboard/my-chips">
+                    <Button variant="ghost">
+                      <Bolt className="h-5 w-5 mr-2" />
+                      My Chips
+                    </Button>
+                  </Link>
                   <Link href="/dashboard/profile">
                     <Button variant="ghost">
                       <UserIcon className="h-5 w-5 mr-2" />

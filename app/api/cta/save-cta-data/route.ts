@@ -4,7 +4,32 @@ import { Collectible } from "@/lib/supabaseClient";
 
 export async function PUT(request: Request) {
   try {
-    const collectible: Collectible = await request.json();
+    const {
+      collectible,
+      orderId,
+      email,
+      text,
+    }: {
+      collectible: Collectible;
+      orderId: string;
+      email: string;
+      text: string;
+    } = await request.json();
+
+    if (orderId) {
+      const supabaseAdmin = await getSupabaseAdmin();
+      const { error } = await supabaseAdmin
+        .from("orders")
+        .update({ cta_email: email, cta_text: text })
+        .eq("id", orderId);
+
+      if (error) {
+        return NextResponse.json(
+          { success: false, error: error.message || "Failed to update order" },
+          { status: 500 }
+        );
+      }
+    }
 
     if (!collectible || !collectible.id) {
       return NextResponse.json(

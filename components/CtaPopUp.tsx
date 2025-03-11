@@ -20,6 +20,7 @@ interface CtaPopUpProps {
   hasTextCapture: boolean;
   collectible: Collectible;
   publicKey: string;
+  existingOrderId: string;
   // onSubmit?: (data: { email?: string; text?: string }) => void;
 }
 
@@ -36,6 +37,7 @@ function CtaPopUp({
   hasTextCapture = false,
   collectible,
   publicKey,
+  existingOrderId,
 }: // onSubmit,
 CtaPopUpProps) {
   const [email, setEmail] = useState("");
@@ -86,7 +88,12 @@ CtaPopUpProps) {
     if (hasEmailCapture || hasTextCapture) {
       const response = await fetch("/api/cta/save-cta-data", {
         method: "PUT",
-        body: JSON.stringify(updatedCollectible),
+        body: JSON.stringify({
+          collectible: updatedCollectible,
+          orderId: existingOrderId,
+          text: text,
+          email: email,
+        }),
       });
       const data = await response.json();
       if (data.success) {
@@ -105,7 +112,7 @@ CtaPopUpProps) {
         }
       } else {
         toast({
-          title: "Failed to update list",
+          title: "Failed to update. Please try again.",
           description: data.error,
         });
       }
