@@ -60,7 +60,7 @@ function CreateCollectiblePage() {
   const [newCtaLogoImage, setNewCtaLogoImage] = useState<File | null>(null);
   const [showCreatorForm, setShowCreatorForm] = useState(false);
   const [availableChips, setAvailableChips] = useState<Array<{id: number, chip_id: string, active: boolean}>>([]);
-  const [selectedChipId, setSelectedChipId] = useState<number | null>(null);
+  const [selectedChipIds, setSelectedChipIds] = useState<number[]>([]);
   const [isLoadingChips, setIsLoadingChips] = useState(false);
 
   // Fetch available chips for the artist
@@ -332,22 +332,24 @@ function CreateCollectiblePage() {
       );
 
       if (createdCollectible) {
-        // If a chip was selected, update the chip link to associate it with the new collectible
-        if (selectedChipId) {
+        // Update multiple chip links
+        if (selectedChipIds.length > 0) {
           try {
-            await updateChipLink(selectedChipId, {
-              id: selectedChipId,
-              chip_id: availableChips.find(chip => chip.id === selectedChipId)?.chip_id || "",
-              collectible_id: createdCollectible.id,
-              active: true,
-              created_at: new Date().toISOString(),
-              artists_id: userProfile.id
-            });
+            await Promise.all(selectedChipIds.map(async (chipId) => {
+              await updateChipLink(chipId, {
+                id: chipId,
+                chip_id: availableChips.find(chip => chip.id === chipId)?.chip_id || "",
+                collectible_id: createdCollectible.id,
+                active: true,
+                created_at: new Date().toISOString(),
+                artists_id: userProfile.id
+              });
+            }));
           } catch (error) {
-            console.error("Error updating chip link:", error);
+            console.error("Error updating chip links:", error);
             toast({
               title: "Warning",
-              description: "Collectible created but failed to link with chip. Please try linking it manually.",
+              description: "Collectible created but some chip links failed. Please try linking them manually.",
               variant: "destructive",
             });
           }
@@ -501,7 +503,7 @@ function CreateCollectiblePage() {
                     htmlFor="chip-selection"
                     className="text-lg font-semibold"
                   >
-                    Assign NFC Chip
+                    Assign NFC Chips
                   </Label>
                   {isLoadingChips ? (
                     <div className="flex items-center space-x-2">
@@ -510,22 +512,36 @@ function CreateCollectiblePage() {
                     </div>
                   ) : availableChips.length > 0 ? (
                     <div className="space-y-2">
-                      <select
-                        id="chip-selection"
-                        value={selectedChipId?.toString() || ""}
-                        onChange={(e) => setSelectedChipId(e.target.value ? Number(e.target.value) : null)}
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
-                      >
-                        <option value="">-- Select a chip --</option>
+                      <div className="max-h-48 overflow-y-auto border rounded-md p-2">
                         {availableChips.map((chip) => (
-                          <option key={chip.id} value={chip.id}>
-                            {chip.chip_id}
-                          </option>
+                          <div key={chip.id} className="flex items-center space-x-2 p-2 hover:bg-primary/5 rounded-md">
+                            <input
+                              type="checkbox"
+                              id={`chip-${chip.id}`}
+                              checked={selectedChipIds.includes(chip.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedChipIds([...selectedChipIds, chip.id]);
+                                } else {
+                                  setSelectedChipIds(selectedChipIds.filter(id => id !== chip.id));
+                                }
+                              }}
+                              className="h-4 w-4 rounded border-gray-300"
+                            />
+                            <label htmlFor={`chip-${chip.id}`} className="flex-grow cursor-pointer">
+                              {chip.chip_id}
+                            </label>
+                          </div>
                         ))}
-                      </select>
+                      </div>
                       <p className="text-sm text-muted-foreground">
-                        Selecting a chip will link this collectible to the physical NFC chip.
+                        Select one or more chips to link to this collectible.
                       </p>
+                      {selectedChipIds.length > 0 && (
+                        <p className="text-sm text-primary">
+                          {selectedChipIds.length} chip{selectedChipIds.length > 1 ? 's' : ''} selected
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <div className="rounded-md bg-amber-50 p-4">
