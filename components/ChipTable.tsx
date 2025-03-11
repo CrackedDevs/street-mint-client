@@ -84,23 +84,22 @@ export default function ChipTable({
           chip.chip_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
           (chip.collectible_id?.toString() || '').includes(searchQuery.toLowerCase()) ||
           chip.created_at.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          chip.metadata.artist
+          (chip.metadata.artist || '')
             .toLowerCase()
             .includes(searchQuery.toLowerCase()) ||
-          chip.metadata.collectible_name
+          (chip.metadata.collectible_name || '')
             .toLowerCase()
             .includes(searchQuery.toLowerCase()) ||
-          chip.metadata.location
+          (chip.metadata.location || '')
             .toLowerCase()
             .includes(searchQuery.toLowerCase()) ||
-          chip.metadata.location_note
+          (chip.metadata.location_note || '')
             .toLowerCase()
             .includes(searchQuery.toLowerCase()) ||
-          chip.metadata.collectible_description
+          (chip.metadata.collectible_description || '')
             .toLowerCase()
             .includes(searchQuery.toLowerCase()) ||
-          chip.metadata.collection_id
-            .toString()
+          (chip.metadata.collection_id?.toString() || '')
             .includes(searchQuery.toLowerCase())
       )
       .sort((a, b) => {
@@ -213,7 +212,7 @@ export default function ChipTable({
                 <TableCell>{chip.metadata.collectible_name}</TableCell>
                 <TableCell>
                   <a
-                    href={chip.metadata.location}
+                    href={chip.metadata.location || '#'}
                     target="_blank"
                     className="text-indigo-600 hover:text-indigo-800 hover:underline transition-colors duration-200"
                   >
@@ -221,7 +220,7 @@ export default function ChipTable({
                   </a>
                 </TableCell>
                 <TableCell>
-                  {chip.metadata.location_note.slice(0, 30)}
+                  {(chip.metadata.location_note || '').slice(0, 30)}
                 </TableCell>
                 <TableCell>
                   <a
