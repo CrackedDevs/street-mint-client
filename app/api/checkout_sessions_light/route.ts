@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
       nftImageUrl,
       collectibleId,
       isCardPayment,
+      walletAddress,
       signatureCode,
     } = await req.json();
     // console.log(body, "body");
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
         collectibleId,
         isCardPayment,
         signatureCode,
+        walletAddress,
         isLightVersion: "true",
       },
     });

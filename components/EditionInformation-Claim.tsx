@@ -26,6 +26,7 @@ const EditionInformationClaim = ({
   artistWalletAddress,
   soldCount,
   lightOrder,
+  signatureCode
 }: {
   collection: Collection;
   collectible: Collectible;
@@ -33,6 +34,7 @@ const EditionInformationClaim = ({
   artistWalletAddress: string;
   soldCount: number;
   lightOrder: LightOrder;
+  signatureCode: string;
 }) => {
   const [mintingStatus, setMintingStatus] = useState<MintStatus>("loading");
   const [timeLeft, setTimeLeft] = useState<string>("");
@@ -143,6 +145,7 @@ const EditionInformationClaim = ({
             }}
             mintStatus={mintingStatus}
             lightOrder={lightOrder}
+            signatureCode={signatureCode}
           />
         </div>
 

@@ -22,53 +22,101 @@ export async function POST(req: NextRequest) {
     if (!stripeData.metadata) {
       throw new Error("Missing metadata in Stripe webhook");
     }
-    const {
-      orderId,
-      tipLinkWalletAddress,
-      signedTransaction,
-      priceInSol,
-      isEmail,
-      nftImageUrl,
-      collectibleId,
-      chipTapData,
-      isCardPayment,
-    } = stripeData.metadata;
-    const parsedChipData = JSON.parse(chipTapData);
-    console.log(parsedChipData);
+    const isLightVersion = stripeData.metadata.isLightVersion === "true";
 
-    const processResponse = await fetch(
-      `${
-        process.env.NODE_ENV === "development"
-          ? process.env.DEV_SITE_URL
-          : process.env.PROD_SITE_URL
-      }/api/collection/mint/process`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          orderId,
-          tipLinkWalletAddress,
-          signedTransaction,
-          priceInSol,
-          isEmail,
-          nftImageUrl,
-          collectibleId,
-          chipTapData: parsedChipData,
-          isCardPayment,
-        }),
+    console.log("stripeData.metadata", stripeData.metadata);
+
+    if (isLightVersion) {
+      const {
+        orderId,
+        signedTransaction,
+        priceInSol,
+        collectibleId,
+        isCardPayment,
+        walletAddress,
+      } = stripeData.metadata;
+      const processResponse = await fetch(
+        `${
+          process.env.NODE_ENV === "development"
+            ? process.env.DEV_SITE_URL
+            : process.env.PROD_SITE_URL
+        }/api/collection/mint/process-light`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId,
+            signedTransaction,
+            priceInSol,
+            walletAddress,
+            collectibleId,
+            isCardPayment
+          }),
+        }
+      );
+
+      console.log(processResponse);
+
+      if (!processResponse.ok) {
+        const supabaseAdmin = await getSupabaseAdmin();
+        await supabaseAdmin
+          .from("orders")
+          .update({ status: "failed" })
+          .eq("id", orderId);
+        const errorData = await processResponse.json();
+        console.error("Failed to process minting:", errorData);
+
+        throw new Error(errorData.error || "Failed to process minting");
       }
-    );
+    } else {
+      const {
+        orderId,
+        tipLinkWalletAddress,
+        signedTransaction,
+        priceInSol,
+        isEmail,
+        nftImageUrl,
+        collectibleId,
+        chipTapData,
+        isCardPayment,
+      } = stripeData.metadata;
+      const parsedChipData = JSON.parse(chipTapData);
+      console.log(parsedChipData);
 
-    if (!processResponse.ok) {
-      const supabaseAdmin = await getSupabaseAdmin();
-      await supabaseAdmin
-        .from("orders")
-        .update({ status: "failed" })
-        .eq("id", orderId);
-      const errorData = await processResponse.json();
-      console.error("Failed to process minting:", errorData);
+      const processResponse = await fetch(
+        `${
+          process.env.NODE_ENV === "development"
+            ? process.env.DEV_SITE_URL
+            : process.env.PROD_SITE_URL
+        }/api/collection/mint/process`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId,
+            tipLinkWalletAddress,
+            signedTransaction,
+            priceInSol,
+            isEmail,
+            nftImageUrl,
+            collectibleId,
+            chipTapData: parsedChipData,
+            isCardPayment,
+          }),
+        }
+      );
 
-      throw new Error(errorData.error || "Failed to process minting");
+      if (!processResponse.ok) {
+        const supabaseAdmin = await getSupabaseAdmin();
+        await supabaseAdmin
+          .from("orders")
+          .update({ status: "failed" })
+          .eq("id", orderId);
+        const errorData = await processResponse.json();
+        console.error("Failed to process minting:", errorData);
+
+        throw new Error(errorData.error || "Failed to process minting");
+      }
     }
   } else if (stripeData.status === "expired") {
     const supabaseAdmin = await getSupabaseAdmin();
