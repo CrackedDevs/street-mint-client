@@ -67,6 +67,7 @@ export type Collectible = {
     is_irls: boolean | null;
     is_video: boolean | null;
     is_light_version: boolean;
+    sponsor_id?: number | null;
 };
 
 interface Order {
@@ -865,3 +866,53 @@ export async function getGalleryInformationByTokenAddresses(tokenAddresses: stri
 
     return formattedData;
 }
+
+export type Sponsor = {
+    id: number;
+    name: string | null;
+    img_url: string | null;
+    artist_id: number | null;
+    created_at: string;
+};
+
+
+
+
+
+export const updateSponsor = async (sponsor: Sponsor): Promise<{ success: boolean; error: Error | null }> => {
+    try {
+        const { error } = await supabase
+            .from('sponsors')
+            .update(sponsor)
+            .eq('id', sponsor.id);
+
+        if (error) {
+            console.error('Error updating sponsor:', error);
+            return { success: false, error: new Error(error.message) };
+        }
+
+        return { success: true, error: null };
+    } catch (error) {
+        console.error('Error updating sponsor:', error);
+        return { success: false, error: error as Error };
+    }
+};
+
+export const deleteSponsor = async (sponsorId: number): Promise<{ success: boolean; error: Error | null }> => {
+    try {
+        const { error } = await supabase
+            .from('sponsors')
+            .delete()
+            .eq('id', sponsorId);
+
+        if (error) {
+            console.error('Error deleting sponsor:', error);
+            return { success: false, error: new Error(error.message) };
+        }
+
+        return { success: true, error: null };
+    } catch (error) {
+        console.error('Error deleting sponsor:', error);
+        return { success: false, error: error as Error };
+    }
+};

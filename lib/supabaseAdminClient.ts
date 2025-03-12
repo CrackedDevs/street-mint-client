@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from "@supabase/supabase-js";
-import { createFetch, fetchCollectibleById, getCollectionById, getArtistById, Collectible } from "./supabaseClient";
+import { createFetch, fetchCollectibleById, getCollectionById, getArtistById, Collectible, Sponsor } from "./supabaseClient";
 import { Database } from "./types/database.types";
 import { isSignatureValid } from "./nfcVerificationHellper";
 import Stripe from "stripe";
@@ -642,3 +642,71 @@ export async function getLightOrdersByEmail(email: string, page: number = 0, pag
         total: count || 0 
     };
 }
+
+export async function getAllOrders(page: number = 0, pageSize: number = 20, filters: { status?: string } = {}) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const start = page * pageSize;
+    
+    let query = supabaseAdmin
+        .from('light_orders')
+        .select('*, collectibles(name, primary_image_url, collections(name))', { count: 'exact' })
+        .order('created_at', { ascending: false });
+    
+    // Apply filters if provided
+    if (filters.status) {
+        query = query.eq('status', filters.status);
+    }
+    
+    const { data, error, count } = await query.range(start, start + pageSize - 1);
+
+    if (error) {
+        console.error('Error getting all orders:', error);
+        return { orders: null, total: 0 };
+    }
+
+    return { 
+        orders: data, 
+        total: count || 0 
+    };
+}
+
+export const createSponsor = async (sponsor: Omit<Sponsor, 'id' | 'created_at'>): Promise<Sponsor | null> => {
+    try {
+        const supabaseAdmin = await getSupabaseAdmin();
+        const { data, error } = await supabaseAdmin
+            .from('sponsors')
+            .insert([sponsor])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error creating sponsor:', error);
+            return null;
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error creating sponsor:', error);
+        return null;
+    }
+};
+
+export const getSponsorsByArtistId = async (artistId: number): Promise<Sponsor[]> => {
+    try {
+        const supabaseAdmin = await getSupabaseAdmin();
+        const { data, error } = await supabaseAdmin
+            .from('sponsors')
+            .select('*')
+            .eq('artist_id', artistId);
+
+        if (error) {
+            console.error('Error fetching sponsors:', error);
+            return [];
+        }
+
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching sponsors:', error);
+        return [];
+    }
+};
