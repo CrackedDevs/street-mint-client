@@ -2,46 +2,27 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PopulatedCollection } from "@/lib/supabaseClient";
-import CollectionCard from "@/components/collectionCard";
-import { loginAdmin, checkAdminSession } from "./actions";
+import { checkAdminSession, loginAdmin } from "./actions";
 import { Button } from "@/components/ui/button";
-import AddChipForm from "@/components/AddChipForm";
-import ChipTable from "@/components/ChipTable";
 import {
-  ChipLink,
-  createChipLink,
-  getAllChipLinks,
-  ChipLinkCreate,
-  deleteChipLink,
-  updateChipLink,
-  ChipLinkDetailed,
-} from "@/lib/supabaseAdminClient";
+  LayoutDashboard,
+  Tag,
+  BookOpen,
+  Settings,
+  ArrowRight,
+  List,
+} from "lucide-react";
 
-enum Section {
-  Library = "library",
-  ChipManager = "chip-manager",
-}
-
-export default function AdminDashboard() {
+export default function AdminOverview() {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [password, setPassword] = useState("");
-  const [collections, setCollections] = useState<PopulatedCollection[]>([]);
-  const [selectedSection, setSelectedSection] = useState<Section>(
-    Section.ChipManager
-  );
-  const [chipLinks, setChipLinks] = useState<ChipLinkDetailed[]>([]);
 
   useEffect(() => {
     const checkSession = async () => {
-      const { isLoggedIn, collections } = await checkAdminSession();
+      const { isLoggedIn } = await checkAdminSession();
       setIsLoggedIn(isLoggedIn);
-      if (isLoggedIn && collections) {
-        setCollections(collections);
-        fetchChipLinks();
-      }
       setIsLoading(false);
     };
 
@@ -55,39 +36,11 @@ export default function AdminDashboard() {
 
     if (result.success) {
       setIsLoggedIn(true);
-      setCollections(result.collections);
-      fetchChipLinks();
-      // Navigate to a protected route after successful login
-      router.push("/admin/chips");
+      setIsLoading(false);
     } else {
       alert("Incorrect password");
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  };
-
-  const fetchChipLinks = async () => {
-    const links = await getAllChipLinks();
-    console.log("links", links);
-    if (links) {
-      setChipLinks(links);
-    }
-  };
-
-  const addChipLink = async (chipLink: ChipLinkCreate) => {
-    const result = await createChipLink(chipLink);
-    if (result) {
-      fetchChipLinks();
-    }
-  };
-
-  const handleDeleteChipLink = async (id: number) => {
-    await deleteChipLink(id);
-    fetchChipLinks();
-  };
-
-  const handleUpdateChipLink = async (id: number, chipLink: ChipLink) => {
-    await updateChipLink(id, chipLink);
-    fetchChipLinks();
   };
 
   if (isLoading) {
@@ -124,64 +77,76 @@ export default function AdminDashboard() {
     );
   }
 
+  // Admin sections with descriptions
+  const adminSections = [
+    {
+      title: "Dashboard",
+      description: "Link chips to collectible",
+      icon: <LayoutDashboard className="h-6 w-6" />,
+      path: "/admin/dashboard",
+      color: "bg-blue-500",
+    },
+    {
+      title: "Chip Management",
+      description: "Assign chips to artists",
+      icon: <Tag className="h-6 w-6" />,
+      path: "/admin/chips",
+      color: "bg-purple-500",
+    },
+    {
+      title: "Collections & Collectibles",
+      description: "Add, edit, and delete collections & collectibles",
+      icon: <BookOpen className="h-6 w-6" />,
+      path: "/admin/library",
+      color: "bg-green-500",
+    },
+    {
+      title: "Orders",
+      description: "View and manage orders",
+      icon: <List className="h-6 w-6" />,
+      path: "/admin/orders",
+      color: "bg-red-500",
+    },
+    // {
+    //   title: "Settings",
+    //   description: "Configure platform settings",
+    //   icon: <Settings className="h-6 w-6" />,
+    //   path: "/admin/dashboard",
+    //   color: "bg-gray-500"
+    // }
+  ];
+
   return (
-    <div>
-      <nav className="bg-gray-800 p-4">
-        <div className="container mx-auto flex justify-end items-center">
-          {/* <div className="text-white font-bold text-xl">
-            StreetMint Admin Panel
-          </div> */}
-          <div className="space-x-4">
-            <Button
-              onClick={() => setSelectedSection(Section.Library)}
-              className="text-white hover:text-gray-300"
-            >
-              Library
-            </Button>
-            <Button
-              onClick={() => setSelectedSection(Section.ChipManager)}
-              className="text-white hover:text-gray-300"
-            >
-              Manager
-            </Button>
-          </div>
-        </div>
-      </nav>
+    <div className="max-w-5xl mx-auto p-8">
+      <div className="text-center mb-10">
+        <h1 className="text-4xl font-bold mb-3">StreetMint Admin</h1>
+        <p className="text-gray-600 max-w-2xl mx-auto">
+          Manage your platform from this central dashboard
+        </p>
+      </div>
 
-      {selectedSection === Section.Library && (
-        <div className="p-8">
-          <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {collections.map((collection) => (
-              <div key={collection.id} className="relative z-20 bg-white">
-                <CollectionCard
-                  isAdmin={true}
-                  collection={{
-                    id: collection.id?.toString() || "",
-                    name: collection.name,
-                    description: collection.description,
-                    collectible_image_urls: collection.collectible_image_urls,
-                  }}
-                />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {adminSections.map((section, index) => (
+          <div
+            key={index}
+            onClick={() => router.push(section.path)}
+            className="bg-white rounded-lg shadow-md overflow-hidden transition-all hover:shadow-lg cursor-pointer hover:translate-y-[-2px]"
+          >
+            <div className="p-6 flex items-center">
+              <div
+                className={`${section.color} p-3 rounded-full text-white mr-4`}
+              >
+                {section.icon}
               </div>
-            ))}
+              <div className="flex-grow">
+                <h2 className="text-xl font-bold">{section.title}</h2>
+                <p className="text-gray-600 text-sm">{section.description}</p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-gray-400" />
+            </div>
           </div>
-        </div>
-      )}
-
-      {selectedSection === Section.ChipManager && (
-        <div className="container mx-auto p-4 py-10 space-y-8">
-          <h1 className="text-3xl font-bold text-center mb-12">
-            Chip Collectible Manager 🔐
-          </h1>
-          <AddChipForm onAddChipLink={addChipLink} />
-          <ChipTable
-            chipLinks={chipLinks}
-            onDelete={handleDeleteChipLink}
-            onUpdate={handleUpdateChipLink}
-          />
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }
