@@ -91,6 +91,7 @@ function EditCollectiblePage() {
           enable_card_payments: fetchedCollectible.enable_card_payments || false,
           stripe_price_id: fetchedCollectible.stripe_price_id || undefined,
           sponsor_id: fetchedCollectible.sponsor_id || null,
+          only_card_payment: fetchedCollectible.only_card_payment || false,
         });
       } else {
         toast({

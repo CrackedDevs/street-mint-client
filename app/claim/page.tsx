@@ -154,6 +154,7 @@ export default async function NFTPage({
                 cta_text_list: (collectible.cta_text_list || []) as {
                   [key: string]: string;
                 }[],
+                only_card_payment: collectible.only_card_payment === null ? undefined : collectible.only_card_payment,
               }}
               remainingQuantity={remainingQuantity}
               artistWalletAddress={artist.wallet_address}

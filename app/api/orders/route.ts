@@ -49,7 +49,7 @@ export async function GET(req: Request) {
       .select(
         "id, created_at, is_light_version, name, description, quantity, price_usd, location, is_light_version, mint_start_date, mint_end_date, cta_title, cta_description, cta_logo_url, cta_text, cta_link, cta_has_email_capture, cta_enable, cta_has_text_capture, enable_card_payments"
       )
-      .eq("id", collectibleId)
+      .eq("id", parseInt(collectibleId!))
       .single();
 
     if (collectibleError || !collectible) {
@@ -67,14 +67,14 @@ export async function GET(req: Request) {
         .select(
           "id, wallet_address, status, mint_signature, price_usd, price_sol, created_at, quantity, device_id, updated_at, cta_email, cta_text, email"
         )
-        .eq("collectible_id", collectibleId);
+        .eq("collectible_id", parseInt(collectibleId!));
     } else {
       query = supabaseAdmin
         .from("orders")
         .select(
           "id, wallet_address, status, mint_signature, price_usd, price_sol, created_at, quantity, device_id, updated_at, cta_email, cta_text, tiplink_url"
         )
-        .eq("collectible_id", collectibleId);
+        .eq("collectible_id", parseInt(collectibleId!));
     }
 
     if (onlySuccess) {
