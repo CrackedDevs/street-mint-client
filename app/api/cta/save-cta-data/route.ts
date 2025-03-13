@@ -9,23 +9,32 @@ export async function PUT(request: Request) {
       orderId,
       email,
       text,
+      isLightVersion,
     }: {
       collectible: Collectible;
       orderId: string;
       email: string;
       text: string;
+      isLightVersion: boolean;
     } = await request.json();
 
     if (orderId) {
       const supabaseAdmin = await getSupabaseAdmin();
+
+      const tableName = isLightVersion ? "light_orders" : "orders";
+
       const { error } = await supabaseAdmin
-        .from("orders")
+        .from(tableName)
         .update({ cta_email: email, cta_text: text })
         .eq("id", orderId);
 
       if (error) {
+        console.error(`Error updating ${tableName}:`, error);
         return NextResponse.json(
-          { success: false, error: error.message || "Failed to update order" },
+          {
+            success: false,
+            error: error.message || `Failed to update ${tableName}`,
+          },
           { status: 500 }
         );
       }

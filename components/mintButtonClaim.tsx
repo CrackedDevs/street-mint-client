@@ -737,6 +737,7 @@ export default function MintButtonClaim({
           collectible={collectible}
           publicKey={publicKey?.toString() ?? ""}
           existingOrderId={existingOrder?.id ?? ""}
+          isLightVersion={true}
         />
       )}
       <SuccessPopup
