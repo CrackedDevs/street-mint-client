@@ -1122,7 +1122,7 @@ export default function MintButton({
         onSelectPaymentMethod={handlePaymentMethodSelection}
         price={collectible.price_usd}
         isMinting={isMinting}
-        onlyCardPayment={collectible.only_card_payment}
+        onlyCardPayment={collectible.only_card_payment ?? false}
       />
       <CardPaymentEmailDialog
         isOpen={showCardPaymenEmailtDialog}

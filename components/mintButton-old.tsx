@@ -740,6 +740,7 @@ export default function MintButton({
         onSelectPaymentMethod={handleMintClick}
         price={collectible.price_usd}
         isMinting={isMinting}
+        onlyCardPayment={collectible.only_card_payment ?? false}
       />
       {ctaEnabled && showCtaPopUp && (
         <CtaPopUp

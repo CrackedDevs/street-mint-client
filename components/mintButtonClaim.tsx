@@ -677,6 +677,7 @@ export default function MintButtonClaim({
         onSelectPaymentMethod={handlePaymentMethodSelection}
         price={collectible.price_usd}
         isMinting={isMinting}
+        onlyCardPayment={collectible.only_card_payment ?? false}
       />
       <CardPaymentWalletDialog
         isOpen={showCardPaymenEmailtDialog}
