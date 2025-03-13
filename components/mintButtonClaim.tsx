@@ -373,21 +373,14 @@ export default function MintButtonClaim({
           TriggerConfetti();
           setExistingOrder({ id: lightOrder.id, status: "completed" });
           toast({
-            title: isEmail
-              ? "💌 Please check your inbox, your Collectible awaits you!"
-              : "✅ Collectible Minted Successfully",
+            title: "✅ Collectible Minted Successfully",
           });
-          if (isEmail) {
-            setShowMailSentModal(true);
-          } else {
-            setShowSuccessPopUp(true);
-          }
+          setShowSuccessPopUp(true);
           // setIsEligible(false);
           if (isAirdropEligible) {
             setShowAirdropModal(true);
             updateOrderAirdropStatus(lightOrder.id, true);
           }
-          localStorage.setItem("lastMintInput", addressToUse);
           setWalletAddress("");
         } else {
           throw new Error("Minting process failed");
