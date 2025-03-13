@@ -46,7 +46,9 @@ export async function GET(req: Request) {
 
     const { data: collectible, error: collectibleError } = await supabaseAdmin
       .from("collectibles")
-      .select("*")
+      .select(
+        "id, created_at, is_light_version, name, description, quantity, price_usd, location, is_light_version, mint_start_date, mint_end_date, cta_title, cta_description, cta_logo_url, cta_text, cta_link, cta_has_email_capture, cta_enable, cta_has_text_capture, enable_card_payments"
+      )
       .eq("id", collectibleId)
       .single();
 
