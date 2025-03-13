@@ -643,7 +643,7 @@ export async function getLightOrdersByEmail(email: string, page: number = 0, pag
     };
 }
 
-export async function getAllOrders(page: number = 0, pageSize: number = 20, filters: { status?: string } = {}) {
+export async function getAllLightOrders(page: number = 0, pageSize: number = 20, filters: { status?: string } = {}) {
     const supabaseAdmin = await getSupabaseAdmin();
     const start = page * pageSize;
     
@@ -660,7 +660,7 @@ export async function getAllOrders(page: number = 0, pageSize: number = 20, filt
     const { data, error, count } = await query.range(start, start + pageSize - 1);
 
     if (error) {
-        console.error('Error getting all orders:', error);
+        console.error('Error getting all light orders:', error);
         return { orders: null, total: 0 };
     }
 
@@ -669,6 +669,35 @@ export async function getAllOrders(page: number = 0, pageSize: number = 20, filt
         total: count || 0 
     };
 }
+
+export async function getAllRegularOrders(page: number = 0, pageSize: number = 20, filters: { status?: string } = {}) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const start = page * pageSize;
+    
+    let query = supabaseAdmin
+        .from('orders')
+        .select('*, collectibles(name, primary_image_url, collections(name))', { count: 'exact' })
+        .order('created_at', { ascending: false });
+    
+    // Apply filters if provided
+    if (filters.status) {
+        query = query.eq('status', filters.status);
+    }
+    
+    const { data, error, count } = await query.range(start, start + pageSize - 1);
+
+    if (error) {
+        console.error('Error getting all regular orders:', error);
+        return { orders: null, total: 0 };
+    }
+
+    return { 
+        orders: data, 
+        total: count || 0 
+    };
+}
+
+
 
 export const createSponsor = async (sponsor: Omit<Sponsor, 'id' | 'created_at'>): Promise<Sponsor | null> => {
     try {

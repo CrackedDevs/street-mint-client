@@ -5,35 +5,44 @@ import { useRouter } from "next/navigation";
 import { checkAdminSession } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { 
-  getAllOrders, 
-  LightOrder 
+import {
+  getAllRegularOrders,
+  getAllLightOrders,
+  LightOrder,
 } from "@/lib/supabaseAdminClient";
-import { Search, RefreshCw, Download } from "lucide-react";
+import { Search, RefreshCw, Copy, Check } from "lucide-react";
+import Link from "next/link";
 
-type OrderWithDetails = LightOrder & {
+// Generic order type that can represent both light and regular orders
+type OrderWithDetails = {
+  id: string;
+  created_at: string | null;
+  email?: string | null;
+  wallet_address?: string | null;
+  price_usd: number | null;
+  status: string | null;
+  collectible_id?: string; // Alternative field name
+  collection_id?: string; // Alternative field name
   collectibles?: {
+    id: string;
     name: string;
     primary_image_url: string;
+    collection_id?: string; // Alternative field name
     collections?: {
+      id: string;
       name: string;
     } | null;
   } | null;
+  isLight?: boolean;
+  cta_email?: string | null;
 };
 
 export default function OrdersPage() {
@@ -44,9 +53,9 @@ export default function OrdersPage() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [totalOrders, setTotalOrders] = useState(0);
-  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -55,7 +64,6 @@ export default function OrdersPage() {
       if (isLoggedIn) {
         fetchOrders();
       } else {
-        // Redirect to login page if not logged in
         router.push("/admin");
       }
       setIsLoading(false);
@@ -72,21 +80,45 @@ export default function OrdersPage() {
         setPage(0);
       }
 
-      const filters: { status?: string } = {};
-      if (statusFilter) {
-        filters.status = statusFilter;
-      }
+      // Fetch regular orders
+      const { orders: regularOrders, total: regularTotal } =
+        await getAllRegularOrders(newPage, 100, {});
 
-      const { orders: newOrders, total } = await getAllOrders(newPage, 20, filters);
+      // Fetch light orders
+      const { orders: lightOrdersData, total: lightTotal } =
+        await getAllLightOrders(newPage, 100, {});
 
-      if (newOrders) {
-        if (resetPage) {
-          setOrders(newOrders);
-        } else {
-          setOrders([...orders, ...newOrders]);
+      // Mark light orders
+      const lightOrders =
+        lightOrdersData?.map((order: any) => ({
+          ...order,
+          isLight: true,
+        })) || [];
+
+      // Mark regular orders
+      const markedRegularOrders =
+        regularOrders?.map((order: any) => ({
+          ...order,
+          isLight: false,
+        })) || [];
+
+      // Combine and sort all orders by created_at in descending order
+      const combinedOrders = [...markedRegularOrders, ...lightOrders].sort(
+        (a, b) => {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return dateB - dateA;
         }
-        setTotalOrders(total);
-        setHasMore(newOrders.length === 20);
+      );
+
+      if (combinedOrders) {
+        if (resetPage) {
+          setOrders(combinedOrders);
+        } else {
+          setOrders([...orders, ...combinedOrders]);
+        }
+        setTotalOrders((regularTotal || 0) + (lightTotal || 0));
+        setHasMore(combinedOrders.length === 200); // 100 from each table
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -101,11 +133,6 @@ export default function OrdersPage() {
     fetchOrders();
   };
 
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value === "all" ? undefined : value);
-    fetchOrders(true);
-  };
-
   const handleRefresh = () => {
     fetchOrders(true);
   };
@@ -117,7 +144,7 @@ export default function OrdersPage() {
 
   const getStatusColor = (status: string | null) => {
     if (!status) return "bg-gray-100 text-gray-800";
-    
+
     switch (status.toLowerCase()) {
       case "completed":
         return "bg-green-100 text-green-800";
@@ -132,15 +159,54 @@ export default function OrdersPage() {
     }
   };
 
+  const getOrderTypeColor = (isLight: boolean | undefined) => {
+    return isLight
+      ? "bg-purple-100 text-purple-800"
+      : "bg-blue-100 text-blue-800";
+  };
+
   // Filter orders based on search query
-  const filteredOrders = searchQuery 
-    ? orders.filter(order => 
-        order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.collectibles?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.collectibles?.collections?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+  const filteredOrders = searchQuery
+    ? orders.filter((order) => {
+        const query = searchQuery.toLowerCase().trim();
+        const email = order.email?.toLowerCase() || "";
+        const walletAddress = order.wallet_address?.toLowerCase() || "";
+        const id = order.id.toLowerCase();
+        const collectibleName = order.collectibles?.name?.toLowerCase() || "";
+
+        return (
+          id.includes(query) ||
+          email.includes(query) ||
+          walletAddress.includes(query) ||
+          collectibleName.includes(query)
+        );
+      })
     : orders;
+
+  const handleCopyToClipboard = (text: string, orderId: string) => {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopiedOrderId(orderId);
+        setTimeout(() => setCopiedOrderId(null), 2000);
+      })
+      .catch((err) => {
+        console.error("Failed to copy text: ", err);
+      });
+  };
+
+  const isEmailAddress = (text: string | null): boolean => {
+    if (!text) return false;
+    // Simple email validation regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(text);
+  };
+
+  const truncateAddress = (address: string | null | undefined): string => {
+    if (!address) return "N/A";
+    if (address.length <= 10) return address;
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
 
   if (isLoading && orders.length === 0) {
     return (
@@ -154,7 +220,11 @@ export default function OrdersPage() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Orders Management</h1>
-        <Button onClick={handleRefresh} variant="outline" className="flex items-center gap-2">
+        <Button
+          onClick={handleRefresh}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
           <RefreshCw className="h-4 w-4" />
           Refresh
         </Button>
@@ -166,7 +236,7 @@ export default function OrdersPage() {
             <div className="relative">
               <Input
                 type="text"
-                placeholder="Search by ID, email, collectible or collection..."
+                placeholder="Search by ID, email, collectible..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -174,31 +244,6 @@ export default function OrdersPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             </div>
           </div>
-          <div className="w-full md:w-48">
-            <Select 
-              onValueChange={handleStatusFilterChange} 
-              defaultValue="all"
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button className="md:w-auto">
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
-        </div>
-
-        <div className="text-sm text-gray-500 mb-4">
-          Showing {filteredOrders.length} of {totalOrders} orders
         </div>
 
         <div className="overflow-x-auto">
@@ -207,12 +252,12 @@ export default function OrdersPage() {
               <TableRow>
                 <TableHead>Order ID</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead>Customer</TableHead>
                 <TableHead>Collectible</TableHead>
-                <TableHead>Collection</TableHead>
                 <TableHead>Price</TableHead>
-                <TableHead>Quantity</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -223,24 +268,107 @@ export default function OrdersPage() {
                       {order.id.slice(0, 6)}...{order.id.slice(-4)}
                     </TableCell>
                     <TableCell>{formatDate(order.created_at)}</TableCell>
-                    <TableCell>{order.email}</TableCell>
-                    <TableCell>{order.collectibles?.name || "N/A"}</TableCell>
-                    <TableCell>{order.collectibles?.collections?.name || "N/A"}</TableCell>
                     <TableCell>
-                      {order.price_usd ? `$${order.price_usd.toFixed(2)}` : "N/A"}
+                      <div
+                        onClick={() =>
+                          handleCopyToClipboard(
+                            order.isLight
+                              ? order.email || ""
+                              : order.wallet_address || "",
+                            order.id
+                          )
+                        }
+                        className="flex items-center gap-1 cursor-pointer hover:text-blue-600 group relative"
+                        title="Click to copy"
+                      >
+                        {order.isLight ? (
+                          // Light orders: show email field
+                          <span>{order.email || "N/A"}</span>
+                        ) : // Regular orders
+                        order.wallet_address &&
+                          isEmailAddress(order.wallet_address) ? (
+                          // If wallet_address is email, show full
+                          <span>{order.wallet_address}</span>
+                        ) : (
+                          // If wallet_address is address, truncate and add tooltip
+                          <span title={order.wallet_address || undefined}>
+                            {truncateAddress(order.wallet_address)}
+                          </span>
+                        )}
+                        {copiedOrderId === order.id ? (
+                          <Check className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Copy className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell>{order.quantity || "N/A"}</TableCell>
+                    <TableCell>{order.collectibles?.name || "N/A"}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                        {order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : "Unknown"}
+                      {order.price_usd
+                        ? `$${order.price_usd.toFixed(2)}`
+                        : "Free"}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                          order.status
+                        )}`}
+                      >
+                        {order.status
+                          ? order.status.charAt(0).toUpperCase() +
+                            order.status.slice(1)
+                          : "Unknown"}
                       </span>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${getOrderTypeColor(
+                          order.isLight
+                        )}`}
+                      >
+                        {order.isLight ? "Light" : "Standard"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="link"
+                        className="text-blue-600 hover:text-blue-800 p-0 h-auto font-medium"
+                        onClick={() => {
+                          // Get collection and collectible IDs from wherever they exist in the data structure
+                          const collectionId =
+                            order.collectibles?.collections?.id ||
+                            order.collectibles?.collection_id ||
+                            order.collection_id ||
+                            "";
+                          const collectibleId =
+                            order.collectibles?.id ||
+                            order.collectible_id ||
+                            "";
+
+                          if (collectionId && collectibleId) {
+                            router.push(
+                              `/admin/collection/${collectionId}/orders/${collectibleId}`
+                            );
+                          } else {
+                            console.error(
+                              "Missing collection or collectible ID",
+                              order
+                            );
+                          }
+                        }}
+                      >
+                        View All
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                    {isSearching ? "Searching..." : "No orders found"}
+                  <TableCell
+                    colSpan={8}
+                    className="text-center py-8 text-gray-500"
+                  >
+                    No orders found
                   </TableCell>
                 </TableRow>
               )}
@@ -250,8 +378,8 @@ export default function OrdersPage() {
 
         {hasMore && orders.length > 0 && (
           <div className="mt-6 text-center">
-            <Button 
-              onClick={handleLoadMore} 
+            <Button
+              onClick={handleLoadMore}
               variant="outline"
               disabled={isLoading}
             >
@@ -262,4 +390,4 @@ export default function OrdersPage() {
       </div>
     </div>
   );
-} 
+}
