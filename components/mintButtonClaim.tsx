@@ -228,26 +228,9 @@ export default function MintButtonClaim({
   }, []);
 
   const handleLightVersionClaim = async (paymentMethod: "card" | "crypto") => {
-    const addressToUse = cardPaymentAddress;
-    const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
-      (addressToUse || "").trim()
-    );
-    if (isEmail) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid wallet address",
-        variant: "destructive",
-      });
-      return;
-    }
-    console.log("isEmail", isEmail);
-    console.log("addressToUse", addressToUse);
 
     let newOrderId = null;
 
-    if (!addressToUse) {
-      return;
-    }
     setIsMinting(true);
     setError(null);
 
@@ -256,6 +239,25 @@ export default function MintButtonClaim({
       let priceInSol = 0;
 
       if (paymentMethod === "card") {
+        const addressToUse = cardPaymentAddress;
+
+        if (!addressToUse) {
+          return;
+        }
+        const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
+          (addressToUse || "").trim()
+        );
+        if (isEmail) {
+          toast({
+            title: "Error",
+            description: "Please enter a valid wallet address",
+            variant: "destructive",
+          });
+          return;
+        }
+        console.log("isEmail", isEmail);
+        console.log("addressToUse", addressToUse);
+
         try {
           const response = await fetch("/api/checkout_sessions_light", {
             method: "POST",
