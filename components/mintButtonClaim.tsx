@@ -440,17 +440,18 @@ export default function MintButtonClaim({
         setIsMinting(false);
         return;
       }
-    } else if (!connected) {
-      try {
-        await connect();
-        setIsMinting(false);
-        return;
-      } catch (error) {
-        console.error("Failed to connect wallet:", error);
-        setIsMinting(false);
-        return;
-      }
-    }
+    } 
+    // else if (!connected) {
+    //   try {
+    //     await connect();
+    //     setIsMinting(false);
+    //     return;
+    //   } catch (error) {
+    //     console.error("Failed to connect wallet:", error);
+    //     setIsMinting(false);
+    //     return;
+    //   }
+    // }
 
     await handleLightVersionClaim(paymentMethod);
     if (ctaEnabled) {

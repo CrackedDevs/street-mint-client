@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       if (!processResponse.ok) {
         const supabaseAdmin = await getSupabaseAdmin();
         await supabaseAdmin
-          .from("orders")
+          .from("light_orders")
           .update({ status: "failed" })
           .eq("id", orderId);
         const errorData = await processResponse.json();
