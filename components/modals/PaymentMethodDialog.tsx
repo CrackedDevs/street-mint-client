@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { CreditCard, Wallet } from "lucide-react";
+import { useEffect } from "react";
 
 interface PaymentMethodDialogProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface PaymentMethodDialogProps {
   onSelectPaymentMethod: (method: "crypto" | "card") => void;
   price: number;
   isMinting: boolean;
+  onlyCardPayment?: boolean;
 }
 
 export default function PaymentMethodDialog({
@@ -23,7 +25,21 @@ export default function PaymentMethodDialog({
   onSelectPaymentMethod,
   price,
   isMinting,
+  onlyCardPayment = false,
 }: PaymentMethodDialogProps) {
+  // If only card payment is enabled, automatically select card payment method
+  useEffect(() => {
+    if (isOpen && onlyCardPayment) {
+      onSelectPaymentMethod("card");
+      onClose();
+    }
+  }, [isOpen, onlyCardPayment, onSelectPaymentMethod, onClose]);
+
+  // If only card payment is enabled, don't render the dialog at all
+  if (onlyCardPayment) {
+    return null;
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md rounded-xl w-[95%]">

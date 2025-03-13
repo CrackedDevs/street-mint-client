@@ -860,7 +860,7 @@ export default function MintButton({
 
   const renderWalletButton = () => {
     // If card payments are enabled and not a free mint, we don't need to force wallet connection
-    if (isCardPaymentEnable && !isFreeMint) {
+    if ((isCardPaymentEnable && !isFreeMint) || collectible.only_card_payment) {
       return null;
     }
 
@@ -962,6 +962,8 @@ export default function MintButton({
       onClick={() => {
         if (isFreeMint || !isCardPaymentEnable) {
           handleMintClick("crypto");
+        } else if (collectible.only_card_payment) {
+          handleMintClick("card");
         } else {
           setShowPaymentMethodDialog(true);
         }
@@ -973,7 +975,7 @@ export default function MintButton({
         existingOrder?.status === "completed" ||
         isLoading ||
         !deviceId ||
-        (!connected && !isCardPaymentEnable && !isFreeMint)
+        (!connected && !isCardPaymentEnable && !isFreeMint && !collectible.only_card_payment)
       }
     >
       {getButtonText()}
@@ -1028,6 +1030,11 @@ export default function MintButton({
   );
 
   const handlePaymentMethodSelection = (method: "card" | "crypto") => {
+    // If only card payments are enabled, always use card payment
+    if (collectible.only_card_payment) {
+      method = "card";
+    }
+    
     if (method === "card") {
       setShowPaymentMethodDialog(false);
       setShowCardPaymentEmailDialog(true);
@@ -1115,6 +1122,7 @@ export default function MintButton({
         onSelectPaymentMethod={handlePaymentMethodSelection}
         price={collectible.price_usd}
         isMinting={isMinting}
+        onlyCardPayment={collectible.only_card_payment}
       />
       <CardPaymentEmailDialog
         isOpen={showCardPaymenEmailtDialog}
@@ -1222,11 +1230,18 @@ export default function MintButton({
               ) : (
                 <div className="w-full mt-4 flex flex-col items-center justify-center">
                   {!isCardPaymentEnable && renderWalletButton()}
-                  {isCardPaymentEnable && !connected && (
+                  {isCardPaymentEnable && !connected && !collectible.only_card_payment && (
                     <div className="mb-4 text-center">
                       <p className="text-center text-sm text-white mb-2 bg-black bg-opacity-50 p-2 rounded-md">
                         You can mint without connecting a wallet using card
                         payment
+                      </p>
+                    </div>
+                  )}
+                  {collectible.only_card_payment && (
+                    <div className="mb-4 text-center">
+                      <p className="text-center text-sm text-white mb-2 bg-black bg-opacity-50 p-2 rounded-md">
+                        This collectible can only be purchased with card payment
                       </p>
                     </div>
                   )}
