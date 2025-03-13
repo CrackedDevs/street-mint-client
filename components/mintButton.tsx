@@ -808,7 +808,7 @@ export default function MintButton({
     if (isMinting) return "PROCESSING...";
     if (isLoading) return "Checking Eligibility...";
     // For card payments, always show MINT NOW even if not eligible
-    if (!isEligible && isCardPaymentEnable && !isFreeMint) return "MINT NOW";
+    // if (!isEligible && isCardPaymentEnable && !isFreeMint) return "MINT NOW";
     if (!isEligible) return "NOT ELIGIBLE";
     if (isLightVersion) return "CLAIM NOW";
     if (isEligible) return "COLLECT";
