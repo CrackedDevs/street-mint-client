@@ -228,7 +228,7 @@ export default function MintButtonClaim({
   }, []);
 
   const handleLightVersionClaim = async (paymentMethod: "card" | "crypto") => {
-    const addressToUse = walletAddress;
+    const addressToUse = cardPaymentAddress;
     const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
       (addressToUse || "").trim()
     );
