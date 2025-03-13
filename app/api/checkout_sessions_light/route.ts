@@ -19,6 +19,18 @@ export async function POST(req: NextRequest) {
       walletAddress,
       signatureCode,
     } = await req.json();
+    console.log("priceId", priceId);
+    console.log("orderId", orderId);
+    console.log("signedTransaction", signedTransaction);
+    console.log("priceInSol", priceInSol);
+    console.log("nftImageUrl", nftImageUrl);
+    console.log("collectibleId", collectibleId);
+    console.log("isCardPayment", isCardPayment);
+    console.log("walletAddress", walletAddress);
+    console.log("signatureCode", signatureCode);
+    console.log("origin", origin);
+    
+
     // console.log(body, "body");
     // Create Checkout Sessions from body params.
     const session = await stripe.checkout.sessions.create({

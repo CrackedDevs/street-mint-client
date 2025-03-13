@@ -266,10 +266,10 @@ export default function MintButtonClaim({
             },
             body: JSON.stringify({
               priceId: collectible.stripe_price_id,
-              orderId,
-              signedTransaction,
+              orderId: lightOrder.id,
+              signedTransaction: signedTransaction,
               walletAddress: cardPaymentAddress,
-              priceInSol,
+              priceInSol: priceInSol,
               nftImageUrl: collectible.primary_image_url,
               collectibleId: collectible.id,
               isCardPayment: true,
