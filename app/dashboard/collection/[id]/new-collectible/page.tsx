@@ -131,6 +131,7 @@ function CreateCollectiblePage() {
     cta_has_text_capture: false,
     cta_text_list: [],
     enable_card_payments: false,
+    only_card_payment: false,
     stripe_price_id: "",
     creator_royalty_array: [],
     is_irls: false,
@@ -831,6 +832,33 @@ function CreateCollectiblePage() {
                           className="scale-125"
                         />
                       </div>
+                      
+                      {collectible.enable_card_payments && (
+                        <div className="flex items-center justify-between pt-4 pl-6 mt-2">
+                          <div>
+                            <Label
+                              htmlFor="only-card-payments-toggle"
+                              className="text-lg font-semibold"
+                            >
+                              Only Card Payments
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                              Disable crypto payment option for users
+                            </p>
+                          </div>
+                          <Switch
+                            id="only-card-payments-toggle"
+                            checked={collectible.only_card_payment || false}
+                            onCheckedChange={(checked) =>
+                              handleCollectibleChange(
+                                "only_card_payment",
+                                checked
+                              )
+                            }
+                            className="scale-125"
+                          />
+                        </div>
+                      )}
                     </>
                   )}
                 </div>

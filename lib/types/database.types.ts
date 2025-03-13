@@ -216,6 +216,7 @@ export type Database = {
           mint_start_date: string | null
           name: string
           nfc_public_key: string | null
+          only_card_payment: boolean | null
           price_usd: number
           primary_image_url: string
           quantity: number | null
@@ -254,6 +255,7 @@ export type Database = {
           mint_start_date?: string | null
           name: string
           nfc_public_key?: string | null
+          only_card_payment?: boolean | null
           price_usd: number
           primary_image_url: string
           quantity?: number | null
@@ -292,6 +294,7 @@ export type Database = {
           mint_start_date?: string | null
           name?: string
           nfc_public_key?: string | null
+          only_card_payment?: boolean | null
           price_usd?: number
           primary_image_url?: string
           quantity?: number | null

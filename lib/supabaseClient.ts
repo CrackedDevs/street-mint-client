@@ -63,6 +63,7 @@ export type Collectible = {
     cta_email_list: { [key: string]: string }[];
     cta_text_list: { [key: string]: string }[];
     enable_card_payments?: boolean;
+    only_card_payment?: boolean;
     stripe_price_id?:string
     is_irls: boolean | null;
     is_video: boolean | null;
