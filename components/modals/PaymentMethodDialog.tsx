@@ -16,7 +16,7 @@ interface PaymentMethodDialogProps {
   onSelectPaymentMethod: (method: "crypto" | "card") => void;
   price: number;
   isMinting: boolean;
-  onlyCardPayment?: boolean;
+  onlyCardPayment: boolean;
 }
 
 export default function PaymentMethodDialog({
