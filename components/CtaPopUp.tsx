@@ -39,7 +39,7 @@ function CtaPopUp({
   collectible,
   publicKey,
   existingOrderId,
-  isLightVersion = false,
+  isLightVersion,
 }: // onSubmit,
 CtaPopUpProps) {
   const [email, setEmail] = useState("");
