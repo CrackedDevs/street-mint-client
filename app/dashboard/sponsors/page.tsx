@@ -25,14 +25,12 @@ import {
 import { Trash2, Loader2, PlusCircle, Edit, ImageIcon } from "lucide-react";
 import {
   Sponsor,
-  updateSponsor,
-  deleteSponsor,
   uploadFileToPinata,
 } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { useUserProfile } from "@/app/providers/UserProfileProvider";
 import withAuth from "@/app/dashboard/withAuth";
-import { createSponsor, getSponsorsByArtistId } from "@/lib/supabaseAdminClient";
+import { createSponsor, deleteSponsor, getSponsorsByArtistId, updateSponsor } from "@/lib/supabaseAdminClient";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 

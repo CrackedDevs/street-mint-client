@@ -710,3 +710,45 @@ export const getSponsorsByArtistId = async (artistId: number): Promise<Sponsor[]
         return [];
     }
 };
+
+export const updateSponsor = async (sponsor: Sponsor): Promise<{ success: boolean; error: Error | null }> => {
+    try {
+        const supabaseAdmin = await getSupabaseAdmin();
+
+        const { error } = await supabaseAdmin
+            .from('sponsors')
+            .update(sponsor)
+            .eq('id', sponsor.id);
+
+        if (error) {
+            console.error('Error updating sponsor:', error);
+            return { success: false, error: new Error(error.message) };
+        }
+
+        return { success: true, error: null };
+    } catch (error) {
+        console.error('Error updating sponsor:', error);
+        return { success: false, error: error as Error };
+    }
+};
+
+export const deleteSponsor = async (sponsorId: number): Promise<{ success: boolean; error: Error | null }> => {
+    try {
+        const supabaseAdmin = await getSupabaseAdmin();
+
+        const { error } = await supabaseAdmin
+            .from('sponsors')
+            .delete()
+            .eq('id', sponsorId);
+
+        if (error) {
+            console.error('Error deleting sponsor:', error);
+            return { success: false, error: new Error(error.message) };
+        }
+
+        return { success: true, error: null };
+    } catch (error) {
+        console.error('Error deleting sponsor:', error);
+        return { success: false, error: error as Error };
+    }
+};
