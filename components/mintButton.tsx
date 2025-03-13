@@ -296,7 +296,6 @@ export default function MintButton({
     } else {
       setIsLoading(false);
       setIsEligible(false);
-      setExistingOrder(null);
     }
   }
 
@@ -351,7 +350,6 @@ export default function MintButton({
     } else {
       setIsLoading(false);
       setIsEligible(false);
-      setExistingOrder(null);
     }
   }
 
@@ -1183,6 +1181,7 @@ export default function MintButton({
           collectible={collectible}
           publicKey={publicKey?.toString() ?? ""}
           existingOrderId={existingOrder?.id ?? ""}
+          isLightVersion={isLightVersion}
         />
       )}
       <SuccessPopup
