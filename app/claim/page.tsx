@@ -121,6 +121,7 @@ export default async function NFTPage({
             {/* Edition Information Section */}
             <EditionInformationClaim
               soldCount={soldCount}
+              signatureCode={signatureCode}
               collection={{
                 ...collection,
                 artist: collection.artist || 0,

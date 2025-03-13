@@ -11,14 +11,13 @@ export async function POST(req: NextRequest) {
     const {
       priceId,
       orderId,
-      tipLinkWalletAddress,
       signedTransaction,
       priceInSol,
-      isEmail,
       nftImageUrl,
       collectibleId,
-      chipTapData,
       isCardPayment,
+      walletAddress,
+      signatureCode,
     } = await req.json();
     // console.log(body, "body");
     // Create Checkout Sessions from body params.
@@ -31,19 +30,18 @@ export async function POST(req: NextRequest) {
         },
       ],
       mode: "payment",
-      success_url: `${origin}/v1?x=${chipTapData.x}&n=${chipTapData.n}&e=${chipTapData.e}&success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/v1?x=${chipTapData.x}&n=${chipTapData.n}&e=${chipTapData.e}&canceled=true&orderId=${orderId}`,
+      success_url: `${origin}/claim?signatureCode=${signatureCode}&success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/claim?signatureCode=${signatureCode}&canceled=true&orderId=${orderId}`,
       metadata: {
         orderId,
-        tipLinkWalletAddress,
         signedTransaction,
         priceInSol,
-        isEmail,
         nftImageUrl,
         collectibleId,
-        chipTapData: JSON.stringify(chipTapData),
         isCardPayment,
-        isLightVersion: "false",
+        signatureCode,
+        walletAddress,
+        isLightVersion: "true",
       },
     });
 
