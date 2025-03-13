@@ -148,6 +148,12 @@ export default function MintButtonClaim({
   );
 
   useEffect(() => {
+    if (lightOrder.status === "completed" && lightOrder.mint_signature) {
+      setTransactionSignature(lightOrder.mint_signature);
+    }
+  }, [lightOrder]);
+
+  useEffect(() => {
     if (success == "true") {
       setShowPaymentSuccessDialog(true);
     }
