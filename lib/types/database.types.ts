@@ -220,6 +220,7 @@ export type Database = {
           primary_image_url: string
           quantity: number | null
           quantity_type: Database["public"]["Enums"]["quantity_type"]
+          sponsor_id: number | null
           stripe_price_id: string | null
           whitelist: boolean | null
         }
@@ -257,6 +258,7 @@ export type Database = {
           primary_image_url: string
           quantity?: number | null
           quantity_type: Database["public"]["Enums"]["quantity_type"]
+          sponsor_id?: number | null
           stripe_price_id?: string | null
           whitelist?: boolean | null
         }
@@ -294,6 +296,7 @@ export type Database = {
           primary_image_url?: string
           quantity?: number | null
           quantity_type?: Database["public"]["Enums"]["quantity_type"]
+          sponsor_id?: number | null
           stripe_price_id?: string | null
           whitelist?: boolean | null
         }
@@ -303,6 +306,13 @@ export type Database = {
             columns: ["collection_id"]
             isOneToOne: false
             referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collectibles_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
             referencedColumns: ["id"]
           },
         ]
@@ -533,6 +543,38 @@ export type Database = {
             columns: ["collection_id"]
             isOneToOne: false
             referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsors: {
+        Row: {
+          artist_id: number | null
+          created_at: string
+          id: number
+          img_url: string | null
+          name: string | null
+        }
+        Insert: {
+          artist_id?: number | null
+          created_at?: string
+          id?: number
+          img_url?: string | null
+          name?: string | null
+        }
+        Update: {
+          artist_id?: number | null
+          created_at?: string
+          id?: number
+          img_url?: string | null
+          name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsors_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
             referencedColumns: ["id"]
           },
         ]

@@ -29,6 +29,7 @@ import {
   QuantityType,
   uploadFileToPinata,
   Brand,
+  Sponsor,
 } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -41,7 +42,16 @@ import Delivery from "@/app/assets/delivery.svg";
 import withAuth from "@/app/dashboard/withAuth";
 import { createProduct } from "@/helpers/stripe";
 import { formatDate } from "@/helper/date";
-import { getChipLinksByArtistId, updateChipLink } from "@/lib/supabaseAdminClient";
+import { getChipLinksByArtistId, getSponsorsByArtistId, updateChipLink } from "@/lib/supabaseAdminClient";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import Link from "next/link";
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 interface CreatorRoyalty {
@@ -126,11 +136,39 @@ function CreateCollectiblePage() {
     is_irls: false,
     is_video: false,
     is_light_version: false,
+    sponsor_id: null,
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [isFreeMint, setIsFreeMint] = useState(false);
+
+  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
+  const [isLoadingSponsors, setIsLoadingSponsors] = useState(false);
+
+  // Fetch sponsors for the artist
+  useEffect(() => {
+    const fetchSponsors = async () => {
+      if (userProfile?.id) {
+        setIsLoadingSponsors(true);
+        try {
+          const fetchedSponsors = await getSponsorsByArtistId(userProfile.id);
+          setSponsors(fetchedSponsors);
+        } catch (error) {
+          console.error("Error fetching sponsors:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load sponsors. Please try again.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoadingSponsors(false);
+        }
+      }
+    };
+
+    fetchSponsors();
+  }, [userProfile?.id, toast]);
 
   const handleCollectibleChange = (field: keyof Collectible, value: any) => {
     if (field === "name" && value.length > 32) {
@@ -1280,6 +1318,61 @@ function CreateCollectiblePage() {
                       creator royalties.
                     </p>
                   )}
+                </div>
+
+                <div className="mb-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Sponsor</CardTitle>
+                      <CardDescription>
+                        Select a sponsor to associate with this collectible (optional)
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="sponsor">Sponsor</Label>
+                          {isLoadingSponsors ? (
+                            <div className="flex items-center mt-2">
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              <span>Loading sponsors...</span>
+                            </div>
+                          ) : sponsors.length === 0 ? (
+                            <div className="text-sm text-gray-500 mt-2">
+                              No sponsors available. Create sponsors in the{" "}
+                              <Link href="/dashboard/sponsors" className="text-blue-500 hover:underline">
+                                Sponsors section
+                              </Link>
+                              .
+                            </div>
+                          ) : (
+                            <Select
+                              value={collectible.sponsor_id?.toString() || "none"}
+                              onValueChange={(value) => {
+                                console.log("Selected sponsor value:", value);
+                                handleCollectibleChange(
+                                  "sponsor_id",
+                                  value === "none" ? null : parseInt(value)
+                                )
+                              }}
+                            >
+                              <SelectTrigger className="w-full mt-1">
+                                <SelectValue placeholder="Select a sponsor" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">None</SelectItem>
+                                {sponsors.map((sponsor) => (
+                                  <SelectItem key={sponsor.id} value={sponsor.id.toString()}>
+                                    {sponsor.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
 
