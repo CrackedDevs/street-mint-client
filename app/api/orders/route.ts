@@ -46,7 +46,7 @@ export async function GET(req: Request) {
 
     const { data: collectible, error: collectibleError } = await supabaseAdmin
       .from("collectibles")
-      .select("is_light_version")
+      .select("*")
       .eq("id", collectibleId)
       .single();
 
@@ -114,6 +114,7 @@ export async function GET(req: Request) {
     return NextResponse.json(
       {
         success: true,
+        collectible: collectible,
         orders: transformedOrders,
         is_light_version: collectible.is_light_version,
       },
