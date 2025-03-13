@@ -16,7 +16,7 @@ export const checkLightVersionClaimAuthStatus = async (signatureCode: string) =>
         collectibleData: null,
     };
 
-    if (lightOrder.status != "pending") return {
+    if (lightOrder.status === "failed") return {
         success: false,
         status: "pass",
         reason: "Order is either completed or failed",

@@ -63,10 +63,12 @@ export type Collectible = {
     cta_email_list: { [key: string]: string }[];
     cta_text_list: { [key: string]: string }[];
     enable_card_payments?: boolean;
+    only_card_payment?: boolean;
     stripe_price_id?:string
     is_irls: boolean | null;
     is_video: boolean | null;
     is_light_version: boolean;
+    sponsor_id?: number | null;
 };
 
 interface Order {
@@ -865,3 +867,16 @@ export async function getGalleryInformationByTokenAddresses(tokenAddresses: stri
 
     return formattedData;
 }
+
+export type Sponsor = {
+    id: number;
+    name: string | null;
+    img_url: string | null;
+    artist_id: number | null;
+    created_at: string;
+};
+
+
+
+
+

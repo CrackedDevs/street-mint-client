@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from "@supabase/supabase-js";
-import { createFetch, fetchCollectibleById, getCollectionById, getArtistById, Collectible } from "./supabaseClient";
+import { createFetch, fetchCollectibleById, getCollectionById, getArtistById, Collectible, Sponsor } from "./supabaseClient";
 import { Database } from "./types/database.types";
 import { isSignatureValid } from "./nfcVerificationHellper";
 import Stripe from "stripe";
@@ -356,9 +356,50 @@ export async function getChipLinkByCollectibleId(collectibleId: number) {
     return data;
 }
 
-export async function createChipLink(chipLink: ChipLinkCreate): Promise<boolean> {
+export async function createChipLink(chipLink: ChipLinkCreate): Promise<{ success: boolean; error?: string }> {
     const supabaseAdmin = await getSupabaseAdmin();
-    const { error }: { error: any } = await supabaseAdmin
+    
+    // First, check if the chip ID already exists
+    const { data: existingChip, error: checkError } = await supabaseAdmin
+        .from('chip_links')
+        .select('id, chip_id, artists_id')
+        .eq('chip_id', chipLink.chip_id)
+        .single();
+    
+    if (checkError && checkError.code !== 'PGRST116') {
+        // PGRST116 means no rows returned, which is what we want
+        console.error('Error checking existing chip link:', checkError);
+        return { success: false, error: 'Error checking if chip ID already exists' };
+    }
+    
+    if (existingChip) {
+        // Chip ID already exists, get the artist's username
+        let artistInfo = "unknown artist";
+        
+        if (existingChip.artists_id) {
+            // Fetch the artist's username
+            const { data: artistData, error: artistError } = await supabaseAdmin
+                .from('artists')
+                .select('username')
+                .eq('id', existingChip.artists_id)
+                .single();
+                
+            if (!artistError && artistData) {
+                artistInfo = `${artistData.username} (ID: ${existingChip.artists_id})`;
+            } else {
+                artistInfo = `artist ID ${existingChip.artists_id}`;
+            }
+        }
+        
+        console.log('Chip ID already exists:', existingChip);
+        return { 
+            success: false, 
+            error: `Chip ID ${chipLink.chip_id} is already assigned to ${artistInfo}` 
+        };
+    }
+    
+    // If we get here, the chip ID doesn't exist, so create it
+    const { error: insertError } = await supabaseAdmin
         .from('chip_links')
         .insert({
             chip_id: chipLink.chip_id,
@@ -367,11 +408,12 @@ export async function createChipLink(chipLink: ChipLinkCreate): Promise<boolean>
             artists_id: chipLink.artists_id
         });
 
-    if (error) {
-        console.error('Error creating chip link:', error);
-        return false;
+    if (insertError) {
+        console.error('Error creating chip link:', insertError);
+        return { success: false, error: 'Error creating chip link' };
     }
-    return true;
+    
+    return { success: true };
 }
 
 export async function updateChipLink(id: number, chipLink: ChipLink) {
@@ -600,3 +642,142 @@ export async function getLightOrdersByEmail(email: string, page: number = 0, pag
         total: count || 0 
     };
 }
+
+export async function getAllLightOrders(page: number = 0, pageSize: number = 20, filters: { status?: string } = {}) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const start = page * pageSize;
+    
+    let query = supabaseAdmin
+        .from('light_orders')
+        .select('*, collectibles(name, primary_image_url, collections(name))', { count: 'exact' })
+        .order('created_at', { ascending: false });
+    
+    // Apply filters if provided
+    if (filters.status) {
+        query = query.eq('status', filters.status);
+    }
+    
+    const { data, error, count } = await query.range(start, start + pageSize - 1);
+
+    if (error) {
+        console.error('Error getting all light orders:', error);
+        return { orders: null, total: 0 };
+    }
+
+    return { 
+        orders: data, 
+        total: count || 0 
+    };
+}
+
+export async function getAllRegularOrders(page: number = 0, pageSize: number = 20, filters: { status?: string } = {}) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const start = page * pageSize;
+    
+    let query = supabaseAdmin
+        .from('orders')
+        .select('*, collectibles(name, primary_image_url, collections(name))', { count: 'exact' })
+        .order('created_at', { ascending: false });
+    
+    // Apply filters if provided
+    if (filters.status) {
+        query = query.eq('status', filters.status);
+    }
+    
+    const { data, error, count } = await query.range(start, start + pageSize - 1);
+
+    if (error) {
+        console.error('Error getting all regular orders:', error);
+        return { orders: null, total: 0 };
+    }
+
+    return { 
+        orders: data, 
+        total: count || 0 
+    };
+}
+
+
+
+export const createSponsor = async (sponsor: Omit<Sponsor, 'id' | 'created_at'>): Promise<Sponsor | null> => {
+    try {
+        const supabaseAdmin = await getSupabaseAdmin();
+        const { data, error } = await supabaseAdmin
+            .from('sponsors')
+            .insert([sponsor])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error creating sponsor:', error);
+            return null;
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error creating sponsor:', error);
+        return null;
+    }
+};
+
+export const getSponsorsByArtistId = async (artistId: number): Promise<Sponsor[]> => {
+    try {
+        const supabaseAdmin = await getSupabaseAdmin();
+        const { data, error } = await supabaseAdmin
+            .from('sponsors')
+            .select('*')
+            .eq('artist_id', artistId);
+
+        if (error) {
+            console.error('Error fetching sponsors:', error);
+            return [];
+        }
+
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching sponsors:', error);
+        return [];
+    }
+};
+
+export const updateSponsor = async (sponsor: Sponsor): Promise<{ success: boolean; error: Error | null }> => {
+    try {
+        const supabaseAdmin = await getSupabaseAdmin();
+
+        const { error } = await supabaseAdmin
+            .from('sponsors')
+            .update(sponsor)
+            .eq('id', sponsor.id);
+
+        if (error) {
+            console.error('Error updating sponsor:', error);
+            return { success: false, error: new Error(error.message) };
+        }
+
+        return { success: true, error: null };
+    } catch (error) {
+        console.error('Error updating sponsor:', error);
+        return { success: false, error: error as Error };
+    }
+};
+
+export const deleteSponsor = async (sponsorId: number): Promise<{ success: boolean; error: Error | null }> => {
+    try {
+        const supabaseAdmin = await getSupabaseAdmin();
+
+        const { error } = await supabaseAdmin
+            .from('sponsors')
+            .delete()
+            .eq('id', sponsorId);
+
+        if (error) {
+            console.error('Error deleting sponsor:', error);
+            return { success: false, error: new Error(error.message) };
+        }
+
+        return { success: true, error: null };
+    } catch (error) {
+        console.error('Error deleting sponsor:', error);
+        return { success: false, error: error as Error };
+    }
+};

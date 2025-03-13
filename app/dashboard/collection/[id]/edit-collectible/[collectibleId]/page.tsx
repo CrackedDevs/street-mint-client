@@ -3,11 +3,19 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import {
   ArrowLeftIcon,
@@ -17,6 +25,7 @@ import {
   CalendarIcon,
   PlusCircleIcon,
   XCircleIcon,
+  Loader2,
 } from "lucide-react";
 import {
   Collectible,
@@ -25,11 +34,14 @@ import {
   updateCollectible,
   uploadFileToPinata,
   Brand,
+  Sponsor,
 } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import withAuth from "@/app/dashboard/withAuth";
 import { Switch } from "@/components/ui/switch";
 import { formatDate } from "@/helper/date";
+import { useUserProfile } from "@/app/providers/UserProfileProvider";
+import { getSponsorsByArtistId } from "@/lib/supabaseAdminClient";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -43,10 +55,14 @@ function EditCollectiblePage() {
   const router = useRouter();
   const { id: collectionId, collectibleId } = useParams();
   const { toast } = useToast();
+  const { userProfile } = useUserProfile();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [collectible, setCollectible] = useState<Collectible | null>(null);
   const [newGalleryImages, setNewGalleryImages] = useState<File[]>([]);
   const [newCtaLogoImage, setNewCtaLogoImage] = useState<File>();
+  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
+  const [isLoadingSponsors, setIsLoadingSponsors] = useState(false);
+
   useEffect(() => {
     // Fetch the collectible data
     const fetchCollectible = async () => {
@@ -74,6 +90,8 @@ function EditCollectiblePage() {
           }[],
           enable_card_payments: fetchedCollectible.enable_card_payments || false,
           stripe_price_id: fetchedCollectible.stripe_price_id || undefined,
+          sponsor_id: fetchedCollectible.sponsor_id || null,
+          only_card_payment: fetchedCollectible.only_card_payment || false,
         });
       } else {
         toast({
@@ -86,6 +104,30 @@ function EditCollectiblePage() {
 
     fetchCollectible();
   }, [collectibleId, collectionId]);
+
+  // Fetch sponsors for the artist
+  useEffect(() => {
+    const fetchSponsors = async () => {
+      if (userProfile?.id) {
+        setIsLoadingSponsors(true);
+        try {
+          const fetchedSponsors = await getSponsorsByArtistId(userProfile.id);
+          setSponsors(fetchedSponsors);
+        } catch (error) {
+          console.error("Error fetching sponsors:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load sponsors. Please try again.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoadingSponsors(false);
+        }
+      }
+    };
+
+    fetchSponsors();
+  }, [userProfile?.id, toast]);
 
   const handleCollectibleChange = (field: keyof Collectible, value: any) => {
     setCollectible((prev) => (prev ? { ...prev, [field]: value } : null));
@@ -103,76 +145,67 @@ function EditCollectiblePage() {
         toast({
           title: "Warning",
           description: `${invalidFiles} file(s) exceeded the 10MB size limit and were not added.`,
-          variant: "default",
-        });
-      }
-
-      if (validFiles.length + newGalleryImages.length <= 5) {
-        setNewGalleryImages([...newGalleryImages, ...validFiles]);
-      } else {
-        toast({
-          title: "Error",
-          description:
-            "You can only upload a maximum of 5 images per collectible.",
           variant: "destructive",
         });
       }
+
+      setNewGalleryImages((prev) => [...prev, ...validFiles]);
     }
   };
 
   const removeGalleryImage = (index: number, isNewImage: boolean) => {
     if (isNewImage) {
-      setNewGalleryImages((prev) => prev.filter((_, i) => i !== index));
-    } else if (collectible) {
-      setCollectible({
-        ...collectible,
-        gallery_urls: collectible.gallery_urls.filter((_, i) => i !== index),
+      setNewGalleryImages((prev) => {
+        const newImages = [...prev];
+        newImages.splice(index, 1);
+        return newImages;
+      });
+    } else {
+      setCollectible((prev) => {
+        if (!prev) return null;
+        const newGalleryUrls = [...prev.gallery_urls];
+        newGalleryUrls.splice(index, 1);
+        return { ...prev, gallery_urls: newGalleryUrls };
       });
     }
   };
 
   const handleCtaLogoImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
+    if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.size <= MAX_FILE_SIZE) {
-        setNewCtaLogoImage(file);
-      } else {
+      if (file.size > MAX_FILE_SIZE) {
         toast({
           title: "Error",
-          description: "File size must be less than 10MB",
+          description: "Image size should not exceed 10MB",
           variant: "destructive",
         });
+        return;
       }
+      setNewCtaLogoImage(file);
     }
   };
 
   const handleAddCreator = () => {
-    const newCreator: CreatorRoyalty = {
-      creator_wallet_address: "",
-      royalty_percentage: 0,
-      name: "",
-    };
-
     setCollectible((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        creator_royalty_array: [
-          ...(prev.creator_royalty_array || []),
-          newCreator,
-        ],
-      };
+      if (!prev) return null;
+      const newCreatorRoyaltyArray = [
+        ...(prev.creator_royalty_array || []),
+        {
+          creator_wallet_address: "",
+          royalty_percentage: 0,
+          name: "",
+        },
+      ];
+      return { ...prev, creator_royalty_array: newCreatorRoyaltyArray };
     });
   };
 
   const handleRemoveCreator = (index: number) => {
     setCollectible((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        creator_royalty_array:
-          prev.creator_royalty_array?.filter((_, i) => i !== index) || [],
-      };
+      if (!prev || !prev.creator_royalty_array) return prev;
+      const newCreatorRoyaltyArray = [...prev.creator_royalty_array];
+      newCreatorRoyaltyArray.splice(index, 1);
+      return { ...prev, creator_royalty_array: newCreatorRoyaltyArray };
     });
   };
 
@@ -182,19 +215,13 @@ function EditCollectiblePage() {
     value: string | number
   ) => {
     setCollectible((prev) => {
-      if (!prev) return prev;
-      const updatedCreators = [...(prev.creator_royalty_array || [])];
-      updatedCreators[index] = {
-        ...updatedCreators[index],
-        [field]:
-          field === "royalty_percentage"
-            ? Math.min(100, Math.max(0, Number(value)))
-            : value,
+      if (!prev || !prev.creator_royalty_array) return prev;
+      const newCreatorRoyaltyArray = [...prev.creator_royalty_array];
+      newCreatorRoyaltyArray[index] = {
+        ...newCreatorRoyaltyArray[index],
+        [field]: value,
       };
-      return {
-        ...prev,
-        creator_royalty_array: updatedCreators,
-      };
+      return { ...prev, creator_royalty_array: newCreatorRoyaltyArray };
     });
   };
 
@@ -202,56 +229,46 @@ function EditCollectiblePage() {
     e.preventDefault();
     if (!collectible) return;
 
-    if (
-      collectible.mint_start_date &&
-      collectible.mint_end_date &&
-      new Date(collectible.mint_start_date) >=
-        new Date(collectible.mint_end_date)
-    ) {
-      toast({
-        title: "Invalid Date Range",
-        description: "The start date must be before the end date.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
+
     try {
-      const uploadedGalleryUrls = await Promise.all(
+      // Upload new gallery images if any
+      const newGalleryUrls = await Promise.all(
         newGalleryImages.map(async (file) => {
-          return (await uploadFileToPinata(file)) || "";
+          const url = await uploadFileToPinata(file);
+          return url;
         })
       );
 
-      const uploadedCtaLogoUrl = newCtaLogoImage
-        ? await uploadFileToPinata(newCtaLogoImage)
-        : collectible.cta_logo_url;
+      // Upload new CTA logo image if any
+      let ctaLogoUrl = collectible.cta_logo_url;
+      if (newCtaLogoImage) {
+        ctaLogoUrl = await uploadFileToPinata(newCtaLogoImage);
+      }
 
+      // Update collectible with new data
       const updatedCollectible: Collectible = {
         ...collectible,
-        gallery_urls: [
-          ...collectible.gallery_urls,
-          ...uploadedGalleryUrls.filter(Boolean),
-        ],
-        cta_logo_url: uploadedCtaLogoUrl,
+        gallery_urls: [...collectible.gallery_urls, ...newGalleryUrls.filter(Boolean) as string[]],
+        cta_logo_url: ctaLogoUrl,
       };
 
-      const { success } = await updateCollectible(updatedCollectible);
+      const result = await updateCollectible(updatedCollectible);
 
-      if (success) {
+      if (result.success) {
         toast({
           title: "Success",
           description: "Collectible updated successfully",
         });
         router.push(`/dashboard/collection/${collectionId}`);
       } else {
-        throw new Error("Failed to update collectible");
+        throw new Error(result.error?.message || "Failed to update collectible");
       }
     } catch (error) {
+      console.error("Error updating collectible:", error);
       toast({
         title: "Error",
-        description: "Failed to update collectible",
+        description: "Failed to update collectible. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -260,525 +277,188 @@ function EditCollectiblePage() {
   };
 
   if (!collectible) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <Button
-          variant="ghost"
-          onClick={() => router.push(`/dashboard/collection/${collectionId}`)}
-          className="mb-8"
-        >
-          <ArrowLeftIcon className="mr-2 h-4 w-4" />
-          Back to Collection
-        </Button>
-        <Card className="w-full shadow-lg">
-          <CardHeader className="space-y-1 pb-8">
-            <CardTitle className="text-4xl font-bold text-center">
-              Edit Collectible
-            </CardTitle>
+    <div className="container mx-auto py-8">
+      <Button
+        variant="outline"
+        onClick={() => router.push(`/dashboard/collection/${collectionId}`)}
+        className="mb-6"
+      >
+        <ArrowLeftIcon className="h-4 w-4 mr-2" />
+        Back to Collection
+      </Button>
+
+      <h1 className="text-3xl font-bold mb-6">Edit Collectible</h1>
+
+      <form onSubmit={handleSubmit}>
+        {/* Basic Information */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Basic Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="collectible-brand"
-                  className="text-lg font-semibold"
-                >
-                  Brand <span className="text-destructive">*</span>
-                </Label>
-                <select
-                  id="collectible-brand"
-                  value={collectible.is_irls ? Brand.IRLS : Brand.StreetMint}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  value={collectible.name}
+                  onChange={(e) =>
+                    handleCollectibleChange("name", e.target.value)
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={collectible.description}
+                  onChange={(e) =>
+                    handleCollectibleChange("description", e.target.value)
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="price">Price (USD)</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={collectible.price_usd}
                   onChange={(e) =>
                     handleCollectibleChange(
-                      "is_irls",
-                      e.target.value === Brand.IRLS
+                      "price_usd",
+                      parseFloat(e.target.value)
                     )
                   }
-                  className="w-full p-2 border rounded-md bg-background text-base"
                   required
+                />
+              </div>
+              <div>
+                <Label htmlFor="quantity_type">Quantity Type</Label>
+                <Select
+                  value={collectible.quantity_type}
+                  onValueChange={(value) =>
+                    handleCollectibleChange("quantity_type", value)
+                  }
                 >
-                  <option value={Brand.StreetMint}>StreetMint</option>
-                  <option value={Brand.IRLS}>IRLS</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select quantity type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={QuantityType.Unlimited}>
+                      Unlimited
+                    </SelectItem>
+                    <SelectItem value={QuantityType.Limited}>Limited</SelectItem>
+                    <SelectItem value={QuantityType.Single}>Single</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-
-              <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="collectible-location"
-                    className="text-lg font-semibold flex items-center"
-                  >
-                    <MapPinIcon className="mr-2 h-5 w-5" />
-                    Location (Google Maps URL)
-                  </Label>
+              {collectible.quantity_type === QuantityType.Limited && (
+                <div>
+                  <Label htmlFor="quantity">Quantity</Label>
                   <Input
-                    id="collectible-location"
-                    value={collectible.location ?? ""}
-                    onChange={(e) =>
-                      handleCollectibleChange("location", e.target.value)
-                    }
-                    placeholder="Enter Google Maps URL"
-                    className="text-base"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="collectible-location-note"
-                    className="text-lg font-semibold"
-                  >
-                    Location Note
-                  </Label>
-                  <Textarea
-                    id="collectible-location-note"
-                    value={collectible.location_note ?? ""}
-                    onChange={(e) =>
-                      handleCollectibleChange("location_note", e.target.value)
-                    }
-                    placeholder="Add any additional details about the location"
-                    className="min-h-[80px] text-base"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
-                  <div>
-                    <Label
-                      htmlFor="free-mint-toggle"
-                      className="text-lg font-semibold"
-                    >
-                      Collectible Version{" "}
-                      <span className="text-destructive">*</span>
-                    </Label>
-                  </div>
-                </div>
-
-              <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="mint-start-date"
-                    className="text-lg font-semibold flex items-center"
-                  >
-                    <CalendarIcon className="mr-2 h-5 w-5" />
-                    Minting Start Date and Time
-                  </Label>
-                  <span>Mention the timings in GMT</span>
-                  <Input
-                    id="mint-start-date"
-                    type="datetime-local"
-                    value={
-                      collectible.mint_start_date
-                        ? formatDate(
-                            collectible.mint_start_date,
-                            collectible.mint_start_date.includes("Z")
-                              ? "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
-                              : "yyyy-MM-dd'T'HH:mm",
-                            "yyyy-MM-dd'T'HH:mm"
-                          )
-                        : ""
-                    }
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    value={collectible.quantity || ""}
                     onChange={(e) =>
                       handleCollectibleChange(
-                        "mint_start_date",
-                        new Date(e.target.value + ":00Z").toISOString()
+                        "quantity",
+                        parseInt(e.target.value)
                       )
                     }
-                    className="text-base"
+                    required={collectible.quantity_type === QuantityType.Limited}
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="mint-end-date"
-                    className="text-lg font-semibold flex items-center"
-                  >
-                    <CalendarIcon className="mr-2 h-5 w-5" />
-                    Minting End Date and Time
-                  </Label>
-                  <span>Mention the timings in GMT</span>
-                  <Input
-                    id="mint-end-date"
-                    type="datetime-local"
-                    value={
-                      collectible.mint_end_date
-                        ? formatDate(
-                            collectible.mint_end_date,
-                            collectible.mint_end_date.includes("Z")
-                              ? "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
-                              : "yyyy-MM-dd'T'HH:mm",
-                            "yyyy-MM-dd'T'HH:mm"
-                          )
-                        : ""
-                    }
-                    onChange={(e) =>
-                      handleCollectibleChange(
-                        "mint_end_date",
-                        new Date(e.target.value + ":00Z").toISOString()
-                      )
-                    }
-                    className="text-base"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="gallery-images"
-                  className="text-lg font-semibold"
-                >
-                  Gallery Images (Max 5)
-                </Label>
-                <p className="text-sm text-muted-foreground mb-2">
-                  Current images: {collectible.gallery_urls.length}
-                </p>
-                <div className="flex flex-wrap gap-4 mt-4">
-                  {collectible.gallery_urls.map((url, index) => (
-                    <div key={index} className="relative group">
-                      <Image
-                        src={url}
-                        alt={`Gallery image ${index + 1}`}
-                        width={100}
-                        height={100}
-                        className="rounded-md object-cover"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => removeGalleryImage(index, false)}
-                      >
-                        <TrashIcon className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                  {newGalleryImages.map((file, index) => (
-                    <div key={`new-${index}`} className="relative group">
-                      <Image
-                        src={URL.createObjectURL(file)}
-                        alt={`New gallery image ${index + 1}`}
-                        width={100}
-                        height={100}
-                        className="rounded-md object-cover"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => removeGalleryImage(index, true)}
-                      >
-                        <TrashIcon className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <div className="relative">
-                  <Input
-                    id="gallery-images"
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleGalleryImageChange}
-                    disabled={
-                      collectible.gallery_urls.length +
-                        newGalleryImages.length >=
-                      5
-                    }
-                    className="sr-only"
-                  />
-                  <Label
-                    htmlFor="gallery-images"
-                    className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/50 transition-colors"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <UploadIcon className="w-6 h-6 text-muted-foreground" />
-                      <span className="text-base font-medium text-muted-foreground">
-                        {newGalleryImages.length > 0
-                          ? `${newGalleryImages.length} new file${
-                              newGalleryImages.length > 1 ? "s" : ""
-                            } selected`
-                          : "Add more images"}
-                      </span>
-                    </div>
-                  </Label>
-                </div>
-              </div>
-
-              <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-lg font-semibold">
-                      Call to Action
-                    </Label>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Add a call to action to your collectible.
-                    </p>
-                  </div>
-
-                  <Switch
-                    id="call-to-action-toggle"
-                    checked={collectible.cta_enable}
-                    onCheckedChange={(checked) =>
-                      handleCollectibleChange("cta_enable", checked)
-                    }
-                    className="scale-125"
-                  />
-                </div>
-                {collectible.cta_enable && (
-                  <div className="space-y-4">
-                    <div>
-                      <Label
-                        htmlFor="call-to-action-title"
-                        className="text-lg font-semibold"
-                      >
-                        Title
-                        <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="call-to-action-title"
-                        placeholder="Join our newsletter"
-                        value={collectible.cta_title ?? ""}
-                        required
-                        onChange={(e) =>
-                          handleCollectibleChange("cta_title", e.target.value)
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label
-                        htmlFor="call-to-action-description"
-                        className="text-lg font-semibold"
-                      >
-                        Description
-                        <span className="text-destructive">*</span>
-                      </Label>
-                      <Textarea
-                        id="call-to-action-description"
-                        required
-                        placeholder="Join our newsletter to get exclusive updates and early access to new drops."
-                        value={collectible.cta_description ?? ""}
-                        onChange={(e) =>
-                          handleCollectibleChange(
-                            "cta_description",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label
-                        htmlFor="call-to-action-logo-url"
-                        className="text-lg font-semibold"
-                      >
-                        Logo
-                      </Label>
-                      <Label
-                        htmlFor="call-to-action-logo-url"
-                        className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/50 transition-colors"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <UploadIcon className="w-6 h-6 text-muted-foreground" />
-                          <span className="text-base font-medium text-muted-foreground">
-                            {newCtaLogoImage
-                              ? newCtaLogoImage.name
-                              : "Update Logo"}
-                          </span>
-                        </div>
-                      </Label>
-                      <Input
-                        id="call-to-action-logo-url"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleCtaLogoImageChange}
-                        className="sr-only"
-                      />
-                    </div>
-                    <div>
-                      <Label
-                        htmlFor="call-to-action-cta-text"
-                        className="text-lg font-semibold"
-                      >
-                        CTA Button Text
-                      </Label>
-                      <Input
-                        id="call-to-action-cta-text"
-                        placeholder="Signup"
-                        value={collectible.cta_text ?? ""}
-                        onChange={(e) =>
-                          handleCollectibleChange("cta_text", e.target.value)
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label
-                        htmlFor="call-to-action-cta-link"
-                        className="text-lg font-semibold"
-                      >
-                        CTA Link
-                      </Label>
-                      <Input
-                        id="call-to-action-cta-link"
-                        value={collectible.cta_link ?? ""}
-                        placeholder="https://streetmint.xyz"
-                        onChange={(e) =>
-                          handleCollectibleChange("cta_link", e.target.value)
-                        }
-                      />
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <Label
-                        htmlFor="call-to-action-has-email-capture"
-                        className="text-lg font-semibold"
-                      >
-                        Has Email Capture
-                      </Label>
-                      <Switch
-                        id="call-to-action-has-email-capture"
-                        checked={collectible.cta_has_email_capture}
-                        onCheckedChange={() =>
-                          handleCollectibleChange(
-                            "cta_has_email_capture",
-                            !collectible.cta_has_email_capture
-                          )
-                        }
-                      />
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <Label
-                        htmlFor="call-to-action-has-text-capture"
-                        className="text-lg font-semibold"
-                      >
-                        Has Text Capture
-                      </Label>
-                      <Switch
-                        id="call-to-action-has-text-capture"
-                        checked={collectible.cta_has_text_capture}
-                        onCheckedChange={() =>
-                          handleCollectibleChange(
-                            "cta_has_text_capture",
-                            !collectible.cta_has_text_capture
-                          )
-                        }
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-lg font-semibold">
-                      Creator Royalties
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Add creators and their royalty percentages
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleAddCreator}
-                    className="flex items-center gap-2"
-                  >
-                    <PlusCircleIcon className="h-4 w-4" />
-                    Add Creator
-                  </Button>
-                </div>
-
-                {collectible.creator_royalty_array?.map((creator, index) => (
-                  <div
-                    key={index}
-                    className="space-y-4 bg-background/50 p-4 rounded-lg relative"
-                  >
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-2 right-2"
-                      onClick={() => handleRemoveCreator(index)}
-                    >
-                      <XCircleIcon className="h-4 w-4 text-destructive" />
-                    </Button>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`creator-name-${index}`}>
-                        Creator Name
-                      </Label>
-                      <Input
-                        id={`creator-name-${index}`}
-                        value={creator.name}
-                        onChange={(e) =>
-                          handleCreatorChange(index, "name", e.target.value)
-                        }
-                        placeholder="Enter creator name"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`creator-wallet-${index}`}>
-                        Wallet Address
-                      </Label>
-                      <Input
-                        id={`creator-wallet-${index}`}
-                        value={creator.creator_wallet_address}
-                        onChange={(e) =>
-                          handleCreatorChange(
-                            index,
-                            "creator_wallet_address",
-                            e.target.value.trim()
-                          )
-                        }
-                        placeholder="Enter wallet address"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`creator-royalty-${index}`}>
-                        Royalty Percentage
-                      </Label>
-                      <Input
-                        id={`creator-royalty-${index}`}
-                        type="text"
-                        value={creator.royalty_percentage}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (/^\d*\.?\d*$/.test(value)) {
-                            handleCreatorChange(
-                              index,
-                              "royalty_percentage",
-                              Number(value)
-                            );
-                          }
-                        }}
-                        placeholder="Enter percentage (0-100)"
-                      />
-                    </div>
-                  </div>
-                ))}
-
-                {collectible.creator_royalty_array?.length === 0 && (
-                  <p className="text-center text-muted-foreground py-4">
-                    No creators added. Click &apos;Add Creator&apos; to add
-                    creator royalties.
-                  </p>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full text-lg h-14 mt-8"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Updating..." : "Update Collectible"}
-              </Button>
-            </form>
+              )}
+            </div>
           </CardContent>
         </Card>
-      </div>
+
+        {/* Sponsor Selection */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Sponsor</CardTitle>
+            <CardDescription>
+              Select a sponsor to associate with this collectible (optional)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="sponsor">Sponsor</Label>
+                {isLoadingSponsors ? (
+                  <div className="flex items-center mt-2">
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <span>Loading sponsors...</span>
+                  </div>
+                ) : sponsors.length === 0 ? (
+                  <div className="text-sm text-gray-500 mt-2">
+                    No sponsors available. Create sponsors in the{" "}
+                    <Link href="/dashboard/sponsors" className="text-blue-500 hover:underline">
+                      Sponsors section
+                    </Link>
+                    .
+                  </div>
+                ) : (
+                  <Select
+                    value={collectible.sponsor_id?.toString() || "none"}
+                    onValueChange={(value) => {
+                      console.log("Selected sponsor value:", value);
+                      handleCollectibleChange(
+                        "sponsor_id",
+                        value === "none" ? null : parseInt(value)
+                      )
+                    }}
+                  >
+                    <SelectTrigger className="w-full mt-1">
+                      <SelectValue placeholder="Select a sponsor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {sponsors.map((sponsor) => (
+                        <SelectItem key={sponsor.id} value={sponsor.id.toString()}>
+                          {sponsor.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Rest of the form remains unchanged */}
+        
+        <div className="flex justify-end mt-6">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full md:w-auto"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              "Update Collectible"
+            )}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

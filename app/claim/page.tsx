@@ -121,6 +121,7 @@ export default async function NFTPage({
             {/* Edition Information Section */}
             <EditionInformationClaim
               soldCount={soldCount}
+              signatureCode={signatureCode}
               collection={{
                 ...collection,
                 artist: collection.artist || 0,
@@ -153,6 +154,7 @@ export default async function NFTPage({
                 cta_text_list: (collectible.cta_text_list || []) as {
                   [key: string]: string;
                 }[],
+                only_card_payment: collectible.only_card_payment === null ? undefined : collectible.only_card_payment,
               }}
               remainingQuantity={remainingQuantity}
               artistWalletAddress={artist.wallet_address}

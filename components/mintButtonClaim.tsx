@@ -63,6 +63,12 @@ import WaitlistModal from "./modals/PromotionalModal";
 import { Button } from "./ui/button";
 import { CtaPopUp } from "./CtaPopUp";
 import SuccessPopup from "./modals/SuccessPopup";
+import CardPaymentWalletDialog from "./modals/CardPaymentWalletDialog";
+import PaymentMethodDialog from "./modals/PaymentMethodDialog";
+import { PaymentStatusModal } from "./modals/PaymentStatusModal";
+import { PaymentCancelledModal } from "./modals/PaymentCancelledModal";
+import WalletConnectionPrompt from "./modals/WalletConnectionPrompt";
+import { useSearchParams } from "next/navigation";
 
 interface MintButtonProps {
   collectible: Collectible;
@@ -70,6 +76,7 @@ interface MintButtonProps {
   artistWalletAddress: string;
   mintStatus: MintStatus;
   lightOrder: LightOrder;
+  signatureCode: string;
 }
 
 const wallets = [
@@ -84,6 +91,7 @@ export default function MintButtonClaim({
   artistWalletAddress,
   mintStatus,
   lightOrder,
+  signatureCode,
 }: MintButtonProps) {
   const {
     connected,
@@ -94,6 +102,12 @@ export default function MintButtonClaim({
     connecting,
     disconnect,
   } = useWallet();
+  const searchParams = useSearchParams();
+  const success = searchParams.get("success");
+  const session_id = searchParams.get("session_id");
+  const canceled = searchParams.get("canceled");
+  const orderId = searchParams.get("orderId");
+
   const [isMinting, setIsMinting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,11 +127,55 @@ export default function MintButtonClaim({
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
   const [showSuccessPopUp, setShowSuccessPopUp] = useState(false);
   const [isLightVersion, setIsLightVersion] = useState(false);
+  const isCardPaymentEnable = collectible.enable_card_payments || false;
+  const [showPaymentMethodDialog, setShowPaymentMethodDialog] = useState(false);
+  const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] =
+    useState(false);
+  const [showPaymentCancelledDialog, setShowPaymentCancelledDialog] =
+    useState(false);
+  const [showCardPaymenEmailtDialog, setShowCardPaymentEmailDialog] =
+    useState(false);
+  const [cardPaymentAddress, setCardPaymentAddress] = useState(
+    publicKey?.toString() || ""
+  );
+  const [showWalletConnectionPrompt, setShowWalletConnectionPrompt] =
+    useState(false);
+  const [isEligibleProxy, setIsEligibleProxy] = useState(false); // Not used anywhere
 
   const { getData } = useVisitorData(
     { extendedResult: true },
     { immediate: true }
   );
+
+  useEffect(() => {
+    if (lightOrder.status === "completed" && lightOrder.mint_signature) {
+      setTransactionSignature(lightOrder.mint_signature);
+    }
+  }, [lightOrder]);
+
+  useEffect(() => {
+    if (success == "true") {
+      setShowPaymentSuccessDialog(true);
+    }
+    if (canceled === "true") {
+      setShowPaymentCancelledDialog(true);
+
+      if (orderId) {
+        fetch("/api/orders/update-status", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            orderId,
+            status: "failed",
+          }),
+        }).catch((error) => {
+          console.error("Error updating order status:", error);
+        });
+      }
+    }
+  }, [success, canceled, searchParams]);
 
   const TriggerConfetti = (): void => {
     const end = Date.now() + 3 * 1000; // 3 seconds
@@ -149,6 +207,18 @@ export default function MintButtonClaim({
     frame();
   };
 
+  const handlePaymentMethodSelection = (method: "card" | "crypto") => {
+    if (method === "card") {
+      setShowPaymentMethodDialog(false);
+      setShowCardPaymentEmailDialog(true);
+    } else if (method === "crypto" && !connected) {
+      setShowPaymentMethodDialog(false);
+      setShowWalletConnectionPrompt(true);
+    } else {
+      handleMintClick(method);
+    }
+  };
+
   useEffect(() => {
     if (connected && publicKey && collectible.price_usd === 0) {
       setWalletAddress(publicKey.toString());
@@ -163,190 +233,10 @@ export default function MintButtonClaim({
     }
   }, []);
 
-  //   const handlePaymentAndMint = async () => {
-  //     const addressToUse = isFreeMint ? walletAddress : publicKey?.toString();
-  //     const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
-  //       (addressToUse || "").trim()
-  //     );
-  //     console.log("isEmail", isEmail);
-  //     console.log("addressToUse", addressToUse);
-
-  //     let newOrderId = null;
-
-  //     if (!addressToUse || !isEligible) {
-  //       return;
-  //     }
-  //     setIsMinting(true);
-  //     setError(null);
-  //     try {
-  //       let signedTransaction = null;
-
-  //       const initResponse = await fetch("/api/collection/mint/initiate", {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify({
-  //           collectibleId: collectible.id,
-  //           walletAddress: addressToUse,
-  //           deviceId: deviceId,
-  //           collectionId: collection.id,
-  //         }),
-  //       });
-
-  //       if (!initResponse.ok) {
-  //         const errorData = await initResponse.json();
-  //         throw new Error(errorData.error || "Failed to initiate minting");
-  //       }
-  //       let priceInSol = 0;
-  //       const { orderId, isFree, tipLinkWalletAddress, tipLinkUrl } =
-  //         await initResponse.json();
-
-  //       newOrderId = orderId;
-
-  //       setTipLinkUrl(tipLinkUrl);
-  //       if (!isFree && publicKey) {
-  //         // Step 2: Create payment transaction (only for paid mints)
-  //         const solPrice = await getSolPrice();
-  //         if (!solPrice) {
-  //           throw new Error("Failed to get SOL price");
-  //         }
-  //         const solPriceUSD = solPrice;
-  //         priceInSol = collectible.price_usd / solPriceUSD;
-  //         const lamports = Math.round(priceInSol * LAMPORTS_PER_SOL);
-  //         const instructions = [
-  //           ComputeBudgetProgram.setComputeUnitLimit({
-  //             units: 80000,
-  //           }),
-  //           SystemProgram.transfer({
-  //             fromPubkey: publicKey,
-  //             toPubkey: new PublicKey(artistWalletAddress),
-  //             lamports: lamports,
-  //           }),
-  //         ];
-
-  //         const { blockhash, lastValidBlockHeight } =
-  //           await connection.getLatestBlockhash();
-  //         const messageV0 = new TransactionMessage({
-  //           payerKey: publicKey,
-  //           recentBlockhash: blockhash,
-  //           instructions,
-  //         }).compileToV0Message();
-
-  //         const transaction = new VersionedTransaction(messageV0);
-
-  //         // Sign the transaction
-  //         if (!signTransaction) {
-  //           throw new Error("Failed to sign transaction");
-  //         }
-  //         let signedTx;
-  //         // Serialize the signed transaction
-  //         signedTx = await signTransaction(transaction);
-  //         signedTransaction = Buffer.from(signedTx.serialize()).toString(
-  //           "base64"
-  //         );
-  //       }
-
-  //       const processResponse = await fetch("/api/collection/mint/process", {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify({
-  //           orderId,
-  //           tipLinkWalletAddress,
-  //           signedTransaction,
-  //           priceInSol,
-  //           isEmail,
-  //           nftImageUrl: collectible.primary_image_url,
-  //           collectibleId: collectible.id,
-  //           chipTapData: chipTapData,
-  //         }),
-  //       });
-
-  //       if (!processResponse.ok) {
-  //         const errorData = await processResponse.json();
-  //         throw new Error(errorData.error || "Failed to process minting");
-  //       }
-
-  //       const { success, mintSignature } = await processResponse.json();
-  //       if (success) {
-  //         setTransactionSignature(mintSignature);
-  //         TriggerConfetti();
-  //         setExistingOrder({ id: orderId, status: "completed" });
-  //         toast({
-  //           title: isEmail
-  //             ? "💌 Please check your inbox, your Collectible awaits you!"
-  //             : "✅ Collectible Minted Successfully",
-  //         });
-  //         if (isEmail) {
-  //           setShowMailSentModal(true);
-  //         } else {
-  //           setShowSuccessPopUp(true);
-  //         }
-  //         setIsEligible(false);
-  //         if (isAirdropEligible) {
-  //           setShowAirdropModal(true);
-  //           updateOrderAirdropStatus(orderId, true);
-  //         }
-  //         localStorage.setItem("lastMintInput", addressToUse);
-  //         setWalletAddress("");
-  //       } else {
-  //         throw new Error("Minting process failed");
-  //       }
-  //     } catch (error: any) {
-  //       console.error("Error minting NFT:", error);
-  //       toast({
-  //         title: "Something went wrong while minting your collectible ",
-  //         description:
-  //           error.message ||
-  //           "An unexpected error occurred. Please try again later.",
-  //         variant: "destructive",
-  //       });
-  //       // Set the order status as failed
-  //       if (newOrderId) {
-  //         try {
-  //           const response = await fetch("/api/orders/update-status", {
-  //             method: "POST",
-  //             headers: {
-  //               "Content-Type": "application/json",
-  //             },
-  //             body: JSON.stringify({
-  //               orderId: newOrderId,
-  //               status: "failed",
-  //             }),
-  //           });
-
-  //           if (!response.ok) {
-  //             console.error("Failed to update order status");
-  //           }
-  //         } catch (updateError) {
-  //           console.error("Error updating order status:", updateError);
-  //         }
-  //       }
-  //       setError("An unexpected error occurred");
-  //     } finally {
-  //       setIsMinting(false);
-  //     }
-  //   };
-
-  const handleLightVersionClaim = async () => {
-    const addressToUse = walletAddress;
-    const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
-      (addressToUse || "").trim()
-    );
-    if (isEmail) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid wallet address",
-        variant: "destructive",
-      });
-      return;
-    }
-    console.log("isEmail", isEmail);
-    console.log("addressToUse", addressToUse);
+  const handleLightVersionClaim = async (paymentMethod: "card" | "crypto") => {
 
     let newOrderId = null;
 
-    if (!addressToUse) {
-      return;
-    }
     setIsMinting(true);
     setError(null);
 
@@ -354,93 +244,153 @@ export default function MintButtonClaim({
       let signedTransaction = null;
       let priceInSol = 0;
 
-      if (lightOrder.price_usd !== 0 && publicKey) {
-        // Step 2: Create payment transaction (only for paid mints)
-        const solPrice = await getSolPrice();
-        if (!solPrice) {
-          throw new Error("Failed to get SOL price");
+      if (paymentMethod === "card") {
+        const addressToUse = cardPaymentAddress;
+
+        if (!addressToUse) {
+          return;
         }
-        const solPriceUSD = solPrice;
-        priceInSol = collectible.price_usd / solPriceUSD;
-        const lamports = Math.round(priceInSol * LAMPORTS_PER_SOL);
-        const instructions = [
-          ComputeBudgetProgram.setComputeUnitLimit({
-            units: 80000,
-          }),
-          SystemProgram.transfer({
-            fromPubkey: publicKey,
-            toPubkey: new PublicKey(artistWalletAddress),
-            lamports: lamports,
-          }),
-        ];
-
-        const { blockhash, lastValidBlockHeight } =
-          await connection.getLatestBlockhash();
-        const messageV0 = new TransactionMessage({
-          payerKey: publicKey,
-          recentBlockhash: blockhash,
-          instructions,
-        }).compileToV0Message();
-
-        const transaction = new VersionedTransaction(messageV0);
-
-        // Sign the transaction
-        if (!signTransaction) {
-          throw new Error("Failed to sign transaction");
-        }
-        let signedTx;
-        // Serialize the signed transaction
-        signedTx = await signTransaction(transaction);
-        signedTransaction = Buffer.from(signedTx.serialize()).toString(
-          "base64"
+        const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
+          (addressToUse || "").trim()
         );
-      }
-
-      const processLightResponse = await fetch(
-        "/api/collection/mint/process-light",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId: lightOrder.id,
-            signedTransaction: signedTransaction,
-            priceInSol: priceInSol,
-            walletAddress: walletAddress,
-            collectibleId: lightOrder.collectible_id,
-          }),
-        }
-      );
-
-      if (!processLightResponse.ok) {
-        const errorData = await processLightResponse.json();
-        throw new Error(errorData.error || "Failed to initiate claiming");
-      }
-      const { success, mintSignature, error } =
-        await processLightResponse.json();
-
-      if (success) {
-        setTransactionSignature(mintSignature);
-        TriggerConfetti();
-        setExistingOrder({ id: lightOrder.id, status: "completed" });
-        toast({
-          title: isEmail
-            ? "💌 Please check your inbox, your Collectible awaits you!"
-            : "✅ Collectible Minted Successfully",
-        });
         if (isEmail) {
-          setShowMailSentModal(true);
-        } else {
-          setShowSuccessPopUp(true);
+          toast({
+            title: "Error",
+            description: "Please enter a valid wallet address",
+            variant: "destructive",
+          });
+          return;
         }
-        // setIsEligible(false);
-        if (isAirdropEligible) {
-          setShowAirdropModal(true);
-          updateOrderAirdropStatus(lightOrder.id, true);
+        console.log("isEmail", isEmail);
+        console.log("addressToUse", addressToUse);
+
+        try {
+          const response = await fetch("/api/checkout_sessions_light", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              priceId: collectible.stripe_price_id,
+              orderId: lightOrder.id,
+              signedTransaction: signedTransaction,
+              walletAddress: cardPaymentAddress,
+              priceInSol: priceInSol,
+              nftImageUrl: collectible.primary_image_url,
+              collectibleId: collectible.id,
+              isCardPayment: true,
+              signatureCode,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(
+              errorData.error || "Failed to create checkout session"
+            );
+          }
+
+          const { url } = await response.json();
+
+          // Redirect to Stripe Checkout using window.location
+          if (url) {
+            window.location.href = url;
+            return;
+          } else {
+            throw new Error("No checkout URL received");
+          }
+        } catch (error) {
+          console.error("Error creating checkout session:", error);
+          toast({
+            title: "Error",
+            description: "Failed to initialize payment",
+            variant: "destructive",
+          });
+          setIsMinting(false);
+          return;
         }
-        localStorage.setItem("lastMintInput", addressToUse);
-        setWalletAddress("");
       } else {
-        throw new Error("Minting process failed");
+        if (lightOrder.price_usd !== 0 && publicKey) {
+          // Step 2: Create payment transaction (only for paid mints)
+          const solPrice = await getSolPrice();
+          if (!solPrice) {
+            throw new Error("Failed to get SOL price");
+          }
+          const solPriceUSD = solPrice;
+          priceInSol = collectible.price_usd / solPriceUSD;
+          const lamports = Math.round(priceInSol * LAMPORTS_PER_SOL);
+          const instructions = [
+            ComputeBudgetProgram.setComputeUnitLimit({
+              units: 80000,
+            }),
+            SystemProgram.transfer({
+              fromPubkey: publicKey,
+              toPubkey: new PublicKey(artistWalletAddress),
+              lamports: lamports,
+            }),
+          ];
+
+          const { blockhash, lastValidBlockHeight } =
+            await connection.getLatestBlockhash();
+          const messageV0 = new TransactionMessage({
+            payerKey: publicKey,
+            recentBlockhash: blockhash,
+            instructions,
+          }).compileToV0Message();
+
+          const transaction = new VersionedTransaction(messageV0);
+
+          // Sign the transaction
+          if (!signTransaction) {
+            throw new Error("Failed to sign transaction");
+          }
+          let signedTx;
+          // Serialize the signed transaction
+          signedTx = await signTransaction(transaction);
+          signedTransaction = Buffer.from(signedTx.serialize()).toString(
+            "base64"
+          );
+        }
+
+        const processLightResponse = await fetch(
+          "/api/collection/mint/process-light",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: lightOrder.id,
+              signedTransaction: signedTransaction,
+              priceInSol: priceInSol,
+              walletAddress: walletAddress,
+              collectibleId: lightOrder.collectible_id,
+            }),
+          }
+        );
+
+        if (!processLightResponse.ok) {
+          const errorData = await processLightResponse.json();
+          throw new Error(errorData.error || "Failed to initiate claiming");
+        }
+        const { success, mintSignature, error } =
+          await processLightResponse.json();
+
+        if (success) {
+          setTransactionSignature(mintSignature);
+          TriggerConfetti();
+          setExistingOrder({ id: lightOrder.id, status: "completed" });
+          toast({
+            title: "✅ Collectible Minted Successfully",
+          });
+          setShowSuccessPopUp(true);
+          // setIsEligible(false);
+          if (isAirdropEligible) {
+            setShowAirdropModal(true);
+            updateOrderAirdropStatus(lightOrder.id, true);
+          }
+          setWalletAddress("");
+        } else {
+          throw new Error("Minting process failed");
+        }
       }
     } catch (error: any) {
       console.error("Error minting NFT:", error);
@@ -478,7 +428,7 @@ export default function MintButtonClaim({
     }
   };
 
-  const handleMintClick = async () => {
+  const handleMintClick = async (paymentMethod: "card" | "crypto") => {
     setIsMinting(true);
     // await checkEligibilityAndExistingOrder();
     if (isFreeMint) {
@@ -491,19 +441,20 @@ export default function MintButtonClaim({
         setIsMinting(false);
         return;
       }
-    } else if (!connected) {
-      try {
-        await connect();
-        setIsMinting(false);
-        return;
-      } catch (error) {
-        console.error("Failed to connect wallet:", error);
-        setIsMinting(false);
-        return;
-      }
-    }
+    } 
+    // else if (!connected) {
+    //   try {
+    //     await connect();
+    //     setIsMinting(false);
+    //     return;
+    //   } catch (error) {
+    //     console.error("Failed to connect wallet:", error);
+    //     setIsMinting(false);
+    //     return;
+    //   }
+    // }
 
-    await handleLightVersionClaim();
+    await handleLightVersionClaim(paymentMethod);
     if (ctaEnabled) {
       setTimeout(() => {
         setShowSuccessPopUp(false);
@@ -575,14 +526,10 @@ export default function MintButtonClaim({
       isPhantomInjected || isSolflareInjected || isBackpackInjected;
 
     if (isWalletInjected) {
-      if (connected) {
-        return <></>;
-      }
-
       return (
         <button
           onClick={connected ? disconnect : () => handleConnect()}
-          className={`w-full h-10 rounded-full ${
+          className={`w-full h-11 rounded-full ${
             connected
               ? "bg-gray-200 hover:bg-gray-300 text-gray-800"
               : "bg-white text-black"
@@ -662,18 +609,13 @@ export default function MintButtonClaim({
     <WhiteBgShimmerButton
       borderRadius="9999px"
       className="w-full my-4 text-black hover:bg-gray-800 h-[44px] rounded font-bold"
-      onClick={handleMintClick}
-      disabled={isMinting || existingOrder?.status === "completed" || isLoading}
-    >
-      {getButtonText()}
-    </WhiteBgShimmerButton>
-  );
-
-  const renderLightVersionMintButton = () => (
-    <WhiteBgShimmerButton
-      borderRadius="9999px"
-      className="w-full my-4 text-black hover:bg-gray-800 h-[44px] rounded font-bold"
-      onClick={handleLightVersionClaim}
+      onClick={() => {
+        if (isFreeMint || !isCardPaymentEnable) {
+          handleMintClick("crypto");
+        } else {
+          setShowPaymentMethodDialog(true);
+        }
+      }}
       disabled={isMinting || existingOrder?.status === "completed" || isLoading}
     >
       {getButtonText()}
@@ -729,6 +671,58 @@ export default function MintButtonClaim({
         showModal={showWaitlistModal}
         setShowModal={setShowWaitlistModal}
       />
+      <PaymentMethodDialog
+        isOpen={showPaymentMethodDialog}
+        onClose={() => setShowPaymentMethodDialog(false)}
+        onSelectPaymentMethod={handlePaymentMethodSelection}
+        price={collectible.price_usd}
+        isMinting={isMinting}
+      />
+      <CardPaymentWalletDialog
+        isOpen={showCardPaymenEmailtDialog}
+        onClose={() => setShowCardPaymentEmailDialog(false)}
+        onSelectPaymentMethod={handleMintClick}
+        setCardPaymentAddress={setCardPaymentAddress}
+        cardPaymentAddress={cardPaymentAddress}
+        price={collectible.price_usd}
+        isMinting={isMinting}
+        onBack={() => {
+          setShowCardPaymentEmailDialog(false);
+          setShowPaymentMethodDialog(true);
+        }}
+      />
+      <WalletConnectionPrompt
+        isOpen={showWalletConnectionPrompt}
+        onClose={() => setShowWalletConnectionPrompt(false)}
+        connected={connected}
+        publicKey={publicKey}
+        disconnect={disconnect}
+        handleConnect={handleConnect}
+      />
+      <PaymentStatusModal
+        isOpen={showPaymentSuccessDialog}
+        onClose={() => setShowPaymentSuccessDialog(false)}
+        sessionId={session_id || ""}
+        setTransactionSignature={setTransactionSignature}
+        triggerConfetti={TriggerConfetti}
+        setExistingOrder={setExistingOrder}
+        setIsEligible={setIsEligibleProxy}
+        setShowAirdropModal={setShowAirdropModal}
+        setShowMailSentModal={setShowMailSentModal}
+        setShowSuccessPopUp={setShowSuccessPopUp}
+        setWalletAddress={setWalletAddress}
+        ctaEnabled={ctaEnabled}
+        setShowCtaPopUp={setShowCtaPopUp}
+        setIsMinting={setIsMinting}
+      />
+      <PaymentCancelledModal
+        isOpen={showPaymentCancelledDialog}
+        onClose={() => setShowPaymentCancelledDialog(false)}
+        onRetry={() => {
+          setShowPaymentCancelledDialog(false);
+          setShowPaymentMethodDialog(true);
+        }}
+      />
       {ctaEnabled && showCtaPopUp && (
         <CtaPopUp
           title={collectible.cta_title ?? ""}
@@ -743,6 +737,7 @@ export default function MintButtonClaim({
           collectible={collectible}
           publicKey={publicKey?.toString() ?? ""}
           existingOrderId={existingOrder?.id ?? ""}
+          isLightVersion={true}
         />
       )}
       <SuccessPopup
@@ -762,28 +757,28 @@ export default function MintButtonClaim({
           <div className="flex flex-col items-center justify-center w-full">
             <div className="flex flex-col items-center justify-center w-full">
               {isFreeMint ? (
-              <div className="w-full flex gap-4 flex-col items-center justify-center">
-                <Input
-                  type="text"
-                  placeholder="Enter your Wallet"
-                  value={walletAddress}
-                  onChange={(e) => setWalletAddress(e.target.value)}
-                  className="w-full h-12 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
-                />
-                {existingOrder?.status !== "completed" &&
-                  walletAddress &&
-                  renderMintButton()}
-              </div>
-              ) : (
-              <div className="w-full mt-4 flex flex-col items-center justify-center">
-                {renderWalletButton()}
-                <div className="hidden">
-                  <WalletMultiButton />
+                <div className="w-full flex gap-4 flex-col items-center justify-center">
+                  <Input
+                    type="text"
+                    placeholder="Enter your Wallet"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    className="w-full h-12 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
+                  />
+                  {existingOrder?.status !== "completed" &&
+                    walletAddress &&
+                    renderMintButton()}
                 </div>
-                {existingOrder?.status !== "completed" &&
-                  walletAddress &&
-                  renderMintButton()}
-              </div>
+              ) : (
+                <div className="w-full mt-4 flex flex-col items-center justify-center">
+                  {renderWalletButton()}
+                  <div className="hidden">
+                    <WalletMultiButton />
+                  </div>
+                  {existingOrder?.status !== "completed" &&
+                    walletAddress &&
+                    renderMintButton()}
+                </div>
               )}
             </div>
 

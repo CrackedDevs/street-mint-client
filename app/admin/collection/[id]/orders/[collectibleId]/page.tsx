@@ -69,6 +69,32 @@ const formatAddress = (address: string | null) => {
   return `${address.slice(0, 5)}...${address.slice(-5)}`;
 };
 
+const useCountAnimation = (end: number, duration: number = 2000) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let startTime: number;
+    let animationFrame: number;
+
+    const animate = (currentTime: number) => {
+      if (!startTime) startTime = currentTime;
+      const progress = (currentTime - startTime) / duration;
+
+      if (progress < 1) {
+        setCount(Math.min(Math.floor(end * progress), end));
+        animationFrame = requestAnimationFrame(animate);
+      } else {
+        setCount(end);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [end, duration]);
+
+  return count;
+};
+
 export default function CollectionOrders() {
   const router = useRouter();
   const { id: collectionId, collectibleId } = useParams();
@@ -373,9 +399,55 @@ export default function CollectionOrders() {
     document.body.removeChild(link);
   };
 
+  // Calculate order statistics
+  const totalOrders = orders.length;
+  const successfulOrders = orders.filter(order => order.status === "completed").length;
+  const failedOrders = orders.filter(order => order.status === "failed").length;
+  const successfulPercentage = totalOrders ? ((successfulOrders / totalOrders) * 100).toFixed(2) : 0;
+  const failedPercentage = totalOrders ? ((failedOrders / totalOrders) * 100).toFixed(2) : 0;
+
+  // Add these animated counts
+  const animatedTotal = useCountAnimation(totalOrders);
+  const animatedSuccessful = useCountAnimation(successfulOrders);
+  const animatedFailed = useCountAnimation(failedOrders);
+
   return (
     <div className="p-8">
       <Toaster />
+
+      {/* Statistics Section */}
+      <div className="grid grid-cols-3 gap-6 mb-8">
+        <div className="p-6 bg-white rounded-xl shadow-lg border border-gray-100 transition-all hover:shadow-xl">
+          <div className="flex flex-col items-center">
+            <h2 className="text-gray-600 text-lg font-semibold mb-2">Total Orders</h2>
+            <div className="text-4xl font-bold text-gray-800 mb-1">{animatedTotal}</div>
+            <div className="text-sm text-gray-500">All time orders</div>
+          </div>
+        </div>
+
+        <div className="p-6 bg-white rounded-xl shadow-lg border border-green-100 transition-all hover:shadow-xl">
+          <div className="flex flex-col items-center">
+            <h2 className="text-gray-600 text-lg font-semibold mb-2">Successful Orders</h2>
+            <div className="text-4xl font-bold text-green-600 mb-1">{animatedSuccessful}</div>
+            <div className="flex items-center space-x-1">
+              <div className="text-sm font-medium text-green-600">{successfulPercentage}%</div>
+              <div className="text-sm text-gray-500">success rate</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 bg-white rounded-xl shadow-lg border border-red-100 transition-all hover:shadow-xl">
+          <div className="flex flex-col items-center">
+            <h2 className="text-gray-600 text-lg font-semibold mb-2">Failed Orders</h2>
+            <div className="text-4xl font-bold text-red-600 mb-1">{animatedFailed}</div>
+            <div className="flex items-center space-x-1">
+              <div className="text-sm font-medium text-red-600">{failedPercentage}%</div>
+              <div className="text-sm text-gray-500">failure rate</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between mb-6">
         <Button
           onClick={() => router.back()}

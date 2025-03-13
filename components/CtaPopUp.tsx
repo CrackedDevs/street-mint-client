@@ -21,6 +21,7 @@ interface CtaPopUpProps {
   collectible: Collectible;
   publicKey: string;
   existingOrderId: string;
+  isLightVersion?: boolean;
   // onSubmit?: (data: { email?: string; text?: string }) => void;
 }
 
@@ -38,6 +39,7 @@ function CtaPopUp({
   collectible,
   publicKey,
   existingOrderId,
+  isLightVersion = false,
 }: // onSubmit,
 CtaPopUpProps) {
   const [email, setEmail] = useState("");
@@ -93,6 +95,7 @@ CtaPopUpProps) {
           orderId: existingOrderId,
           text: text,
           email: email,
+          isLightVersion: isLightVersion,
         }),
       });
       const data = await response.json();

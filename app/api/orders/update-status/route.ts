@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { orderId, status } = await req.json();
+    const { orderId, status, is_light_order = false } = await req.json();
 
     if (!orderId || !status) {
       return NextResponse.json(
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
 
     const supabaseAdmin = await getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
-      .from("orders")
+      .from(is_light_order ? "light_orders" : "orders")
       .update({ status })
       .eq("id", orderId);
 

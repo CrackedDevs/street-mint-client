@@ -216,10 +216,12 @@ export type Database = {
           mint_start_date: string | null
           name: string
           nfc_public_key: string | null
+          only_card_payment: boolean | null
           price_usd: number
           primary_image_url: string
           quantity: number | null
           quantity_type: Database["public"]["Enums"]["quantity_type"]
+          sponsor_id: number | null
           stripe_price_id: string | null
           whitelist: boolean | null
         }
@@ -253,10 +255,12 @@ export type Database = {
           mint_start_date?: string | null
           name: string
           nfc_public_key?: string | null
+          only_card_payment?: boolean | null
           price_usd: number
           primary_image_url: string
           quantity?: number | null
           quantity_type: Database["public"]["Enums"]["quantity_type"]
+          sponsor_id?: number | null
           stripe_price_id?: string | null
           whitelist?: boolean | null
         }
@@ -290,10 +294,12 @@ export type Database = {
           mint_start_date?: string | null
           name?: string
           nfc_public_key?: string | null
+          only_card_payment?: boolean | null
           price_usd?: number
           primary_image_url?: string
           quantity?: number | null
           quantity_type?: Database["public"]["Enums"]["quantity_type"]
+          sponsor_id?: number | null
           stripe_price_id?: string | null
           whitelist?: boolean | null
         }
@@ -303,6 +309,13 @@ export type Database = {
             columns: ["collection_id"]
             isOneToOne: false
             referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collectibles_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
             referencedColumns: ["id"]
           },
         ]
@@ -354,6 +367,8 @@ export type Database = {
           collectible_id: number | null
           collection_id: number | null
           created_at: string | null
+          cta_email: string | null
+          cta_text: string | null
           device_id: string | null
           email: string
           email_sent: boolean | null
@@ -377,6 +392,8 @@ export type Database = {
           collectible_id?: number | null
           collection_id?: number | null
           created_at?: string | null
+          cta_email?: string | null
+          cta_text?: string | null
           device_id?: string | null
           email: string
           email_sent?: boolean | null
@@ -400,6 +417,8 @@ export type Database = {
           collectible_id?: number | null
           collection_id?: number | null
           created_at?: string | null
+          cta_email?: string | null
+          cta_text?: string | null
           device_id?: string | null
           email?: string
           email_sent?: boolean | null
@@ -533,6 +552,38 @@ export type Database = {
             columns: ["collection_id"]
             isOneToOne: false
             referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsors: {
+        Row: {
+          artist_id: number | null
+          created_at: string
+          id: number
+          img_url: string | null
+          name: string | null
+        }
+        Insert: {
+          artist_id?: number | null
+          created_at?: string
+          id?: number
+          img_url?: string | null
+          name?: string | null
+        }
+        Update: {
+          artist_id?: number | null
+          created_at?: string
+          id?: number
+          img_url?: string | null
+          name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsors_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
             referencedColumns: ["id"]
           },
         ]

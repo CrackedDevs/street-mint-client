@@ -148,6 +148,7 @@ export default async function NFTPage({
                   [key: string]: string;
                 }[],
                 enable_card_payments: collectible.enable_card_payments || false,
+                only_card_payment: collectible.only_card_payment || false,
               }}
               remainingQuantity={remainingQuantity}
               artistWalletAddress={artist.wallet_address}
