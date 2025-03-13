@@ -811,7 +811,7 @@ export default function MintButton({
     if (!isEligible && isCardPaymentEnable && !isFreeMint) return "MINT NOW";
     if (!isEligible) return "NOT ELIGIBLE";
     if (isLightVersion) return "CLAIM NOW";
-    if (isEligible) return "MINT NOW";
+    if (isEligible) return "COLLECT";
     return "LOADING...";
   };
 
