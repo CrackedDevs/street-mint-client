@@ -22,7 +22,7 @@ import {
 } from "@/lib/supabaseAdminClient";
 import { getEmailTemplateHTML } from "@/components/email/tiplink-template";
 import { headers } from "next/headers";
-import nodemailer from "nodemailer";
+import { transporter } from "@/lib/nodemailer";
 
 function verifyTransactionAmount(
   transaction: Transaction | VersionedTransaction,
@@ -370,16 +370,6 @@ export async function POST(req: Request, res: NextApiResponse) {
           emailSubject = "Congrats! You now own an IRLS Collectible";
           app_password = process.env.IRLS_NODEMAILER_APP_PASSWORD!;
         }
-
-        var transporter = nodemailer.createTransport({
-          service: "gmail",
-          port: 465,
-          secure: true,
-          auth: {
-            user: fromEmail,
-            pass: app_password,
-          },
-        });
 
         var mailOptions = {
           from: `${fromName} <${fromEmail}>`,
