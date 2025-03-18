@@ -114,13 +114,20 @@ function Component() {
             >
               <CardContent className="flex pt-5 w-full h-full justify-center flex-col">
                 <div className=" relative">
-                  {collectible.is_video ? (
+                  {collectible.primary_media_type === "video" ? (
                     <video
                       src={collectible.primary_image_url}
                       className="object-contain w-full h-full object-center items-center"
                       autoPlay
                       loop
                       muted
+                    />
+                  ) : collectible.primary_media_type === "audio" ? (
+                    <audio
+                      src={collectible.primary_image_url}
+                      controls
+                      loop
+                      controlsList="nodownload" 
                     />
                   ) : (
                     <Image

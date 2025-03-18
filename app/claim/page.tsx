@@ -89,7 +89,7 @@ export default async function NFTPage({
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
           {/* Left column - Main Image / Video */}
           <div className="relative flex justify-center items-center h-full w-full">
-            {collectible.is_video ? (
+            {collectible.primary_media_type === "video" ? (
               <video
                 src={collectible.primary_image_url}
                 autoPlay={true}
@@ -98,6 +98,8 @@ export default async function NFTPage({
                 width={500}
                 height={500}
               />
+            ) : collectible.primary_media_type === "audio" ? (
+              <audio src={collectible.primary_image_url} controls loop controlsList="nodownload" />
             ) : (
               <Image
                 src={collectible.primary_image_url}
@@ -114,52 +116,58 @@ export default async function NFTPage({
             <div>
               <h1 className="text-3xl font-bold mb-2">{collectible.name}</h1>
               <p className="text-xl text-gray-600 mb-4">
-              From the &quot;{collection.name}&quot; Collection
-            </p>
-            {/* Artist Information */}
-            <ArtistInfoComponent artist={artist} />
-            {/* Edition Information Section */}
-            <EditionInformationClaim
-              soldCount={soldCount}
-              signatureCode={signatureCode}
-              collection={{
-                ...collection,
-                artist: collection.artist || 0,
-                collectibles: [],
-                collection_mint_public_key:
-                  collection.collection_mint_public_key || "",
-                metadata_uri: collection.metadata_uri || "",
-                merkle_tree_public_key: collection.merkle_tree_public_key || "",
-              }}
-              collectible={{
-                ...collectible,
-                creator_royalty_array: collectible.creator_royalty_array as
-                  | {
-                      creator_wallet_address: string;
-                      royalty_percentage: number;
-                      name: string;
-                    }[]
-                  | null,
-                enable_card_payments: collectible.enable_card_payments || false,
-                stripe_price_id: collectible.stripe_price_id || undefined,
-                quantity_type: collectible.quantity_type as QuantityType,
-                whitelist: collectible.whitelist || false,
-                cta_enable: collectible.cta_enable || false,
-                cta_has_email_capture:
-                  collectible.cta_has_email_capture || false,
-                cta_email_list: (collectible.cta_email_list || []) as {
-                  [key: string]: string;
-                }[],
-                cta_has_text_capture: collectible.cta_has_text_capture || false,
-                cta_text_list: (collectible.cta_text_list || []) as {
-                  [key: string]: string;
-                }[],
-                only_card_payment: collectible.only_card_payment === null ? undefined : collectible.only_card_payment,
-              }}
-              remainingQuantity={remainingQuantity}
-              artistWalletAddress={artist.wallet_address}
-              lightOrder={lightOrder}
-            />
+                From the &quot;{collection.name}&quot; Collection
+              </p>
+              {/* Artist Information */}
+              <ArtistInfoComponent artist={artist} />
+              {/* Edition Information Section */}
+              <EditionInformationClaim
+                soldCount={soldCount}
+                signatureCode={signatureCode}
+                collection={{
+                  ...collection,
+                  artist: collection.artist || 0,
+                  collectibles: [],
+                  collection_mint_public_key:
+                    collection.collection_mint_public_key || "",
+                  metadata_uri: collection.metadata_uri || "",
+                  merkle_tree_public_key:
+                    collection.merkle_tree_public_key || "",
+                }}
+                collectible={{
+                  ...collectible,
+                  creator_royalty_array: collectible.creator_royalty_array as
+                    | {
+                        creator_wallet_address: string;
+                        royalty_percentage: number;
+                        name: string;
+                      }[]
+                    | null,
+                  enable_card_payments:
+                    collectible.enable_card_payments || false,
+                  stripe_price_id: collectible.stripe_price_id || undefined,
+                  quantity_type: collectible.quantity_type as QuantityType,
+                  whitelist: collectible.whitelist || false,
+                  cta_enable: collectible.cta_enable || false,
+                  cta_has_email_capture:
+                    collectible.cta_has_email_capture || false,
+                  cta_email_list: (collectible.cta_email_list || []) as {
+                    [key: string]: string;
+                  }[],
+                  cta_has_text_capture:
+                    collectible.cta_has_text_capture || false,
+                  cta_text_list: (collectible.cta_text_list || []) as {
+                    [key: string]: string;
+                  }[],
+                  only_card_payment:
+                    collectible.only_card_payment === null
+                      ? undefined
+                      : collectible.only_card_payment,
+                }}
+                remainingQuantity={remainingQuantity}
+                artistWalletAddress={artist.wallet_address}
+                lightOrder={lightOrder}
+              />
             </div>
           )}
         </div>
