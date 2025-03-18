@@ -1,6 +1,6 @@
 "use server";
 
-import nodemailer from "nodemailer";
+import { transporter } from "@/lib/nodemailer";
 
 export async function sendEmail(
   brandName: string,
@@ -9,32 +9,20 @@ export async function sendEmail(
   body: string
 ) {
   const platform = brandName == "IRLS" ? "IRLS" : "STREETMINT";
+  console.log("platform", platform);
 
   let fromEmail = "";
   let fromName = "";
-  let app_password = "";
 
   if (platform == "STREETMINT") {
     fromEmail = "hello@streetmint.xyz";
     fromName = "Street Mint";
-    app_password = process.env.STREETMINT_NODEMAILER_APP_PASSWORD!;
   } else {
     fromEmail = "hello@irls.xyz";
     fromName = "IRLS";
-    app_password = process.env.IRLS_NODEMAILER_APP_PASSWORD!;
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      port: 465,
-      secure: true,
-      auth: {
-        user: fromEmail,
-        pass: app_password,
-      },
-    });
-
     const mailOptions = {
       from: `${fromName} <${fromEmail}>`,
       to: fromEmail,
@@ -42,8 +30,8 @@ export async function sendEmail(
       text: `Name: ${name}\nEmail: ${email}\n\nBody: ${body}`,
     };
 
-    const temp = await transporter.sendMail(mailOptions);
-    console.log("temp", temp);
+    const emailResponse = await transporter.sendMail(mailOptions);
+    console.log("emailResponse", emailResponse);
     return { success: true, message: "Email sent successfully" };
   } catch (emailError) {
     console.error("Error sending email:", emailError);

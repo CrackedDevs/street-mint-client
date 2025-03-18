@@ -956,7 +956,7 @@ export default function MintButton({
   const renderMintButton = () => (
     <WhiteBgShimmerButton
       borderRadius="9999px"
-      className="w-full my-4 text-black hover:bg-gray-800 h-[40px] rounded font-bold"
+      className="w-full my-4 text-black hover:bg-gray-800 h-[44px] rounded font-bold"
       onClick={() => {
         if (isFreeMint || !isCardPaymentEnable) {
           handleMintClick("crypto");
