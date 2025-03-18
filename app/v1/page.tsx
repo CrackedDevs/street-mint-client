@@ -81,7 +81,7 @@ export default async function NFTPage({
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
           {/* Left column - Main Image / Video */}
           <div className="relative flex justify-center items-center h-full w-full">
-            {collectible.is_video ? (
+            {collectible.primary_media_type === "video" ? (
               <video
                 src={collectible.primary_image_url}
                 autoPlay={true}
@@ -89,6 +89,13 @@ export default async function NFTPage({
                 muted={true}
                 width={500}
                 height={500}
+              />
+            ) : collectible.primary_media_type === "audio" ? (
+              <audio 
+                src={collectible.primary_image_url} 
+                controls 
+                loop 
+                controlsList="nodownload" 
               />
             ) : (
               <Image

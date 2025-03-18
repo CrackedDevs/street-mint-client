@@ -135,7 +135,7 @@ function CreateCollectiblePage() {
     stripe_price_id: "",
     creator_royalty_array: [],
     is_irls: false,
-    is_video: false,
+    primary_media_type: "image",
     is_light_version: false,
     sponsor_id: null,
   });
@@ -225,7 +225,11 @@ function CreateCollectiblePage() {
         return;
       }
       if (file.type.includes("video")) {
-        handleCollectibleChange("is_video", true);
+        handleCollectibleChange("primary_media_type", "video");
+      } else if (file.type.includes("audio")) {
+        handleCollectibleChange("primary_media_type", "audio");
+      } else {
+        handleCollectibleChange("primary_media_type", "image");
       }
       setPrimaryImageLocalFile(file);
       handleCollectibleChange("primary_image_url", URL.createObjectURL(file));
@@ -672,7 +676,7 @@ function CreateCollectiblePage() {
                     <Input
                       id="collectible-image"
                       type="file"
-                      accept="image/*,video/*,.gif"
+                      accept="image/*,video/*,.gif,audio/*"
                       onChange={handleImageChange}
                       required
                       className="sr-only"

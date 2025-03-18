@@ -386,9 +386,9 @@ export default function MintButton({
   const handlePaymentAndMint = async (paymentMethod: "card" | "crypto") => {
     console.log("adddressss", cardPaymentAddress);
     const addressToUse = isFreeMint
-      ? walletAddress
+      ? walletAddress.trim()
       : paymentMethod === "card" && cardPaymentAddress
-      ? cardPaymentAddress
+      ? cardPaymentAddress.trim()
       : publicKey?.toString();
 
     const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
