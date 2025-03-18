@@ -22,7 +22,7 @@ import {
 } from "@/lib/supabaseAdminClient";
 import { getEmailTemplateHTML } from "@/components/email/tiplink-template";
 import { headers } from "next/headers";
-import nodemailer from "nodemailer";
+import { transporter } from "@/lib/nodemailer";
 
 function verifyTransactionAmount(
   transaction: Transaction | VersionedTransaction,
@@ -358,28 +358,15 @@ export async function POST(req: Request, res: NextApiResponse) {
         let fromEmail = "";
         let fromName = "";
         let emailSubject = "";
-        let app_password = "";
         if (platform == "STREETMINT") {
           fromEmail = "hello@streetmint.xyz";
           fromName = "StreetMint";
           emailSubject = "You now own a Street Mint Collectible!";
-          app_password = process.env.STREETMINT_NODEMAILER_APP_PASSWORD!;
         } else {
           fromEmail = "hello@irls.xyz";
           fromName = "IRLS";
           emailSubject = "Congrats! You now own an IRLS Collectible";
-          app_password = process.env.IRLS_NODEMAILER_APP_PASSWORD!;
         }
-
-        var transporter = nodemailer.createTransport({
-          service: "gmail",
-          port: 465,
-          secure: true,
-          auth: {
-            user: fromEmail,
-            pass: app_password,
-          },
-        });
 
         var mailOptions = {
           from: `${fromName} <${fromEmail}>`,
@@ -392,8 +379,8 @@ export async function POST(req: Request, res: NextApiResponse) {
           }),
         };
 
-        const temp = await transporter.sendMail(mailOptions);
-        console.log("temp", temp);
+        const emailResponse = await transporter.sendMail(mailOptions);
+        console.log("emailResponse", emailResponse);
         console.log("Email sent successfully");
       } catch (emailError) {
         console.error("Error sending email:", emailError);

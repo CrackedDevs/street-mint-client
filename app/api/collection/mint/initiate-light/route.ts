@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdminClient";
 import nodemailer from "nodemailer";
 import ClaimEmailTemplate from "@/components/email/claim-template";
+import { transporter } from "@/lib/nodemailer";
 
 export async function POST(req: Request, res: NextApiResponse) {
   const { collectibleId, emailAddress, deviceId, collectionId } =
@@ -119,16 +120,6 @@ export async function POST(req: Request, res: NextApiResponse) {
         fromName = "IRLS";
         app_password = process.env.IRLS_NODEMAILER_APP_PASSWORD!;
       }
-
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        port: 465,
-        secure: true,
-        auth: {
-          user: fromEmail,
-          pass: app_password,
-        },
-      });
 
       const mailOptions = {
         from: `${fromName} <${fromEmail}>`,
