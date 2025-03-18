@@ -101,7 +101,7 @@ export default function CollectibleMegaCard({
               index % 2 === 0 ? "md:order-first" : "md:order-last"
             }`}
           >
-            {collectible.is_video ? (
+            {collectible.primary_media_type === "video" ? (
               <video
                 src={collectible.primary_image_url || "/placeholder.svg"}
                 autoPlay={true}
@@ -109,6 +109,8 @@ export default function CollectibleMegaCard({
                 muted={true}
                 className="w-full object-cover rounded-lg"
               />
+            ) : collectible.primary_media_type === "audio" ? (
+              <audio src={collectible.primary_image_url} controls loop controlsList="nodownload" />
             ) : (
               <Image
                 src={collectible.primary_image_url || "/placeholder.svg"}

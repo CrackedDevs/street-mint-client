@@ -219,6 +219,7 @@ export type Database = {
           only_card_payment: boolean | null
           price_usd: number
           primary_image_url: string
+          primary_media_type: string | null
           quantity: number | null
           quantity_type: Database["public"]["Enums"]["quantity_type"]
           sponsor_id: number | null
@@ -258,6 +259,7 @@ export type Database = {
           only_card_payment?: boolean | null
           price_usd: number
           primary_image_url: string
+          primary_media_type?: string | null
           quantity?: number | null
           quantity_type: Database["public"]["Enums"]["quantity_type"]
           sponsor_id?: number | null
@@ -297,6 +299,7 @@ export type Database = {
           only_card_payment?: boolean | null
           price_usd?: number
           primary_image_url?: string
+          primary_media_type?: string | null
           quantity?: number | null
           quantity_type?: Database["public"]["Enums"]["quantity_type"]
           sponsor_id?: number | null

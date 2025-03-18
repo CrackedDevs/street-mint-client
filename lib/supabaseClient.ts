@@ -66,9 +66,9 @@ export type Collectible = {
     only_card_payment?: boolean;
     stripe_price_id?:string
     is_irls: boolean | null;
-    is_video: boolean | null;
     is_light_version: boolean;
     sponsor_id?: number | null;
+    primary_media_type: string | null;
 };
 
 interface Order {
@@ -502,7 +502,7 @@ export const fetchAllCollectibles = async (offset: number = 0, limit: number = 1
             cta_email_list,
             cta_text_list,
             is_irls,
-            is_video,
+            primary_media_type,
             is_light_version
         `)
         .range(offset, offset + limit - 1)
