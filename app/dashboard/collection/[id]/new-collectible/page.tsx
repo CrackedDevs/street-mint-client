@@ -1216,9 +1216,7 @@ function CreateCollectiblePage() {
                       <div className="h-0.5 bg-black/10 mb-4"></div>
                       <div className="space-y-2">
                         <div>
-                          Lorem ipsum dolor sit amet consectetur adipisicing
-                          elit. Quisquam, quos. Lorem ipsum dolor sit amet
-                          consectetur adipisicing elit. Quisquam, quos.
+                          Instant Mint - If an email is provided, a wallet is automatically created. The user can then transfer their IRLS NFT to their own wallet via email.
                         </div>
                       </div>
                     </button>
@@ -1243,9 +1241,7 @@ function CreateCollectiblePage() {
                       <div className="h-0.5 bg-black/10 mb-4"></div>
                       <div className="space-y-2">
                         <div>
-                          Lorem ipsum dolor sit amet consectetur adipisicing
-                          elit. Quisquam, quos. Lorem ipsum dolor sit amet
-                          consectetur adipisicing elit. Quisquam, quos.
+                          Email-Based Minting - Users receive an email with the option to mint their IRLS NFT and transfer it to their own wallet at their convenience.
                         </div>
                       </div>
                     </button>
