@@ -9,6 +9,38 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_signature_codes: {
+        Row: {
+          active: boolean
+          admin_signature_code: string
+          collectible_id: number
+          created_at: string
+          id: number
+        }
+        Insert: {
+          active?: boolean
+          admin_signature_code: string
+          collectible_id: number
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          active?: boolean
+          admin_signature_code?: string
+          collectible_id?: number
+          created_at?: string
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_signature_codes_collectible_id_fkey"
+            columns: ["collectible_id"]
+            isOneToOne: false
+            referencedRelation: "collectibles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artists: {
         Row: {
           app_password: string

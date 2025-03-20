@@ -7,11 +7,12 @@ import EditionInformation from "@/components/EditionInformation";
 import { checkAuthStatus } from "@/lib/ixkioAuth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { verifySignatureCode } from "@/lib/adminAuth";
 
 export default async function NFTPage({
   searchParams,
 }: {
-  searchParams: { x: string; n: string; e: string };
+  searchParams: { x: string; n: string; e: string; signatureCode: string };
 }) {
   // Get hostname from headers
   const host = headers().get("host") || "";
@@ -19,15 +20,21 @@ export default async function NFTPage({
   console.log("isIrlsDomain", isIrlsDomain);
 
   const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
+  const signatureCode = searchParams.signatureCode || "";
+  let data;
 
-  const data = await checkAuthStatus(
-    searchParams.x,
-    searchParams.n,
-    searchParams.e,
-    isIrlsDomain
-  );
+  if (signatureCode) {
+    data = await verifySignatureCode(signatureCode);
+  } else {
+    data = await checkAuthStatus(
+      searchParams.x,
+      searchParams.n,
+      searchParams.e,
+      isIrlsDomain
+    );
+  }
 
-  if (!data) {
+  if (!data || data.collectibleData === null) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Image
@@ -41,7 +48,7 @@ export default async function NFTPage({
     );
   }
 
-  if (data.is_irls == true && data.redirectUrl) {
+  if (data.is_irls == true && data.redirectUrl !== null) {
     redirect(data.redirectUrl);
   } else if (data.is_irls == true) {
     alert("IRLS is not available for this moment");
@@ -56,8 +63,8 @@ export default async function NFTPage({
     soldCount,
   } = data.collectibleData;
 
+  const adminSignatureAuthenticated = data.adminSignatureAuthenticated || false;
   const isIRLtapped = data.isIRLtapped;
-  const scanCount = data.scanCount;
 
   return (
     <div className="min-h-screen bg-white text-black">
@@ -91,11 +98,11 @@ export default async function NFTPage({
                 height={500}
               />
             ) : collectible.primary_media_type === "audio" ? (
-              <audio 
-                src={collectible.primary_image_url} 
-                controls 
-                loop 
-                controlsList="nodownload" 
+              <audio
+                src={collectible.primary_image_url}
+                controls
+                loop
+                controlsList="nodownload"
               />
             ) : (
               <Image
@@ -121,6 +128,8 @@ export default async function NFTPage({
               x={searchParams.x}
               n={searchParams.n}
               e={searchParams.e}
+              adminSignatureCode={signatureCode}
+              adminSignatureAuthenticated={adminSignatureAuthenticated}
               soldCount={soldCount}
               isIRLtapped={isIRLtapped}
               collection={{
