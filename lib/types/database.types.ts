@@ -11,23 +11,23 @@ export type Database = {
     Tables: {
       admin_signature_codes: {
         Row: {
-          active: boolean | null
+          active: boolean
           admin_signature_code: string
-          collectible_id: number | null
+          collectible_id: number
           created_at: string
           id: number
         }
         Insert: {
-          active?: boolean | null
+          active?: boolean
           admin_signature_code: string
-          collectible_id?: number | null
+          collectible_id: number
           created_at?: string
           id?: number
         }
         Update: {
-          active?: boolean | null
+          active?: boolean
           admin_signature_code?: string
-          collectible_id?: number | null
+          collectible_id?: number
           created_at?: string
           id?: number
         }
