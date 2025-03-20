@@ -64,6 +64,9 @@ interface Order {
   cta_text?: string | null;
 }
 
+const STREETMINT_ADMIN_LINK = "https://www.streetmint.xyz/v1?signatureCode=";
+const IRLS_ADMIN_LINK = "https://www.irls.xyz/v1?signatureCode=";
+
 const formatAddress = (address: string | null) => {
   if (!address) return "N/A";
   return `${address.slice(0, 5)}...${address.slice(-5)}`;
@@ -231,6 +234,33 @@ export default function CollectionOrders() {
       },
     },
   ];
+
+  const createAdminLink = async () => {
+    const response = await fetch("/api/create_admin_link", {
+      method: "POST",
+      body: JSON.stringify({ collectibleId }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log(data);
+      toast({
+        title: "Admin Link Created and Copied to Clipboard",
+        description: "Admin link created successfully and copied to clipboard",
+      });
+
+      navigator.clipboard.writeText(
+        isLightVersion
+          ? IRLS_ADMIN_LINK + data.signatureCode
+          : STREETMINT_ADMIN_LINK + data.signatureCode
+      );
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to create admin link",
+      });
+    }
+  };
 
   useEffect(() => {
     async function fetchCollectibleAndOrders() {
@@ -401,10 +431,18 @@ export default function CollectionOrders() {
 
   // Calculate order statistics
   const totalOrders = orders.length;
-  const successfulOrders = orders.filter(order => order.status === "completed").length;
-  const failedOrders = orders.filter(order => order.status === "failed").length;
-  const successfulPercentage = totalOrders ? ((successfulOrders / totalOrders) * 100).toFixed(2) : 0;
-  const failedPercentage = totalOrders ? ((failedOrders / totalOrders) * 100).toFixed(2) : 0;
+  const successfulOrders = orders.filter(
+    (order) => order.status === "completed"
+  ).length;
+  const failedOrders = orders.filter(
+    (order) => order.status === "failed"
+  ).length;
+  const successfulPercentage = totalOrders
+    ? ((successfulOrders / totalOrders) * 100).toFixed(2)
+    : 0;
+  const failedPercentage = totalOrders
+    ? ((failedOrders / totalOrders) * 100).toFixed(2)
+    : 0;
 
   // Add these animated counts
   const animatedTotal = useCountAnimation(totalOrders);
@@ -419,18 +457,28 @@ export default function CollectionOrders() {
       <div className="grid grid-cols-3 gap-6 mb-8">
         <div className="p-6 bg-white rounded-xl shadow-lg border border-gray-100 transition-all hover:shadow-xl">
           <div className="flex flex-col items-center">
-            <h2 className="text-gray-600 text-lg font-semibold mb-2">Total Orders</h2>
-            <div className="text-4xl font-bold text-gray-800 mb-1">{animatedTotal}</div>
+            <h2 className="text-gray-600 text-lg font-semibold mb-2">
+              Total Orders
+            </h2>
+            <div className="text-4xl font-bold text-gray-800 mb-1">
+              {animatedTotal}
+            </div>
             <div className="text-sm text-gray-500">All time orders</div>
           </div>
         </div>
 
         <div className="p-6 bg-white rounded-xl shadow-lg border border-green-100 transition-all hover:shadow-xl">
           <div className="flex flex-col items-center">
-            <h2 className="text-gray-600 text-lg font-semibold mb-2">Successful Orders</h2>
-            <div className="text-4xl font-bold text-green-600 mb-1">{animatedSuccessful}</div>
+            <h2 className="text-gray-600 text-lg font-semibold mb-2">
+              Successful Orders
+            </h2>
+            <div className="text-4xl font-bold text-green-600 mb-1">
+              {animatedSuccessful}
+            </div>
             <div className="flex items-center space-x-1">
-              <div className="text-sm font-medium text-green-600">{successfulPercentage}%</div>
+              <div className="text-sm font-medium text-green-600">
+                {successfulPercentage}%
+              </div>
               <div className="text-sm text-gray-500">success rate</div>
             </div>
           </div>
@@ -438,10 +486,16 @@ export default function CollectionOrders() {
 
         <div className="p-6 bg-white rounded-xl shadow-lg border border-red-100 transition-all hover:shadow-xl">
           <div className="flex flex-col items-center">
-            <h2 className="text-gray-600 text-lg font-semibold mb-2">Failed Orders</h2>
-            <div className="text-4xl font-bold text-red-600 mb-1">{animatedFailed}</div>
+            <h2 className="text-gray-600 text-lg font-semibold mb-2">
+              Failed Orders
+            </h2>
+            <div className="text-4xl font-bold text-red-600 mb-1">
+              {animatedFailed}
+            </div>
             <div className="flex items-center space-x-1">
-              <div className="text-sm font-medium text-red-600">{failedPercentage}%</div>
+              <div className="text-sm font-medium text-red-600">
+                {failedPercentage}%
+              </div>
               <div className="text-sm text-gray-500">failure rate</div>
             </div>
           </div>
@@ -449,13 +503,22 @@ export default function CollectionOrders() {
       </div>
 
       <div className="flex items-center justify-between mb-6">
-        <Button
-          onClick={() => router.back()}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft size={16} />
-          Back
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => router.back()}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft size={16} />
+            Back
+          </Button>
+          <Button
+            onClick={() => createAdminLink()}
+            className="flex items-center text-md text-black gap-2 font-semibold bg-gray-100 hover:bg-gray-200"
+          >
+            Create Admin Link
+          </Button>
+        </div>
+
         <h1 className="text-3xl font-bold">
           {isLightVersion ? "Light" : ""} Orders for Collectible {collectibleId}
         </h1>
