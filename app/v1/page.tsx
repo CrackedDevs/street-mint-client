@@ -45,8 +45,8 @@ export default async function NFTPage({
     return (
       <div className="flex justify-center items-center h-screen">
         <Image
-          src={sponsor_data?.img_url || '/logo.svg'}
-          alt={sponsor_data?.name || "Street mint logo"}
+          src={sponsor_data?.img_url || (isIrlsDomain ? '/irlLogo.svg' : '/logo.svg')}
+          alt={sponsor_data?.name || (isIrlsDomain ? "IRLS logo" : "Street mint logo")}
           width={250}
           height={100}
           className="h-20 w-auto animate-pulse"
