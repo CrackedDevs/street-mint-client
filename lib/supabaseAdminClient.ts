@@ -781,3 +781,46 @@ export const deleteSponsor = async (sponsorId: number): Promise<{ success: boole
         return { success: false, error: error as Error };
     }
 };
+
+
+export async function getSponsorImageByCollectibleId(collectibleId: number) {
+    let collectible_sponsor_id = null;
+    try {
+        const { data: collectibleData, error: collectibleError } = await supabaseAdmin
+            .from('collectibles')
+            .select('sponsor_id')
+            .eq('id', collectibleId)
+            .single();
+        collectible_sponsor_id = collectibleData?.sponsor_id;
+
+        if (collectibleError) {
+            throw new Error(`Error fetching collectible: ${collectibleError.message}`);
+        }
+        
+        // If no sponsor_id, return null
+        if (!collectible_sponsor_id) {
+            return null;
+        }
+        
+        const { data: sponsorData, error: sponsorError } = await supabaseAdmin
+            .from('sponsors')
+            .select('*')
+            .eq('id', collectible_sponsor_id)
+            .single()
+
+        if (sponsorError) {
+            throw new Error(`Error fetching sponsor: ${sponsorError.message}`);
+        }
+    
+        // If no data or empty array, return null
+        if (!sponsorData) {
+            return null;
+        }
+        return sponsorData;
+
+    } catch (error) {
+        console.error('Error in getSponsorImageByCollectibleId:', error);
+        return null;
+    }
+}
+
