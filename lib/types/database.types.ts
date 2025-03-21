@@ -234,6 +234,8 @@ export type Database = {
           cta_text: string | null
           cta_text_list: Json[] | null
           cta_title: string | null
+          custom_email: boolean | null
+          custom_email_content: string | null
           description: string
           enable_card_payments: boolean | null
           gallery_urls: string[]
@@ -274,6 +276,8 @@ export type Database = {
           cta_text?: string | null
           cta_text_list?: Json[] | null
           cta_title?: string | null
+          custom_email?: boolean | null
+          custom_email_content?: string | null
           description: string
           enable_card_payments?: boolean | null
           gallery_urls: string[]
@@ -314,6 +318,8 @@ export type Database = {
           cta_text?: string | null
           cta_text_list?: Json[] | null
           cta_title?: string | null
+          custom_email?: boolean | null
+          custom_email_content?: string | null
           description?: string
           enable_card_payments?: boolean | null
           gallery_urls?: string[]

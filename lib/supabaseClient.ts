@@ -69,6 +69,8 @@ export type Collectible = {
     is_light_version: boolean;
     sponsor_id?: number | null;
     primary_media_type: string | null;
+    custom_email: boolean | null;
+    custom_email_content: string | null;
 };
 
 interface Order {
@@ -503,7 +505,9 @@ export const fetchAllCollectibles = async (offset: number = 0, limit: number = 1
             cta_text_list,
             is_irls,
             primary_media_type,
-            is_light_version
+            is_light_version,
+            custom_email,
+            custom_email_content
         `)
         .range(offset, offset + limit - 1)
         .order('created_at', { ascending: false });
