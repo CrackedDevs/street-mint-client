@@ -38,7 +38,7 @@ export default async function NFTPage({
   }
 
   // Then fetch sponsor data if available
-  const sponsor_data = data ? await getSponsorImageByCollectibleId(data.collectibleData?.collectible?.id || null) : null;
+  const sponsor_data = data ? await getSponsorImageByCollectibleId(data.collectibleData?.collectible?.id) : null;
   console.log("Sponsor data:", sponsor_data);
 
   if (!data || data.collectibleData === null) {

@@ -805,7 +805,7 @@ export const deleteSponsor = async (sponsorId: number): Promise<{ success: boole
 };
 
 
-export async function getSponsorImageByCollectibleId(collectibleId: number) {
+export async function getSponsorImageByCollectibleId(collectibleId: any) {
     let collectible_sponsor_id = null;
     try {
         const { data: collectibleData, error: collectibleError } = await supabaseAdmin
