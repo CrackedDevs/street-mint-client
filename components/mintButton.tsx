@@ -75,6 +75,8 @@ interface MintButtonProps {
   x: string;
   n: string;
   e: string;
+  adminSignatureCode: string;
+  adminSignatureAuthenticated: boolean;
 }
 
 const wallets = [
@@ -92,6 +94,8 @@ export default function MintButton({
   x,
   n,
   e,
+  adminSignatureCode,
+  adminSignatureAuthenticated,
 }: MintButtonProps) {
   const searchParams = useSearchParams();
   const success = searchParams.get("success");
@@ -379,7 +383,7 @@ export default function MintButton({
     // Auto fill the wallet address if the user has previously minted
     const lastMintInput = localStorage.getItem("lastMintInput");
     if (lastMintInput) {
-      setWalletAddress(lastMintInput || "");
+      // setWalletAddress(lastMintInput || "");
     }
   }, []);
 
@@ -411,7 +415,7 @@ export default function MintButton({
 
     setIsMinting(true);
     setError(null);
-    if (collectible.price_usd > 0 && x && n && e) {
+    if (collectible.price_usd > 0 && x && n && e && !adminSignatureAuthenticated) {
       const recordSuccess = await recordPaidChipTap(x, n, e);
       if (!recordSuccess) {
         return;
@@ -548,9 +552,9 @@ export default function MintButton({
       }
 
       const chipTapData = {
-        x,
-        n,
-        e,
+        x: x || "",
+        n: n || "",
+        e: e || "",
       };
 
       const processResponse = await fetch("/api/collection/mint/process", {
@@ -565,6 +569,8 @@ export default function MintButton({
           nftImageUrl: collectible.primary_image_url,
           collectibleId: collectible.id,
           chipTapData: chipTapData,
+          adminSignatureCode,
+          adminSignatureAuthenticated,
           isCardPayment: false,
         }),
       });
@@ -956,7 +962,7 @@ export default function MintButton({
   const renderMintButton = () => (
     <WhiteBgShimmerButton
       borderRadius="9999px"
-      className="w-full my-4 text-black hover:bg-gray-800 h-[40px] rounded font-bold"
+      className="w-full my-4 text-black hover:bg-gray-800 h-[44px] rounded font-bold"
       onClick={() => {
         if (isFreeMint || !isCardPaymentEnable) {
           handleMintClick("crypto");

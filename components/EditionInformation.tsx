@@ -30,6 +30,8 @@ const EditionInformation = ({
   x,
   n,
   e,
+  adminSignatureCode,
+  adminSignatureAuthenticated,
 }: {
   collection: Collection;
   collectible: Collectible;
@@ -41,6 +43,8 @@ const EditionInformation = ({
   x: string;
   n: string;
   e: string;
+  adminSignatureCode: string;
+  adminSignatureAuthenticated: boolean;
 }) => {
   const [mintingStatus, setMintingStatus] = useState<MintStatus>("loading");
   const [timeLeft, setTimeLeft] = useState<string>("");
@@ -168,6 +172,8 @@ const EditionInformation = ({
             x={x}
             n={n}
             e={e}
+            adminSignatureCode={adminSignatureCode}
+            adminSignatureAuthenticated={adminSignatureAuthenticated}
             isIRLtapped={
               process.env.NEXT_PUBLIC_NODE_ENV === "development"
                 ? true

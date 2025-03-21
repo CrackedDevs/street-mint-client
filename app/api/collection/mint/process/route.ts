@@ -17,12 +17,14 @@ import { v4 as uuidv4 } from "uuid";
 import { NextResponse } from "next/server";
 import {
   getChipTap,
+  getSignatureCodeAuth,
   getSupabaseAdmin,
   recordChipTapServerAuth,
 } from "@/lib/supabaseAdminClient";
 import { getEmailTemplateHTML } from "@/components/email/tiplink-template";
 import { headers } from "next/headers";
-import nodemailer from "nodemailer";
+import { transporter } from "@/lib/nodemailer";
+import { verifySignatureCode } from "@/lib/adminAuth";
 
 function verifyTransactionAmount(
   transaction: Transaction | VersionedTransaction,
@@ -120,21 +122,38 @@ export async function POST(req: Request, res: NextApiResponse) {
     nftImageUrl,
     collectibleId,
     chipTapData,
+    adminSignatureCode,
     isCardPayment,
   } = await req.json();
 
-  console.time("Initial Checks Duration"); // Start timing initial checks
-  //log all
+  console.time("Initial Checks Duration");
   console.log("tipLinkWalletAddress", tipLinkWalletAddress);
   console.log("isEmail", isEmail);
   if (!orderId) {
-    console.timeEnd("Initial Checks Duration"); // End timing initial checks
+    console.timeEnd("Initial Checks Duration");
     return NextResponse.json(
       { success: false, error: "Transaction not found" },
       { status: 400 }
     );
   }
-  if (!chipTapData) {
+
+  let adminBypassAuth = false;
+
+  if (adminSignatureCode) {
+    const adminBypassAuthResult = await getSignatureCodeAuth(
+      adminSignatureCode
+    );
+    if (adminBypassAuthResult && adminBypassAuthResult.active) {
+      adminBypassAuth = true;
+    } else {
+      return NextResponse.json(
+        { success: false, error: "Invalid admin signature code" },
+        { status: 400 }
+      );
+    }
+  }
+
+  if (!chipTapData && !adminBypassAuth) {
     return NextResponse.json(
       { success: false, error: "Chip tap data not found" },
       { status: 400 }
@@ -143,30 +162,34 @@ export async function POST(req: Request, res: NextApiResponse) {
 
   try {
     const transactionUid = uuidv4();
-    const chipTapDataFromDb = await getChipTap(
-      chipTapData.x,
-      chipTapData.n,
-      chipTapData.e,
-      transactionUid
-    );
+    let chipTapDataFromDb;
+    if (!adminBypassAuth) {
+      chipTapDataFromDb = await getChipTap(
+        chipTapData.x,
+        chipTapData.n,
+        chipTapData.e,
+        transactionUid
+      );
 
-    if (!chipTapDataFromDb) {
-      throw new Error("Chip tap not found");
+      if (!chipTapDataFromDb) {
+        throw new Error("Chip tap not found");
+      }
+
+      if (chipTapDataFromDb.server_auth == true) {
+        throw new Error("Chip tap already exists or used");
+      }
     }
 
-    if (chipTapDataFromDb.server_auth == true) {
-      throw new Error("Chip tap already exists or used");
-    }
+    console.time("Fetch Order Duration");
 
-    console.time("Fetch Order Duration"); // Start timing order fetch
-    // Fetch order
     const { data: order, error: fetchError } = await supabase
       .from("orders")
       .select("*, collectibles(name, metadata_uri, creator_royalty_array)")
       .eq("id", orderId)
       .eq("collectible_id", collectibleId)
       .single();
-    console.timeEnd("Fetch Order Duration"); // End timing order fetch
+
+    console.timeEnd("Fetch Order Duration");
 
     if (!order) {
       throw new Error("Invalid Transaction");
@@ -211,17 +234,19 @@ export async function POST(req: Request, res: NextApiResponse) {
       count
     );
 
-    const recordSuccess = await recordChipTapServerAuth(
-      chipTapData.x,
-      chipTapData.n,
-      chipTapData.e,
-      transactionUid
-    );
-
-    if (!recordSuccess) {
-      throw new Error(
-        "Failed to record chip tap because it was already used or tried to use it more than once"
+    if (!adminBypassAuth) {
+      const recordSuccess = await recordChipTapServerAuth(
+        chipTapData.x,
+        chipTapData.n,
+        chipTapData.e,
+        transactionUid
       );
+
+      if (!recordSuccess) {
+        throw new Error(
+          "Failed to record chip tap because it was already used or tried to use it more than once"
+        );
+      }
     }
 
     if (count && count > 1) {
@@ -294,7 +319,7 @@ export async function POST(req: Request, res: NextApiResponse) {
         }
       }
     }
-    console.log("we are out of the tx");
+
     const merkleTreePublicKey = process.env.MERKLE_TREE_PUBLIC_KEY;
     const collectionMintPublicKey = process.env.MEGA_COLLECTION_MINT_PUBLIC_KEY;
 
@@ -307,8 +332,8 @@ export async function POST(req: Request, res: NextApiResponse) {
       throw new Error("Something went wrong");
     }
 
-    console.time("Mint NFT Duration"); // Start timing NFT minting
-    // Mint NFT
+    console.time("Mint NFT Duration");
+
     const mintResult = await mintNFTWithBubbleGumTree(
       merkleTreePublicKey,
       collectionMintPublicKey,
@@ -339,6 +364,15 @@ export async function POST(req: Request, res: NextApiResponse) {
       throw new Error("Failed to update order");
     }
 
+    const { error: updateAdminSignatureAuth } = await supabaseAdmin
+      .from("admin_signature_codes")
+      .update({ active: false })
+      .eq("admin_signature_code", adminSignatureCode);
+
+    if (updateAdminSignatureAuth) {
+      throw new Error("Failed to update admin signature auth");
+    }
+
     if (isEmail && tipLinkWalletAddress) {
       //send email
       console.time("Email Sending Duration"); // Start timing email sending
@@ -358,28 +392,15 @@ export async function POST(req: Request, res: NextApiResponse) {
         let fromEmail = "";
         let fromName = "";
         let emailSubject = "";
-        let app_password = "";
         if (platform == "STREETMINT") {
           fromEmail = "hello@streetmint.xyz";
           fromName = "StreetMint";
           emailSubject = "You now own a Street Mint Collectible!";
-          app_password = process.env.STREETMINT_NODEMAILER_APP_PASSWORD!;
         } else {
           fromEmail = "hello@irls.xyz";
           fromName = "IRLS";
           emailSubject = "Congrats! You now own an IRLS Collectible";
-          app_password = process.env.IRLS_NODEMAILER_APP_PASSWORD!;
         }
-
-        var transporter = nodemailer.createTransport({
-          service: "gmail",
-          port: 465,
-          secure: true,
-          auth: {
-            user: fromEmail,
-            pass: app_password,
-          },
-        });
 
         var mailOptions = {
           from: `${fromName} <${fromEmail}>`,
@@ -392,8 +413,8 @@ export async function POST(req: Request, res: NextApiResponse) {
           }),
         };
 
-        const temp = await transporter.sendMail(mailOptions);
-        console.log("temp", temp);
+        const emailResponse = await transporter.sendMail(mailOptions);
+        console.log("emailResponse", emailResponse);
         console.log("Email sent successfully");
       } catch (emailError) {
         console.error("Error sending email:", emailError);

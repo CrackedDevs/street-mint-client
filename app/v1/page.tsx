@@ -9,11 +9,12 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { getSponsorImageByCollectibleId } from "@/lib/supabaseAdminClient";
 import LoadingOverlay from "@/components/LoadingOverlay";
+import { verifySignatureCode } from "@/lib/adminAuth";
 
 export default async function NFTPage({
   searchParams,
 }: {
-  searchParams: { x: string; n: string; e: string };
+  searchParams: { x: string; n: string; e: string; signatureCode: string };
 }) {
   // Get hostname from headers
   const host = headers().get("host") || "";
@@ -21,19 +22,26 @@ export default async function NFTPage({
   console.log("isIrlsDomain", isIrlsDomain);
 
   const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
+  const signatureCode = searchParams.signatureCode || "";
+  let data;
 
-  // First fetch the data to get the collectible ID
-  const data = await checkAuthStatus(
-    searchParams.x,
-    searchParams.n,
-    searchParams.e,
-    isIrlsDomain
-  );
+  // Fetch data based on whether signature code exists
+  if (signatureCode) {
+    data = await verifySignatureCode(signatureCode);
+  } else {
+    data = await checkAuthStatus(
+      searchParams.x,
+      searchParams.n,
+      searchParams.e,
+      isIrlsDomain
+    );
+  }
 
   // Then fetch sponsor data if available
-  const sponsor_data = data ? await getSponsorImageByCollectibleId(data.collectibleData?.collectible?.id) : null;
+  const sponsor_data = data ? await getSponsorImageByCollectibleId(data.collectibleData?.collectible?.id || null) : null;
   console.log("Sponsor data:", sponsor_data);
-  if (!data) {
+
+  if (!data || data.collectibleData === null) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Image
@@ -47,7 +55,7 @@ export default async function NFTPage({
     );
   }
 
-  if (data.is_irls == true && data.redirectUrl) {
+  if (data.is_irls == true && data.redirectUrl !== null) {
     redirect(data.redirectUrl);
   } else if (data.is_irls == true) {
     alert("IRLS is not available for this moment");
@@ -62,8 +70,8 @@ export default async function NFTPage({
     soldCount,
   } = data.collectibleData;
 
+  const adminSignatureAuthenticated = data.adminSignatureAuthenticated || false;
   const isIRLtapped = data.isIRLtapped;
-  const scanCount = data.scanCount;
 
   // Prepare sponsor logo and name, handling null values
   const sponsorLogo = sponsor_data?.img_url || undefined;
@@ -97,7 +105,7 @@ export default async function NFTPage({
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
           {/* Left column - Main Image / Video */}
           <div className="relative flex justify-center items-center h-full w-full">
-            {collectible.is_video ? (
+            {collectible.primary_media_type === "video" ? (
               <video
                 src={collectible.primary_image_url}
                 autoPlay={true}
@@ -105,6 +113,13 @@ export default async function NFTPage({
                 muted={true}
                 width={500}
                 height={500}
+              />
+            ) : collectible.primary_media_type === "audio" ? (
+              <audio
+                src={collectible.primary_image_url}
+                controls
+                loop
+                controlsList="nodownload"
               />
             ) : (
               <Image
@@ -130,6 +145,8 @@ export default async function NFTPage({
               x={searchParams.x}
               n={searchParams.n}
               e={searchParams.e}
+              adminSignatureCode={signatureCode}
+              adminSignatureAuthenticated={adminSignatureAuthenticated}
               soldCount={soldCount}
               isIRLtapped={isIRLtapped}
               collection={{

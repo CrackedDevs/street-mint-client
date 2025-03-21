@@ -9,6 +9,38 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_signature_codes: {
+        Row: {
+          active: boolean
+          admin_signature_code: string
+          collectible_id: number
+          created_at: string
+          id: number
+        }
+        Insert: {
+          active?: boolean
+          admin_signature_code: string
+          collectible_id: number
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          active?: boolean
+          admin_signature_code?: string
+          collectible_id?: number
+          created_at?: string
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_signature_codes_collectible_id_fkey"
+            columns: ["collectible_id"]
+            isOneToOne: false
+            referencedRelation: "collectibles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artists: {
         Row: {
           app_password: string
@@ -219,6 +251,7 @@ export type Database = {
           only_card_payment: boolean | null
           price_usd: number
           primary_image_url: string
+          primary_media_type: string | null
           quantity: number | null
           quantity_type: Database["public"]["Enums"]["quantity_type"]
           sponsor_id: number | null
@@ -258,6 +291,7 @@ export type Database = {
           only_card_payment?: boolean | null
           price_usd: number
           primary_image_url: string
+          primary_media_type?: string | null
           quantity?: number | null
           quantity_type: Database["public"]["Enums"]["quantity_type"]
           sponsor_id?: number | null
@@ -297,6 +331,7 @@ export type Database = {
           only_card_payment?: boolean | null
           price_usd?: number
           primary_image_url?: string
+          primary_media_type?: string | null
           quantity?: number | null
           quantity_type?: Database["public"]["Enums"]["quantity_type"]
           sponsor_id?: number | null

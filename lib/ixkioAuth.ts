@@ -29,7 +29,8 @@ export const checkAuthStatus = async (x: string, n: string, e: string, isCurrent
         isIRLtapped: false,
         authenticated: false,
         is_irls: true,
-        redirectUrl
+        redirectUrl,
+        adminSignatureAuthenticated: false,
       }
       return resultData;
     }
@@ -75,7 +76,9 @@ export const checkAuthStatus = async (x: string, n: string, e: string, isCurrent
             scanCount: e,
             authenticated: true,
             isIRLtapped,
-            is_irls: false
+            is_irls: false,
+            redirectUrl: null,
+            adminSignatureAuthenticated: false,
         };
     }
     else {
@@ -85,9 +88,11 @@ export const checkAuthStatus = async (x: string, n: string, e: string, isCurrent
         scanCount: 0,
         authenticated: false,
         isIRLtapped,
-        is_irls: false
-    };
-  }
+        is_irls: false,
+        redirectUrl: null,
+        adminSignatureAuthenticated: false,
+      };
+    }
     return resultData
   } catch (error) {
     console.error("Error checking auth status", error);
@@ -98,7 +103,9 @@ export const checkAuthStatus = async (x: string, n: string, e: string, isCurrent
         scanCount: 0,
         authenticated: false,
         isIRLtapped,
-        is_irls: false
+        is_irls: false,
+        redirectUrl: null,
+        adminSignatureAuthenticated: false,
       };
       return resultData;
     }

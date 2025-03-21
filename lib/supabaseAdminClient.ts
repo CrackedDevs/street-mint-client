@@ -27,6 +27,13 @@ export type ChipLink = {
     created_at: string;
 }
 
+export type CollectibleBySignatureCode = {
+    id: number;
+    admin_signature_code: string;
+    collectible_id: number;
+    active: boolean;
+}
+
 export type ChipLinkDetailed = ChipLink & {
     metadata: {
     artist: string;
@@ -183,6 +190,21 @@ export async function recordChipTapServerAuth(x: string, n: string, e: string, u
     console.log("chipTapServerAuth data", data);
 
     return true;
+}
+
+export async function getSignatureCodeAuth(adminSignatureCode: string) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { data, error } : { data: CollectibleBySignatureCode | null, error: any } = await supabaseAdmin
+        .from('admin_signature_codes')
+        .select(`id, admin_signature_code, collectible_id, active`)
+        .eq('admin_signature_code', adminSignatureCode)
+        .eq('active', true)
+        .single();
+    if (error) {
+        console.error('Error getting collectible by admin signature code:', error);
+        return null;
+    }
+    return data;
 }
 
 // Do not use this function, since it is used for authentication and prevent race condition
