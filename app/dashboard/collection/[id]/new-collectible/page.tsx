@@ -146,7 +146,8 @@ function CreateCollectiblePage() {
     is_light_version: false,
     sponsor_id: null,
     custom_email: false,
-    custom_email_content: "",
+    custom_email_subject: "",
+    custom_email_body: "",
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -927,24 +928,44 @@ function CreateCollectiblePage() {
                     />
                   </div>
                   {customEmail && (
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="custom-email-content"
-                        className="text-lg font-semibold"
-                      >
-                        Custom Email Content
-                      </Label>
-                      <Textarea
-                        id="custom-email-content"
-                        value={collectible.custom_email_content ?? ""}
-                        className="min-h-[120px] text-base"
-                        onChange={(e) =>
-                          handleCollectibleChange(
-                            "custom_email_content",
-                            e.target.value
-                          )
-                        }
-                      />
+                    <div className="flex flex-col gap-4">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="custom-email-subject"
+                          className="text-lg font-semibold"
+                        >
+                          Custom Email Subject
+                        </Label>
+                        <Input
+                          id="custom-email-subject"
+                          value={collectible.custom_email_subject ?? ""}
+                          onChange={(e) =>
+                            handleCollectibleChange(
+                              "custom_email_subject",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="custom-email-content"
+                          className="text-lg font-semibold"
+                        >
+                          Custom Email Content
+                        </Label>
+                        <Textarea
+                          id="custom-email-content"
+                          value={collectible.custom_email_body ?? ""}
+                          className="min-h-[120px] text-base"
+                          onChange={(e) =>
+                            handleCollectibleChange(
+                              "custom_email_body",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
                     </div>
                   )}
                 </div>

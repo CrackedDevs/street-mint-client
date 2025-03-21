@@ -156,13 +156,22 @@ export async function POST(req: Request, res: NextApiResponse) {
         );
       }
 
-      transporter.sendMail(mailOptions, function (error: any, info: any) {
-        if (error) {
-          console.log(error);
-        } else {
-          console.log("Email sent: " + info.response);
-        }
-      });
+      const emailResponse = await transporter.sendMail(mailOptions);
+      console.log("emailResponse", emailResponse);
+      console.log("Email sent successfully");
+
+      if (collectible.custom_email && collectible.custom_email_subject && collectible.custom_email_body) {
+        const customEmailOptions = {
+          from: `${fromName} <${fromEmail}>`,
+          to: emailAddress,
+          subject: collectible.custom_email_subject.trim(),
+          html: `<p style="font-size: 16px; line-height: 1.5; color: black; font-family: Arial, sans-serif;">${collectible.custom_email_body.trim()}</p>`,
+        };
+
+        const customEmailResponse = await transporter.sendMail(customEmailOptions);
+        console.log("customEmailResponse", customEmailResponse);
+        console.log("Custom email sent successfully");
+      }
 
       const { data: emailData, error: emailError } = await supabaseAdmin
         .from("light_orders")
