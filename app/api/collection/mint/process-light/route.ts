@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabaseClient";
 import {
   CreatorRoyalty,
   mintNFTWithBubbleGumTree,
+  resolveSolDomain,
 } from "../../collection.helper";
 import { v4 as uuidv4 } from "uuid";
 import { NextResponse } from "next/server";
@@ -125,6 +126,19 @@ export async function POST(req: Request, res: NextApiResponse) {
   }
 
   try {
+
+    let resolvedWalletAddress = walletAddress;
+    if (walletAddress.endsWith(".sol")) {
+      try {
+        resolvedWalletAddress = await resolveSolDomain(
+          connection,
+          walletAddress
+        );
+      } catch (error) {
+        throw new Error("Failed to resolve .sol domain");
+      }
+    }
+    console.log("Resolved Wallet Address:", resolvedWalletAddress);
 
     console.time("Fetch Order Duration"); // Start timing order fetch
     // Fetch order
@@ -255,7 +269,7 @@ export async function POST(req: Request, res: NextApiResponse) {
     const mintResult = await mintNFTWithBubbleGumTree(
       merkleTreePublicKey,
       collectionMintPublicKey,
-      walletAddress,
+      resolvedWalletAddress,
       order.collectibles.name,
       order.collectibles.metadata_uri,
       order.collectibles.creator_royalty_array as unknown as CreatorRoyalty[]
