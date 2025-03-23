@@ -50,7 +50,7 @@ export const checkAuthStatus = async (x: string, n: string, e: string, isCurrent
       xuid: string;
       response: string;
     } = response.data;
-
+    
     console.log("ixkio auth data", data);
     
     if (data && data.xuid === x && data.response && data.response.toLowerCase() === "pass") {
