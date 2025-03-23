@@ -22,7 +22,7 @@ export default function ClaimEmailTemplate({
           src="${
             platform === "STREETMINT"
               ? "https://iaulwnqmthzvuxfubnsb.supabase.co/storage/v1/object/public/nft-images/logo%202.png"
-              : "https://iaulwnqmthzvuxfubnsb.supabase.co/storage/v1/object/public/nft-images/photo_2024-09-12_22-11-09.jpg"
+              : "https://iaulwnqmthzvuxfubnsb.supabase.co/storage/v1/object/public/nft-images/irls-logo.png"
           }"
           alt="${platform === "STREETMINT" ? "StreetMint Logo" : "IRLS Logo"}"
           width="150"
@@ -30,23 +30,25 @@ export default function ClaimEmailTemplate({
           style="display: block; max-width: 150px; height: auto; margin: 0 auto 20px;"
         />
         <h2 style="color: #4a4a4a; text-align: center; margin-bottom: 20px;">
-          Congratulations! Your IRL Collectible is ready to be claimed 🎉
+          Success! This IRLS Collectible is now officially yours.
         </h2>
         <img
           src="${nftImageUrl}"
           alt="Your NFT"
           style="display: block; max-width: 100%; height: auto; margin: 0 auto 20px; border-radius: 10px;"
         />
-        <p>Hey there! Your awesome Collectible is claimed and ready to go.</p>
+        <p>This link is your golden ticket to your unique collectible.  It will always be here in your inbox, so you're all set. If you would like to transfer ownership or trade your collectible on a secondary marketplace, just click the claim button below.</p>
         <a
           href="https://streetmint.xyz/claim?signatureCode=${signatureCode}"
-          style="display: block; background-color: #3498db; color: white; text-decoration: none; padding: 15px 20px; border-radius: 5px; margin: 20px auto; text-align: center; font-weight: bold; text-transform: uppercase;"
+          style="display: block; background-color: black; color: white; text-decoration: none; padding: 15px 20px; border-radius: 5px; margin: 20px auto; text-align: center; font-weight: bold; text-transform: uppercase;"
         >
-          Claim Your ${platform === "STREETMINT" ? "StreetMint" : "IRLS"} Light Collectible
+          ✨ Claim ✨
         </a>
-        <p>
-          This link is your golden ticket to your IRL Collectible. Make sure you
-          claim it to qualify for digital and physical prizes!
+        <p>${
+          platform === "STREETMINT"
+            ? `P.S. Want to learn more about Street Mint and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://streetmint.xyz/faq">https://streetmint.xyz/faq</a>`
+            : `P.S. Want to learn more about IRLS and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://irls.xyz/faq">https://irls.xyz/faq</a>`
+        }
         </p>
       </div>
     </div>`;

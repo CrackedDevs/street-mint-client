@@ -124,7 +124,7 @@ export async function POST(req: Request, res: NextApiResponse) {
       const mailOptions = {
         from: `${fromName} <${fromEmail}>`,
         to: emailAddress,
-        subject: `Here's your one-time claim link for NFT ${collectible.name} - ${fromName}`,
+        subject: `Congrats! You now own an IRLS Collectible`,
         html: ClaimEmailTemplate({
           platform,
           nftImageUrl: collectible.primary_image_url,
