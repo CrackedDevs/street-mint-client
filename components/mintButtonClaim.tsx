@@ -435,7 +435,7 @@ export default function MintButtonClaim({
       if (!walletAddress) {
         toast({
           title: "Error",
-          description: "Please enter a valid wallet address",
+          description: "Please enter a valid wallet address or .sol address",
           variant: "destructive",
         });
         setIsMinting(false);
@@ -761,7 +761,7 @@ export default function MintButtonClaim({
                 <div className="w-full flex gap-4 flex-col items-center justify-center">
                   <Input
                     type="text"
-                    placeholder="Enter your Wallet"
+                    placeholder="Enter Solana Wallet or .Sol Address"
                     value={walletAddress}
                     onChange={(e) => setWalletAddress(e.target.value)}
                     className="w-full h-12 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
