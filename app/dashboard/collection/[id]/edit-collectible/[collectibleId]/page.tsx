@@ -130,6 +130,12 @@ function EditCollectiblePage() {
   }, [userProfile?.id, toast]);
 
   const handleCollectibleChange = (field: keyof Collectible, value: any) => {
+    if (field === "mint_start_date") {
+      value = formatDate(value);
+    }
+    else if (field === "mint_end_date") {
+      value = formatDate(value);
+    }
     setCollectible((prev) => (prev ? { ...prev, [field]: value } : null));
   };
 
@@ -382,6 +388,60 @@ function EditCollectiblePage() {
                   />
                 </div>
               )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Add Date and Time Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Minting Schedule</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="mint-start-date"
+                  className="text-lg font-semibold flex items-center"
+                >
+                  <CalendarIcon className="mr-2 h-5 w-5" />
+                  Minting Start Date and Time
+                </Label>
+                <span>Mention the timings in GMT</span>
+                <Input
+                  id="mint-start-date"
+                  type="datetime-local"
+                  value={collectible.mint_start_date?.slice(0, 16) ?? ""}
+                  onChange={(e) => {
+                    handleCollectibleChange(
+                      "mint_start_date",
+                      e.target.value
+                    );
+                  }}
+                  className="text-base w-fit"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="mint-end-date"
+                  className="text-lg font-semibold flex items-center"
+                >
+                  <CalendarIcon className="mr-2 h-5 w-5" />
+                  Minting End Date and Time
+                </Label>
+                <span>Mention the timings in GMT</span>
+                <Input
+                  id="mint-end-date"
+                  type="datetime-local"
+                  value={collectible.mint_end_date?.slice(0, 16) ?? ""}
+                  onChange={(e) =>
+                    handleCollectibleChange("mint_end_date", e.target.value)
+                  }
+                  className="text-base w-fit"
+                />
+              </div>
+              <span className="mt-2">You can edit this later</span>
             </div>
           </CardContent>
         </Card>
