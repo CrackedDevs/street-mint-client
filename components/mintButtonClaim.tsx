@@ -494,7 +494,7 @@ export default function MintButtonClaim({
     if (isMinting) return "PROCESSING...";
     if (isLoading) return "Checking Eligibility...";
     if (isLightVersion) return "CLAIM NOW";
-    return "MINT NOW";
+    return "COLLECT";
     return "LOADING...";
   };
 

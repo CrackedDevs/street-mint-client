@@ -820,7 +820,7 @@ export default function MintButton({
     // For card payments, always show MINT NOW even if not eligible
     // if (!isEligible && isCardPaymentEnable && !isFreeMint) return "MINT NOW";
     if (!isEligible) return "NOT ELIGIBLE";
-    if (isLightVersion) return "CLAIM NOW";
+    if (isLightVersion) return "COLLECT";
     if (isEligible) return "COLLECT";
     return "LOADING...";
   };
