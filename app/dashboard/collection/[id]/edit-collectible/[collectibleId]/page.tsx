@@ -62,6 +62,8 @@ function EditCollectiblePage() {
   const [newCtaLogoImage, setNewCtaLogoImage] = useState<File>();
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [isLoadingSponsors, setIsLoadingSponsors] = useState(false);
+  const [isFreeMint, setIsFreeMint] = useState(false);
+  const [customEmail, setCustomEmail] = useState(false);
 
   useEffect(() => {
     // Fetch the collectible data
@@ -92,7 +94,14 @@ function EditCollectiblePage() {
           stripe_price_id: fetchedCollectible.stripe_price_id || undefined,
           sponsor_id: fetchedCollectible.sponsor_id || null,
           only_card_payment: fetchedCollectible.only_card_payment || false,
+          custom_email: fetchedCollectible.custom_email || false,
+          custom_email_subject: fetchedCollectible.custom_email_subject || "",
+          custom_email_body: fetchedCollectible.custom_email_body || "",
         });
+        // Set isFreeMint based on price
+        setIsFreeMint(fetchedCollectible.price_usd === 0);
+        // Set customEmail based on custom_email field
+        setCustomEmail(fetchedCollectible.custom_email || false);
       } else {
         toast({
           title: "Error",
@@ -231,6 +240,14 @@ function EditCollectiblePage() {
     });
   };
 
+  const handleFreeMintToggle = (checked: boolean) => {
+    setIsFreeMint(checked);
+    if (checked) {
+      handleCollectibleChange("price_usd", 0);
+      handleCollectibleChange("enable_card_payments", false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!collectible) return;
@@ -320,8 +337,13 @@ function EditCollectiblePage() {
                     handleCollectibleChange("name", e.target.value)
                   }
                   required
+                  maxLength={32}
                 />
+                <p className="text-sm text-muted-foreground">
+                  {collectible.name.length}/32 characters
+                </p>
               </div>
+              
               <div>
                 <Label htmlFor="description">Description</Label>
                 <Textarea
@@ -331,45 +353,49 @@ function EditCollectiblePage() {
                     handleCollectibleChange("description", e.target.value)
                   }
                   required
+                  className="min-h-[120px]"
                 />
               </div>
+
               <div>
-                <Label htmlFor="price">Price (USD)</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={collectible.price_usd}
+                <Label htmlFor="collectible-brand">Brand</Label>
+                <select
+                  id="collectible-brand"
+                  value={collectible.is_irls ? Brand.IRLS : Brand.StreetMint}
                   onChange={(e) =>
                     handleCollectibleChange(
-                      "price_usd",
-                      parseFloat(e.target.value)
+                      "is_irls",
+                      e.target.value === Brand.IRLS
                     )
                   }
+                  className="w-full p-2 border rounded-md bg-background text-base"
                   required
-                />
+                >
+                  <option value={Brand.StreetMint}>StreetMint</option>
+                  <option value={Brand.IRLS}>IRLS</option>
+                </select>
               </div>
+
               <div>
                 <Label htmlFor="quantity_type">Quantity Type</Label>
-                <Select
+                <select
+                  id="quantity_type"
                   value={collectible.quantity_type}
-                  onValueChange={(value) =>
-                    handleCollectibleChange("quantity_type", value)
+                  onChange={(e) =>
+                    handleCollectibleChange(
+                      "quantity_type",
+                      e.target.value as QuantityType
+                    )
                   }
+                  className="w-full p-2 border rounded-md bg-background text-base"
+                  required
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select quantity type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={QuantityType.Unlimited}>
-                      Unlimited
-                    </SelectItem>
-                    <SelectItem value={QuantityType.Limited}>Limited</SelectItem>
-                    <SelectItem value={QuantityType.Single}>Single</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <option value={QuantityType.Unlimited}>Open Edition</option>
+                  <option value={QuantityType.Single}>1 of 1</option>
+                  <option value={QuantityType.Limited}>Limited Edition</option>
+                </select>
               </div>
+              
               {collectible.quantity_type === QuantityType.Limited && (
                 <div>
                   <Label htmlFor="quantity">Quantity</Label>
@@ -386,6 +412,173 @@ function EditCollectiblePage() {
                     }
                     required={collectible.quantity_type === QuantityType.Limited}
                   />
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Payment Settings */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Payment Settings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
+              <div className="flex items-center justify-between">
+                <Label
+                  htmlFor="free-mint-toggle"
+                  className="text-lg font-semibold"
+                >
+                  Make Free Claim
+                </Label>
+                <Switch
+                  id="free-mint-toggle"
+                  checked={isFreeMint}
+                  onCheckedChange={handleFreeMintToggle}
+                  className="scale-125"
+                />
+              </div>
+
+              {!isFreeMint && (
+                <>
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="collectible-price"
+                      className="text-lg font-semibold"
+                    >
+                      Price (USD) <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="collectible-price"
+                      type="number"
+                      value={collectible.price_usd}
+                      onChange={(e) =>
+                        handleCollectibleChange(
+                          "price_usd",
+                          parseFloat(e.target.value)
+                        )
+                      }
+                      placeholder="Enter price in USD"
+                      required
+                      className="text-base"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <div>
+                      <Label
+                        htmlFor="card-payments-toggle"
+                        className="text-lg font-semibold"
+                      >
+                        Enable Card Payments
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Allow users to pay with credit/debit cards
+                      </p>
+                    </div>
+                    <Switch
+                      id="card-payments-toggle"
+                      checked={collectible.enable_card_payments}
+                      onCheckedChange={(checked) =>
+                        handleCollectibleChange("enable_card_payments", checked)
+                      }
+                      className="scale-125"
+                    />
+                  </div>
+
+                  {collectible.enable_card_payments && (
+                    <div className="flex items-center justify-between pt-4 pl-6 mt-2">
+                      <div>
+                        <Label
+                          htmlFor="only-card-payments-toggle"
+                          className="text-lg font-semibold"
+                        >
+                          Only Card Payments
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Disable crypto payment option for users
+                        </p>
+                      </div>
+                      <Switch
+                        id="only-card-payments-toggle"
+                        checked={collectible.only_card_payment || false}
+                        onCheckedChange={(checked) =>
+                          handleCollectibleChange("only_card_payment", checked)
+                        }
+                        className="scale-125"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Custom Email */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Email Settings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
+              <div className="flex items-center justify-between">
+                <Label
+                  htmlFor="custom-email-toggle"
+                  className="text-lg font-semibold"
+                >
+                  Custom Email After Mint
+                </Label>
+                <Switch
+                  id="custom-email-toggle"
+                  checked={customEmail}
+                  onCheckedChange={(checked) => {
+                    setCustomEmail(checked);
+                    handleCollectibleChange("custom_email", checked);
+                  }}
+                  className="scale-125"
+                />
+              </div>
+              {customEmail && (
+                <div className="flex flex-col gap-4">
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="custom-email-subject"
+                      className="text-lg font-semibold"
+                    >
+                      Custom Email Subject
+                    </Label>
+                    <Input
+                      id="custom-email-subject"
+                      value={collectible.custom_email_subject ?? ""}
+                      onChange={(e) =>
+                        handleCollectibleChange(
+                          "custom_email_subject",
+                          e.target.value
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="custom-email-content"
+                      className="text-lg font-semibold"
+                    >
+                      Custom Email Content
+                    </Label>
+                    <Textarea
+                      id="custom-email-content"
+                      value={collectible.custom_email_body ?? ""}
+                      className="min-h-[120px] text-base"
+                      onChange={(e) =>
+                        handleCollectibleChange(
+                          "custom_email_body",
+                          e.target.value
+                        )
+                      }
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -500,8 +693,226 @@ function EditCollectiblePage() {
           </CardContent>
         </Card>
 
-        {/* Rest of the form remains unchanged */}
-        
+        {/* Location Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Location</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="collectible-location"
+                  className="text-lg font-semibold flex items-center"
+                >
+                  <MapPinIcon className="mr-2 h-5 w-5" />
+                  Location (Google Maps URL) *
+                </Label>
+                <Input
+                  id="collectible-location"
+                  value={collectible.location ?? ""}
+                  onChange={(e) =>
+                    handleCollectibleChange("location", e.target.value)
+                  }
+                  placeholder="Enter Google Maps URL"
+                  className="text-base"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="collectible-location-note"
+                  className="text-lg font-semibold"
+                >
+                  Location Note
+                </Label>
+                <Textarea
+                  id="collectible-location-note"
+                  value={collectible.location_note ?? ""}
+                  onChange={(e) =>
+                    handleCollectibleChange("location_note", e.target.value)
+                  }
+                  placeholder="Add any additional details about the location"
+                  className="min-h-[80px] text-base"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Call to Action Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Call to Action</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-lg font-semibold">
+                    Call to Action
+                  </Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Add a call to action to your collectible.
+                  </p>
+                </div>
+
+                <Switch
+                  id="call-to-action-toggle"
+                  checked={collectible.cta_enable}
+                  onCheckedChange={(checked) =>
+                    handleCollectibleChange("cta_enable", checked)
+                  }
+                  className="scale-125"
+                />
+              </div>
+              {collectible.cta_enable && (
+                <div className="space-y-4">
+                  <div>
+                    <Label
+                      htmlFor="call-to-action-title"
+                      className="text-lg font-semibold"
+                    >
+                      Title
+                      <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="call-to-action-title"
+                      value={collectible.cta_title ?? ""}
+                      placeholder="Join our newsletter"
+                      required
+                      onChange={(e) =>
+                        handleCollectibleChange("cta_title", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="call-to-action-description"
+                      className="text-lg font-semibold"
+                    >
+                      Description
+                      <span className="text-destructive">*</span>
+                    </Label>
+                    <Textarea
+                      id="call-to-action-description"
+                      required
+                      placeholder="Join our newsletter to get exclusive updates and early access to new drops."
+                      value={collectible.cta_description ?? ""}
+                      onChange={(e) =>
+                        handleCollectibleChange(
+                          "cta_description",
+                          e.target.value
+                        )
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="call-to-action-logo-url"
+                      className="text-lg font-semibold"
+                    >
+                      Logo
+                    </Label>
+                    <Label
+                      htmlFor="call-to-action-logo-url"
+                      className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/50 transition-colors"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <UploadIcon className="w-6 h-6 text-muted-foreground" />
+                        <span className="text-base font-medium text-muted-foreground">
+                          {newCtaLogoImage
+                            ? newCtaLogoImage.name
+                            : collectible.cta_logo_url 
+                              ? "Change Logo" 
+                              : "Add Logo"}
+                        </span>
+                      </div>
+                    </Label>
+
+                    <Input
+                      id="call-to-action-logo-url"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCtaLogoImageChange}
+                      className="sr-only"
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="call-to-action-cta-text"
+                      className="text-lg font-semibold"
+                    >
+                      CTA Button Text
+                    </Label>
+                    <Input
+                      id="call-to-action-cta-text"
+                      placeholder="Signup"
+                      value={collectible.cta_text ?? ""}
+                      onChange={(e) =>
+                        handleCollectibleChange("cta_text", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="call-to-action-cta-link"
+                      className="text-lg font-semibold"
+                    >
+                      CTA Link
+                    </Label>
+                    <Input
+                      id="call-to-action-cta-link"
+                      value={collectible.cta_link ?? ""}
+                      placeholder="https://streetmint.xyz"
+                      onChange={(e) =>
+                        handleCollectibleChange("cta_link", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <Label
+                      htmlFor="call-to-action-has-email-capture"
+                      className="text-lg font-semibold"
+                    >
+                      Has Email Capture
+                    </Label>
+                    <Switch
+                      id="call-to-action-has-email-capture"
+                      checked={collectible.cta_has_email_capture}
+                      onCheckedChange={() =>
+                        handleCollectibleChange(
+                          "cta_has_email_capture",
+                          !collectible.cta_has_email_capture
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <Label
+                      htmlFor="call-to-action-has-text-capture"
+                      className="text-lg font-semibold"
+                    >
+                      Has Text Capture
+                    </Label>
+                    <Switch
+                      id="call-to-action-has-text-capture"
+                      checked={collectible.cta_has_text_capture}
+                      onCheckedChange={() =>
+                        handleCollectibleChange(
+                          "cta_has_text_capture",
+                          !collectible.cta_has_text_capture
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="flex justify-end mt-6">
           <Button
             type="submit"
