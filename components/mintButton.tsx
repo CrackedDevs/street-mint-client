@@ -209,13 +209,19 @@ export default function MintButton({
 
   async function fetchDeviceId() {
     try {
-      const id = await getData({ ignoreCache: true, extendedResult: true });
-      if (!id.visitorId) {
-        return null;
-      }
-      console.log("ID in mintButton.tsx:", id.visitorId, id.browserName);
-      setDeviceId(id.visitorId);
-      return id.visitorId;
+      // const id = await getData({ ignoreCache: true, extendedResult: true });
+      // if (!id.visitorId) {
+      //   return null;
+      // }
+      // console.log("ID in mintButton.tsx:", id.visitorId, id.browserName);
+      // setDeviceId(id.visitorId);
+      // return id.visitorId;
+
+      // remove this to lock again
+      const id = new Date().getTime().toString();
+      setDeviceId(id);
+      return id;
+
     } catch (error) {
       setDeviceId(null);
       return null;
@@ -814,7 +820,7 @@ export default function MintButton({
     // For card payments, always show MINT NOW even if not eligible
     // if (!isEligible && isCardPaymentEnable && !isFreeMint) return "MINT NOW";
     if (!isEligible) return "NOT ELIGIBLE";
-    if (isLightVersion) return "CLAIM NOW";
+    if (isLightVersion) return "COLLECT";
     if (isEligible) return "COLLECT";
     return "LOADING...";
   };

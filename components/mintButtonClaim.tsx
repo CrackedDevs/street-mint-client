@@ -256,7 +256,7 @@ export default function MintButtonClaim({
         if (isEmail) {
           toast({
             title: "Error",
-            description: "Please enter a valid wallet address",
+            description: "Please enter a valid Solana Wallet or .Sol Address",
             variant: "destructive",
           });
           return;
@@ -352,6 +352,30 @@ export default function MintButtonClaim({
           );
         }
 
+        if (!walletAddress) {
+          toast({
+            title: "Error",
+            description: "Please enter a valid Solana Wallet or .Sol Address",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
+          (walletAddress || "").trim()
+        );
+
+        if (isEmail) {
+          toast({
+            title: "Error",
+            description: "Please enter a valid Solana Wallet or .Sol Address",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        console.log("isEmail", isEmail);
+
         const processLightResponse = await fetch(
           "/api/collection/mint/process-light",
           {
@@ -361,7 +385,7 @@ export default function MintButtonClaim({
               orderId: lightOrder.id,
               signedTransaction: signedTransaction,
               priceInSol: priceInSol,
-              walletAddress: walletAddress,
+              walletAddress: walletAddress.trim(),
               collectibleId: lightOrder.collectible_id,
             }),
           }
@@ -470,7 +494,7 @@ export default function MintButtonClaim({
     if (isMinting) return "PROCESSING...";
     if (isLoading) return "Checking Eligibility...";
     if (isLightVersion) return "CLAIM NOW";
-    return "MINT NOW";
+    return "COLLECT";
     return "LOADING...";
   };
 
