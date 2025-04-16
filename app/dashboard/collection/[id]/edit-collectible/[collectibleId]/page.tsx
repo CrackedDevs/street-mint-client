@@ -41,7 +41,7 @@ import withAuth from "@/app/dashboard/withAuth";
 import { Switch } from "@/components/ui/switch";
 import { formatDate } from "@/helper/date";
 import { useUserProfile } from "@/app/providers/UserProfileProvider";
-import { getSponsorsByArtistId } from "@/lib/supabaseAdminClient";
+import { getSponsorsByArtistId, getChipLinksByArtistId, updateChipLink } from "@/lib/supabaseAdminClient";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -64,6 +64,18 @@ function EditCollectiblePage() {
   const [isLoadingSponsors, setIsLoadingSponsors] = useState(false);
   const [isFreeMint, setIsFreeMint] = useState(false);
   const [customEmail, setCustomEmail] = useState(false);
+  const [availableChips, setAvailableChips] = useState<
+    Array<{ 
+      id: number; 
+      chip_id: string; 
+      active: boolean; 
+      collectible_id: number | null;
+      created_at: string;
+      artists_id: number | null;
+    }>
+  >([]);
+  const [selectedChipIds, setSelectedChipIds] = useState<number[]>([]);
+  const [isLoadingChips, setIsLoadingChips] = useState(false);
 
   useEffect(() => {
     // Fetch the collectible data
@@ -137,6 +149,42 @@ function EditCollectiblePage() {
 
     fetchSponsors();
   }, [userProfile?.id, toast]);
+  
+  // Fetch available chips for the artist
+  useEffect(() => {
+    const fetchArtistChips = async () => {
+      if (userProfile?.id) {
+        setIsLoadingChips(true);
+        try {
+          const chips = await getChipLinksByArtistId(userProfile.id);
+          if (chips) {
+            // Get all chips, including those already assigned to other collectibles
+            setAvailableChips(chips);
+            
+            // Set selected chips that are already assigned to this collectible
+            if (collectible?.id) {
+              const assignedToThisCollectible = chips
+                .filter(chip => chip.collectible_id === collectible.id)
+                .map(chip => chip.id);
+              
+              setSelectedChipIds(assignedToThisCollectible);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching artist chips:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load your assigned chips. Please try again.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoadingChips(false);
+        }
+      }
+    };
+
+    fetchArtistChips();
+  }, [userProfile?.id, collectible?.id, toast]);
 
   const handleCollectibleChange = (field: keyof Collectible, value: any) => {
     if (field === "mint_start_date") {
@@ -279,6 +327,53 @@ function EditCollectiblePage() {
       const result = await updateCollectible(updatedCollectible);
 
       if (result.success) {
+        // Handle chip assignments
+        if (userProfile?.id) {
+          try {
+            // Get current chip assignments for this collectible
+            const currentAssignments = availableChips
+              .filter(chip => chip.collectible_id === collectible.id)
+              .map(chip => chip.id);
+            
+            // Find chips to add and remove
+            const chipsToAdd = selectedChipIds.filter(id => !currentAssignments.includes(id));
+            const chipsToRemove = currentAssignments.filter(id => !selectedChipIds.includes(id));
+            
+            // Update chip assignments
+            await Promise.all([
+              // Add new assignments
+              ...chipsToAdd.map(chipId => 
+                updateChipLink(chipId, {
+                  id: chipId,
+                  chip_id: availableChips.find(chip => chip.id === chipId)?.chip_id || "",
+                  collectible_id: collectible.id,
+                  active: true,
+                  created_at: new Date().toISOString(),
+                  artists_id: userProfile.id,
+                })
+              ),
+              // Remove unselected assignments
+              ...chipsToRemove.map(chipId => 
+                updateChipLink(chipId, {
+                  id: chipId,
+                  chip_id: availableChips.find(chip => chip.id === chipId)?.chip_id || "",
+                  collectible_id: null,
+                  active: true,
+                  created_at: new Date().toISOString(),
+                  artists_id: userProfile.id,
+                })
+              )
+            ]);
+          } catch (error) {
+            console.error("Error updating chip assignments:", error);
+            toast({
+              title: "Warning",
+              description: "Collectible updated but chip assignments may not be complete. Please check them manually.",
+              variant: "destructive",
+            });
+          }
+        }
+
         toast({
           title: "Success",
           description: "Collectible updated successfully",
@@ -412,6 +507,115 @@ function EditCollectiblePage() {
                     }
                     required={collectible.quantity_type === QuantityType.Limited}
                   />
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Assign NFC Chips */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Assign NFC Chips</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label
+                htmlFor="chip-selection"
+                className="text-lg font-semibold"
+              >
+                Assign NFC Chips
+              </Label>
+              {isLoadingChips ? (
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Loading your assigned chips...</span>
+                </div>
+              ) : availableChips.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="max-h-48 overflow-y-auto border rounded-md p-2">
+                    {availableChips.map((chip) => (
+                      <div
+                        key={chip.id}
+                        className="flex items-center space-x-2 p-2 hover:bg-primary/5 rounded-md"
+                      >
+                        <input
+                          type="checkbox"
+                          id={`chip-${chip.id}`}
+                          checked={selectedChipIds.includes(chip.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedChipIds([
+                                ...selectedChipIds,
+                                chip.id,
+                              ]);
+                            } else {
+                              setSelectedChipIds(
+                                selectedChipIds.filter(
+                                  (id) => id !== chip.id
+                                )
+                              );
+                            }
+                          }}
+                          className="h-4 w-4 rounded border-gray-300"
+                          disabled={chip.collectible_id !== null && chip.collectible_id !== collectible?.id}
+                        />
+                        <label
+                          htmlFor={`chip-${chip.id}`}
+                          className={`flex-grow cursor-pointer ${
+                            chip.collectible_id !== null && chip.collectible_id !== collectible?.id
+                              ? "text-gray-400"
+                              : ""
+                          }`}
+                        >
+                          {chip.chip_id}
+                          {chip.collectible_id !== null && chip.collectible_id !== collectible?.id && 
+                            " (Assigned to another collectible)"}
+                          {chip.collectible_id === collectible?.id && 
+                            " (Currently assigned to this collectible)"}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Select one or more chips to link to this collectible.
+                  </p>
+                  {selectedChipIds.length > 0 && (
+                    <p className="text-sm text-primary">
+                      {selectedChipIds.length} chip
+                      {selectedChipIds.length > 1 ? "s" : ""} selected
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-md bg-amber-50 p-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg
+                        className="h-5 w-5 text-amber-400"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-amber-800">
+                        No chips available
+                      </h3>
+                      <div className="mt-2 text-sm text-amber-700">
+                        <p>
+                          You don&apos;t have any available chips to assign
+                          to this collectible. Please contact an admin to
+                          have NFC chips assigned to your account.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
