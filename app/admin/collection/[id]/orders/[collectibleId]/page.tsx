@@ -269,7 +269,7 @@ export default function CollectionOrders() {
         const { data: collectibleData, error: collectibleError } =
           await supabase
             .from("collectibles")
-            .select("is_light_version")
+            .select("is_light_version, is_irls")
             .eq(
               "id",
               Array.isArray(collectibleId)
