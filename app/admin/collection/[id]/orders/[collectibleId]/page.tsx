@@ -250,7 +250,7 @@ export default function CollectionOrders() {
       });
 
       navigator.clipboard.writeText(
-        isLightVersion
+        collectible?.is_irls
           ? IRLS_ADMIN_LINK + data.signatureCode
           : STREETMINT_ADMIN_LINK + data.signatureCode
       );
