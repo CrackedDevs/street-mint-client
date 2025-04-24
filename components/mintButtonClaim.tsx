@@ -234,7 +234,6 @@ export default function MintButtonClaim({
   }, []);
 
   const handleLightVersionClaim = async (paymentMethod: "card" | "crypto") => {
-
     let newOrderId = null;
 
     setIsMinting(true);
@@ -250,9 +249,10 @@ export default function MintButtonClaim({
         if (!addressToUse) {
           return;
         }
-        const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
-          (addressToUse || "").trim()
-        );
+        const isEmail =
+          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
+            (addressToUse || "").trim()
+          );
         if (isEmail) {
           toast({
             title: "Error",
@@ -361,9 +361,10 @@ export default function MintButtonClaim({
           return;
         }
 
-        const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
-          (walletAddress || "").trim()
-        );
+        const isEmail =
+          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
+            (walletAddress || "").trim()
+          );
 
         if (isEmail) {
           toast({
@@ -465,7 +466,7 @@ export default function MintButtonClaim({
         setIsMinting(false);
         return;
       }
-    } 
+    }
     // else if (!connected) {
     //   try {
     //     await connect();

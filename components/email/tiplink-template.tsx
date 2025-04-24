@@ -133,7 +133,7 @@ export function getEmailTemplateHTML({
           src="${
             platform === "STREETMINT"
               ? "https://iaulwnqmthzvuxfubnsb.supabase.co/storage/v1/object/public/nft-images/logo%202.png"
-              : "https://iaulwnqmthzvuxfubnsb.supabase.co/storage/v1/object/public/nft-images/irls-logo.png"  
+              : "https://iaulwnqmthzvuxfubnsb.supabase.co/storage/v1/object/public/nft-images/irls-logo.png"
           }"
           alt="${platform === "STREETMINT" ? "StreetMint Logo" : "IRLS Logo"}"
           width="150"
@@ -149,7 +149,11 @@ export function getEmailTemplateHTML({
             color: #4a4a4a;
             text-align: center;
             margin-bottom: 20px;"
-        >${platform === "STREETMINT" ? `Congrats on becoming the owner of this rare piece of street art history. This link is your golden ticket to your unique collectible.  It will always be here in your inbox, so you're all set.` : `Success! This IRLS Collectible is now officially yours.`}
+        >${
+          platform === "STREETMINT"
+            ? `Congrats on becoming the owner of this rare piece of street art history. This link is your golden ticket to your unique collectible.  It will always be here in your inbox, so you're all set.`
+            : `Success! This IRLS Collectible is now officially yours.`
+        }
         </h2>
         <img
           src="${nftImageUrl}"
@@ -161,7 +165,11 @@ export function getEmailTemplateHTML({
             margin: 0 auto 20px;
             border-radius: 10px;"
         />
-        <p>${platform === "STREETMINT" ? `If you would like to transfer ownership or trade your collectible on a secondary marketplace, just click the claim button below.` : `This link is your golden ticket to your unique collectible.  It will always be here in your inbox, so you're all set. If you would like to transfer ownership or trade your collectible on a secondary marketplace, just click the claim button below. `}</p>
+        <p>${
+          platform === "STREETMINT"
+            ? `If you would like to transfer ownership or trade your collectible on a secondary marketplace, just click the claim button below.`
+            : `This link is your golden ticket to your unique collectible.  It will always be here in your inbox, so you're all set. If you would like to transfer ownership or trade your collectible on a secondary marketplace, just click the claim button below. `
+        }</p>
         <a
           href="${tiplinkUrl}"
           style="
@@ -179,16 +187,16 @@ export function getEmailTemplateHTML({
           ✨ Claim  ✨
         </a>
         <p>${
-            platform === "STREETMINT"
-              ? `P.S. Want to learn more about Street Mint and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://streetmint.xyz/faq">https://streetmint.xyz/faq</a>`
-              : `P.S. Want to learn more about IRLS and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://irls.xyz/faq">https://irls.xyz/faq</a>`
-          }
+          platform === "STREETMINT"
+            ? `P.S. Want to learn more about Street Mint and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://streetmint.xyz/faq">https://streetmint.xyz/faq</a>`
+            : `P.S. Want to learn more about IRLS and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://irls.xyz/faq">https://irls.xyz/faq</a>`
+        }
         </p>
         <p>${
-            platform === "STREETMINT"
-              ? `P.P.S. Show off your latest find! Share your new collectible on social media with #StreetMint and tag us <a href="https://www.instagram.com/streetmint.xyz">https://www.instagram.com/streetmint.xyz</a>`
-              : `P.P.S. Show off your latest find! Share your new collectible on social media with #StreetMint and tag us <a href="https://www.instagram.com/streetmint.xyz">https://www.instagram.com/streetmint.xyz</a>`
-          }
+          platform === "STREETMINT"
+            ? `P.P.S. Show off your latest find! Share your new collectible on social media with #StreetMint and tag us <a href="https://www.instagram.com/streetmint.xyz">https://www.instagram.com/streetmint.xyz</a>`
+            : `P.P.S. Show off your latest find! Share your new collectible on social media with #StreetMint and tag us <a href="https://www.instagram.com/streetmint.xyz">https://www.instagram.com/streetmint.xyz</a>`
+        }
         </p>
       </div>
     </div>`;
