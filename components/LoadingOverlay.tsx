@@ -10,6 +10,7 @@ interface LoadingOverlayProps {
 
 export default function LoadingOverlay({ sponsorLogo, sponsorName }: LoadingOverlayProps) {
     const [isLoading, setIsLoading] = useState(true);
+    
 
     useEffect(() => {
         // Show loading overlay for 3 seconds
