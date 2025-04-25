@@ -99,7 +99,12 @@ export default async function NFTPage({
                 height={500}
               />
             ) : collectible.primary_media_type === "audio" ? (
-              <audio src={collectible.primary_image_url} controls loop controlsList="nodownload" />
+              <audio
+                src={collectible.primary_image_url}
+                controls
+                loop
+                controlsList="nodownload"
+              />
             ) : (
               <Image
                 src={collectible.primary_image_url}

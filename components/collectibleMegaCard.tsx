@@ -110,7 +110,12 @@ export default function CollectibleMegaCard({
                 className="w-full object-cover rounded-lg"
               />
             ) : collectible.primary_media_type === "audio" ? (
-              <audio src={collectible.primary_image_url} controls loop controlsList="nodownload" />
+              <audio
+                src={collectible.primary_image_url}
+                controls
+                loop
+                controlsList="nodownload"
+              />
             ) : (
               <Image
                 src={collectible.primary_image_url || "/placeholder.svg"}

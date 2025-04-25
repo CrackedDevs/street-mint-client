@@ -134,12 +134,13 @@ export async function POST(req: Request, res: NextApiResponse) {
 
       await new Promise((resolve) => setTimeout(resolve, 400));
 
-      const { data: existingLightOrder, error: lightOrderError } = await supabase
-      .from('light_orders')
-      .select('id, status', { head: true, count: 'exact' })
-      .eq('email', emailAddress)
-      .eq('collectible_id', collectibleId)
-      .in('status', ['completed', 'pending'])
+      const { data: existingLightOrder, error: lightOrderError } =
+        await supabase
+          .from("light_orders")
+          .select("id, status", { head: true, count: "exact" })
+          .eq("email", emailAddress)
+          .eq("collectible_id", collectibleId)
+          .in("status", ["completed", "pending"]);
 
       if (lightOrderError && lightOrderError.code !== "PGRST116")
         throw lightOrderError; // PGRST116 means no rows returned
@@ -160,7 +161,11 @@ export async function POST(req: Request, res: NextApiResponse) {
       console.log("emailResponse", emailResponse);
       console.log("Email sent successfully");
 
-      if (collectible.custom_email && collectible.custom_email_subject && collectible.custom_email_body) {
+      if (
+        collectible.custom_email &&
+        collectible.custom_email_subject &&
+        collectible.custom_email_body
+      ) {
         const customEmailOptions = {
           from: `${fromName} <${fromEmail}>`,
           to: emailAddress,
@@ -168,7 +173,9 @@ export async function POST(req: Request, res: NextApiResponse) {
           html: `<p style="font-size: 16px; line-height: 1.5; color: black; font-family: Arial, sans-serif;">${collectible.custom_email_body.trim()}</p>`,
         };
 
-        const customEmailResponse = await transporter.sendMail(customEmailOptions);
+        const customEmailResponse = await transporter.sendMail(
+          customEmailOptions
+        );
         console.log("customEmailResponse", customEmailResponse);
         console.log("Custom email sent successfully");
       }
