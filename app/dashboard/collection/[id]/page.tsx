@@ -127,7 +127,7 @@ function Component() {
                       src={collectible.primary_image_url}
                       controls
                       loop
-                      controlsList="nodownload" 
+                      controlsList="nodownload"
                     />
                   ) : (
                     <Image

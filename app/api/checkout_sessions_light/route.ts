@@ -29,7 +29,6 @@ export async function POST(req: NextRequest) {
     console.log("walletAddress", walletAddress);
     console.log("signatureCode", signatureCode);
     console.log("origin", origin);
-    
 
     // console.log(body, "body");
     // Create Checkout Sessions from body params.

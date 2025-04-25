@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
             priceInSol,
             walletAddress,
             collectibleId,
-            isCardPayment
+            isCardPayment,
           }),
         }
       );

@@ -8,7 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -41,7 +47,11 @@ import withAuth from "@/app/dashboard/withAuth";
 import { Switch } from "@/components/ui/switch";
 import { formatDate } from "@/helper/date";
 import { useUserProfile } from "@/app/providers/UserProfileProvider";
-import { getSponsorsByArtistId, getChipLinksByArtistId, updateChipLink } from "@/lib/supabaseAdminClient";
+import {
+  getSponsorsByArtistId,
+  getChipLinksByArtistId,
+  updateChipLink,
+} from "@/lib/supabaseAdminClient";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -65,10 +75,10 @@ function EditCollectiblePage() {
   const [isFreeMint, setIsFreeMint] = useState(false);
   const [customEmail, setCustomEmail] = useState(false);
   const [availableChips, setAvailableChips] = useState<
-    Array<{ 
-      id: number; 
-      chip_id: string; 
-      active: boolean; 
+    Array<{
+      id: number;
+      chip_id: string;
+      active: boolean;
       collectible_id: number | null;
       created_at: string;
       artists_id: number | null;
@@ -102,7 +112,8 @@ function EditCollectiblePage() {
           cta_text_list: (fetchedCollectible.cta_text_list || []) as {
             [key: string]: string;
           }[],
-          enable_card_payments: fetchedCollectible.enable_card_payments || false,
+          enable_card_payments:
+            fetchedCollectible.enable_card_payments || false,
           stripe_price_id: fetchedCollectible.stripe_price_id || undefined,
           sponsor_id: fetchedCollectible.sponsor_id || null,
           only_card_payment: fetchedCollectible.only_card_payment || false,
@@ -149,7 +160,7 @@ function EditCollectiblePage() {
 
     fetchSponsors();
   }, [userProfile?.id, toast]);
-  
+
   // Fetch available chips for the artist
   useEffect(() => {
     const fetchArtistChips = async () => {
@@ -160,13 +171,13 @@ function EditCollectiblePage() {
           if (chips) {
             // Get all chips, including those already assigned to other collectibles
             setAvailableChips(chips);
-            
+
             // Set selected chips that are already assigned to this collectible
             if (collectible?.id) {
               const assignedToThisCollectible = chips
-                .filter(chip => chip.collectible_id === collectible.id)
-                .map(chip => chip.id);
-              
+                .filter((chip) => chip.collectible_id === collectible.id)
+                .map((chip) => chip.id);
+
               setSelectedChipIds(assignedToThisCollectible);
             }
           }
@@ -174,7 +185,8 @@ function EditCollectiblePage() {
           console.error("Error fetching artist chips:", error);
           toast({
             title: "Error",
-            description: "Failed to load your assigned chips. Please try again.",
+            description:
+              "Failed to load your assigned chips. Please try again.",
             variant: "destructive",
           });
         } finally {
@@ -189,8 +201,7 @@ function EditCollectiblePage() {
   const handleCollectibleChange = (field: keyof Collectible, value: any) => {
     if (field === "mint_start_date") {
       value = formatDate(value);
-    }
-    else if (field === "mint_end_date") {
+    } else if (field === "mint_end_date") {
       value = formatDate(value);
     }
     setCollectible((prev) => (prev ? { ...prev, [field]: value } : null));
@@ -320,7 +331,10 @@ function EditCollectiblePage() {
       // Update collectible with new data
       const updatedCollectible: Collectible = {
         ...collectible,
-        gallery_urls: [...collectible.gallery_urls, ...newGalleryUrls.filter(Boolean) as string[]],
+        gallery_urls: [
+          ...collectible.gallery_urls,
+          ...(newGalleryUrls.filter(Boolean) as string[]),
+        ],
         cta_logo_url: ctaLogoUrl,
       };
 
@@ -332,20 +346,26 @@ function EditCollectiblePage() {
           try {
             // Get current chip assignments for this collectible
             const currentAssignments = availableChips
-              .filter(chip => chip.collectible_id === collectible.id)
-              .map(chip => chip.id);
-            
+              .filter((chip) => chip.collectible_id === collectible.id)
+              .map((chip) => chip.id);
+
             // Find chips to add and remove
-            const chipsToAdd = selectedChipIds.filter(id => !currentAssignments.includes(id));
-            const chipsToRemove = currentAssignments.filter(id => !selectedChipIds.includes(id));
-            
+            const chipsToAdd = selectedChipIds.filter(
+              (id) => !currentAssignments.includes(id)
+            );
+            const chipsToRemove = currentAssignments.filter(
+              (id) => !selectedChipIds.includes(id)
+            );
+
             // Update chip assignments
             await Promise.all([
               // Add new assignments
-              ...chipsToAdd.map(chipId => 
+              ...chipsToAdd.map((chipId) =>
                 updateChipLink(chipId, {
                   id: chipId,
-                  chip_id: availableChips.find(chip => chip.id === chipId)?.chip_id || "",
+                  chip_id:
+                    availableChips.find((chip) => chip.id === chipId)
+                      ?.chip_id || "",
                   collectible_id: collectible.id,
                   active: true,
                   created_at: new Date().toISOString(),
@@ -353,22 +373,25 @@ function EditCollectiblePage() {
                 })
               ),
               // Remove unselected assignments
-              ...chipsToRemove.map(chipId => 
+              ...chipsToRemove.map((chipId) =>
                 updateChipLink(chipId, {
                   id: chipId,
-                  chip_id: availableChips.find(chip => chip.id === chipId)?.chip_id || "",
+                  chip_id:
+                    availableChips.find((chip) => chip.id === chipId)
+                      ?.chip_id || "",
                   collectible_id: null,
                   active: true,
                   created_at: new Date().toISOString(),
                   artists_id: userProfile.id,
                 })
-              )
+              ),
             ]);
           } catch (error) {
             console.error("Error updating chip assignments:", error);
             toast({
               title: "Warning",
-              description: "Collectible updated but chip assignments may not be complete. Please check them manually.",
+              description:
+                "Collectible updated but chip assignments may not be complete. Please check them manually.",
               variant: "destructive",
             });
           }
@@ -380,7 +403,9 @@ function EditCollectiblePage() {
         });
         router.push(`/dashboard/collection/${collectionId}`);
       } else {
-        throw new Error(result.error?.message || "Failed to update collectible");
+        throw new Error(
+          result.error?.message || "Failed to update collectible"
+        );
       }
     } catch (error) {
       console.error("Error updating collectible:", error);
@@ -438,7 +463,7 @@ function EditCollectiblePage() {
                   {collectible.name.length}/32 characters
                 </p>
               </div>
-              
+
               <div>
                 <Label htmlFor="description">Description</Label>
                 <Textarea
@@ -490,7 +515,7 @@ function EditCollectiblePage() {
                   <option value={QuantityType.Limited}>Limited Edition</option>
                 </select>
               </div>
-              
+
               {collectible.quantity_type === QuantityType.Limited && (
                 <div>
                   <Label htmlFor="quantity">Quantity</Label>
@@ -505,7 +530,9 @@ function EditCollectiblePage() {
                         parseInt(e.target.value)
                       )
                     }
-                    required={collectible.quantity_type === QuantityType.Limited}
+                    required={
+                      collectible.quantity_type === QuantityType.Limited
+                    }
                   />
                 </div>
               )}
@@ -520,10 +547,7 @@ function EditCollectiblePage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <Label
-                htmlFor="chip-selection"
-                className="text-lg font-semibold"
-              >
+              <Label htmlFor="chip-selection" className="text-lg font-semibold">
                 Assign NFC Chips
               </Label>
               {isLoadingChips ? (
@@ -545,33 +569,33 @@ function EditCollectiblePage() {
                           checked={selectedChipIds.includes(chip.id)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setSelectedChipIds([
-                                ...selectedChipIds,
-                                chip.id,
-                              ]);
+                              setSelectedChipIds([...selectedChipIds, chip.id]);
                             } else {
                               setSelectedChipIds(
-                                selectedChipIds.filter(
-                                  (id) => id !== chip.id
-                                )
+                                selectedChipIds.filter((id) => id !== chip.id)
                               );
                             }
                           }}
                           className="h-4 w-4 rounded border-gray-300"
-                          disabled={chip.collectible_id !== null && chip.collectible_id !== collectible?.id}
+                          disabled={
+                            chip.collectible_id !== null &&
+                            chip.collectible_id !== collectible?.id
+                          }
                         />
                         <label
                           htmlFor={`chip-${chip.id}`}
                           className={`flex-grow cursor-pointer ${
-                            chip.collectible_id !== null && chip.collectible_id !== collectible?.id
+                            chip.collectible_id !== null &&
+                            chip.collectible_id !== collectible?.id
                               ? "text-gray-400"
                               : ""
                           }`}
                         >
                           {chip.chip_id}
-                          {chip.collectible_id !== null && chip.collectible_id !== collectible?.id && 
+                          {chip.collectible_id !== null &&
+                            chip.collectible_id !== collectible?.id &&
                             " (Assigned to another collectible)"}
-                          {chip.collectible_id === collectible?.id && 
+                          {chip.collectible_id === collectible?.id &&
                             " (Currently assigned to this collectible)"}
                         </label>
                       </div>
@@ -609,9 +633,9 @@ function EditCollectiblePage() {
                       </h3>
                       <div className="mt-2 text-sm text-amber-700">
                         <p>
-                          You don&apos;t have any available chips to assign
-                          to this collectible. Please contact an admin to
-                          have NFC chips assigned to your account.
+                          You don&apos;t have any available chips to assign to
+                          this collectible. Please contact an admin to have NFC
+                          chips assigned to your account.
                         </p>
                       </div>
                     </div>
@@ -810,10 +834,7 @@ function EditCollectiblePage() {
                   type="datetime-local"
                   value={collectible.mint_start_date?.slice(0, 16) ?? ""}
                   onChange={(e) => {
-                    handleCollectibleChange(
-                      "mint_start_date",
-                      e.target.value
-                    );
+                    handleCollectibleChange("mint_start_date", e.target.value);
                   }}
                   className="text-base w-fit"
                 />
@@ -863,7 +884,10 @@ function EditCollectiblePage() {
                 ) : sponsors.length === 0 ? (
                   <div className="text-sm text-gray-500 mt-2">
                     No sponsors available. Create sponsors in the{" "}
-                    <Link href="/dashboard/sponsors" className="text-blue-500 hover:underline">
+                    <Link
+                      href="/dashboard/sponsors"
+                      className="text-blue-500 hover:underline"
+                    >
                       Sponsors section
                     </Link>
                     .
@@ -876,7 +900,7 @@ function EditCollectiblePage() {
                       handleCollectibleChange(
                         "sponsor_id",
                         value === "none" ? null : parseInt(value)
-                      )
+                      );
                     }}
                   >
                     <SelectTrigger className="w-full mt-1">
@@ -885,7 +909,10 @@ function EditCollectiblePage() {
                     <SelectContent>
                       <SelectItem value="none">None</SelectItem>
                       {sponsors.map((sponsor) => (
-                        <SelectItem key={sponsor.id} value={sponsor.id.toString()}>
+                        <SelectItem
+                          key={sponsor.id}
+                          value={sponsor.id.toString()}
+                        >
                           {sponsor.name}
                         </SelectItem>
                       ))}
@@ -1028,9 +1055,9 @@ function EditCollectiblePage() {
                         <span className="text-base font-medium text-muted-foreground">
                           {newCtaLogoImage
                             ? newCtaLogoImage.name
-                            : collectible.cta_logo_url 
-                              ? "Change Logo" 
-                              : "Add Logo"}
+                            : collectible.cta_logo_url
+                            ? "Change Logo"
+                            : "Add Logo"}
                         </span>
                       </div>
                     </Label>
