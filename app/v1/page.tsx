@@ -74,8 +74,8 @@ export default async function NFTPage({
   const isIRLtapped = data.isIRLtapped;
 
   // Prepare sponsor logo and name, handling null values
-  const sponsorLogo = sponsor_data?.img_url || undefined;
-  const sponsorName = sponsor_data?.name || undefined;
+  const sponsorLogo = sponsor_data?.img_url || (isIrlsDomain ? "/irlLogo.svg" : "/logo.svg");
+  const sponsorName = sponsor_data?.name || (isIrlsDomain ? "IRLS" : "Street Mint");
 
   return (
     <div className="min-h-screen bg-white text-black">
