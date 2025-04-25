@@ -147,14 +147,14 @@ export default function CollectionOrders() {
     },
     ...(isLightVersion
       ? [
-          {
-            accessorKey: "email",
-            header: "Email",
-            cell: ({ row }: { row: Row<Order> }) => (
-              <div>{row.getValue("email") || "N/A"}</div>
-            ),
-          },
-        ]
+        {
+          accessorKey: "email",
+          header: "Email",
+          cell: ({ row }: { row: Row<Order> }) => (
+            <div>{row.getValue("email") || "N/A"}</div>
+          ),
+        },
+      ]
       : []),
     {
       accessorKey: "status",
@@ -166,8 +166,8 @@ export default function CollectionOrders() {
             status === "pending"
               ? "Unclaimed"
               : status === "completed"
-              ? "Claimed"
-              : status ?? "N/A";
+                ? "Claimed"
+                : status ?? "N/A";
         }
 
         return <div className="capitalize">{status}</div>;
@@ -175,15 +175,22 @@ export default function CollectionOrders() {
     },
     {
       accessorKey: "created_at",
-      header: "Timestamp",
+      header: "Date",
       cell: ({ row }) => {
-        const createdAt = row.getValue("created_at") as string;
-        const date = new Date(createdAt).toISOString();
-        return (
-          <div className="capitalize">
-            {date.slice(0, 19).replace("T", " ")}
-          </div>
-        );
+        const createdAt = new Date(row.getValue("created_at") as string);
+        const formattedDate = createdAt.toLocaleDateString("en-GB");
+
+        return <div className="capitalize">{formattedDate}</div>;
+      },
+    },
+    {
+      accessorKey: "created_at",
+      header: "Time",
+      cell: ({ row }) => {
+        const createdAt = new Date(row.getValue("created_at") as string);
+        const formattedTime = createdAt.toLocaleTimeString("en-GB");
+
+        return <div className="capitalize">{formattedTime}</div>;
       },
     },
     {
@@ -335,8 +342,8 @@ export default function CollectionOrders() {
           order.status === "pending"
             ? "Unclaimed"
             : order.status === "completed"
-            ? "Claimed"
-            : order.status ?? "N/A";
+              ? "Claimed"
+              : order.status ?? "N/A";
       }
 
       return {
@@ -410,8 +417,8 @@ export default function CollectionOrders() {
         { length: Math.max(csvData.emails.length, csvData.texts.length) },
         (_, i) => [
           csvData.emails[i]?.walletAddress ||
-            csvData.texts[i]?.walletAddress ||
-            "",
+          csvData.texts[i]?.walletAddress ||
+          "",
           csvData.emails[i]?.value || "",
           // csvData.texts[i]?.walletAddress || "",
           csvData.texts[i]?.value || "",
@@ -583,9 +590,9 @@ export default function CollectionOrders() {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   );
                 })}
