@@ -26,7 +26,7 @@ const EditionInformationClaim = ({
   artistWalletAddress,
   soldCount,
   lightOrder,
-  signatureCode
+  signatureCode,
 }: {
   collection: Collection;
   collectible: Collectible;

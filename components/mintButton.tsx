@@ -216,7 +216,6 @@ export default function MintButton({
       console.log("ID in mintButton.tsx:", id.visitorId, id.browserName);
       setDeviceId(id.visitorId);
       return id.visitorId;
-
     } catch (error) {
       setDeviceId(null);
       return null;
@@ -416,7 +415,13 @@ export default function MintButton({
 
     setIsMinting(true);
     setError(null);
-    if (collectible.price_usd > 0 && x && n && e && !adminSignatureAuthenticated) {
+    if (
+      collectible.price_usd > 0 &&
+      x &&
+      n &&
+      e &&
+      !adminSignatureAuthenticated
+    ) {
       const recordSuccess = await recordPaidChipTap(x, n, e);
       if (!recordSuccess) {
         return;
@@ -980,7 +985,10 @@ export default function MintButton({
         existingOrder?.status === "completed" ||
         isLoading ||
         !deviceId ||
-        (!connected && !isCardPaymentEnable && !isFreeMint && !collectible.only_card_payment)
+        (!connected &&
+          !isCardPaymentEnable &&
+          !isFreeMint &&
+          !collectible.only_card_payment)
       }
     >
       {getButtonText()}
@@ -1039,7 +1047,7 @@ export default function MintButton({
     if (collectible.only_card_payment) {
       method = "card";
     }
-    
+
     if (method === "card") {
       setShowPaymentMethodDialog(false);
       setShowCardPaymentEmailDialog(true);
@@ -1220,46 +1228,50 @@ export default function MintButton({
                     renderLightVersionMintButton()}
                 </div>
               )}
-              {!isLightVersion && (isFreeMint ? (
-                <div className="w-full flex mt-2 gap-4 flex-col items-center justify-center">
-                  <Input
-                    type="text"
-                    placeholder="Enter Email, Solana Wallet or .SOL Address"
-                    value={walletAddress}
-                    onChange={(e) => setWalletAddress(e.target.value)}
-                    className="w-full h-12 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
-                  />
-                  {existingOrder?.status !== "completed" &&
-                    walletAddress &&
-                    renderMintButton()}
-                </div>
-              ) : (
-                <div className="w-full mt-4 flex flex-col items-center justify-center">
-                  {!isCardPaymentEnable && renderWalletButton()}
-                  {isCardPaymentEnable && !connected && !collectible.only_card_payment && (
-                    <div className="mb-4 text-center">
-                      <p className="text-center text-sm text-white mb-2 bg-black bg-opacity-50 p-2 rounded-md">
-                        You can mint without connecting a wallet using card
-                        payment
-                      </p>
-                    </div>
-                  )}
-                  {collectible.only_card_payment && (
-                    <div className="mb-4 text-center">
-                      <p className="text-center text-sm text-white mb-2 bg-black bg-opacity-50 p-2 rounded-md">
-                        This collectible can only be purchased with card payment
-                      </p>
-                    </div>
-                  )}
-                  <div className="hidden">
-                    <WalletMultiButton />
+              {!isLightVersion &&
+                (isFreeMint ? (
+                  <div className="w-full flex mt-2 gap-4 flex-col items-center justify-center">
+                    <Input
+                      type="text"
+                      placeholder="Enter Email, Solana Wallet or .SOL Address"
+                      value={walletAddress}
+                      onChange={(e) => setWalletAddress(e.target.value)}
+                      className="w-full h-12 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
+                    />
+                    {existingOrder?.status !== "completed" &&
+                      walletAddress &&
+                      renderMintButton()}
                   </div>
-                  {existingOrder?.status !== "completed" &&
-                    connected &&
-                    renderMintButton()}
-                  {isCardPaymentEnable && !connected && renderMintButton()}
-                </div>
-              ))}
+                ) : (
+                  <div className="w-full mt-4 flex flex-col items-center justify-center">
+                    {!isCardPaymentEnable && renderWalletButton()}
+                    {isCardPaymentEnable &&
+                      !connected &&
+                      !collectible.only_card_payment && (
+                        <div className="mb-4 text-center">
+                          <p className="text-center text-sm text-white mb-2 bg-black bg-opacity-50 p-2 rounded-md">
+                            You can mint without connecting a wallet using card
+                            payment
+                          </p>
+                        </div>
+                      )}
+                    {collectible.only_card_payment && (
+                      <div className="mb-4 text-center">
+                        <p className="text-center text-sm text-white mb-2 bg-black bg-opacity-50 p-2 rounded-md">
+                          This collectible can only be purchased with card
+                          payment
+                        </p>
+                      </div>
+                    )}
+                    <div className="hidden">
+                      <WalletMultiButton />
+                    </div>
+                    {existingOrder?.status !== "completed" &&
+                      connected &&
+                      renderMintButton()}
+                    {isCardPaymentEnable && !connected && renderMintButton()}
+                  </div>
+                ))}
             </div>
 
             {error && <p className="text-red-500 mt-2">{error}</p>}

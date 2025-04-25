@@ -15,9 +15,7 @@ import {
 } from "../../collection.helper";
 import { v4 as uuidv4 } from "uuid";
 import { NextResponse } from "next/server";
-import {
-  getSupabaseAdmin,
-} from "@/lib/supabaseAdminClient";
+import { getSupabaseAdmin } from "@/lib/supabaseAdminClient";
 import { headers } from "next/headers";
 
 function verifyTransactionAmount(
@@ -126,7 +124,6 @@ export async function POST(req: Request, res: NextApiResponse) {
   }
 
   try {
-
     let resolvedWalletAddress = walletAddress;
     if (walletAddress.endsWith(".sol")) {
       try {

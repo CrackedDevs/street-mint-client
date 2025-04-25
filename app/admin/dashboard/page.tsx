@@ -73,18 +73,17 @@ export default function AdminDashboard() {
 
   return (
     <div className="container mx-auto p-4 py-10 space-y-8">
-      <h1 className="text-3xl font-bold text-center mb-12">
-        Dashboard
-      </h1>
-      
+      <h1 className="text-3xl font-bold text-center mb-12">Dashboard</h1>
+
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
         <h2 className="text-2xl font-bold mb-4">Chip Collectible Manager 🔐</h2>
         <p className="text-gray-600 mb-6">
-          Assign and manage NFC chips for artists and collectibles. Add new chip links, update existing ones, or remove them as needed.
+          Assign and manage NFC chips for artists and collectibles. Add new chip
+          links, update existing ones, or remove them as needed.
         </p>
         <AddChipForm onAddChipLink={addChipLink} />
       </div>
-      
+
       <ChipTable
         chipLinks={chipLinks}
         onDelete={handleDeleteChipLink}
@@ -92,4 +91,4 @@ export default function AdminDashboard() {
       />
     </div>
   );
-} 
+}

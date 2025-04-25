@@ -13,7 +13,10 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { getOrderById } from "@/lib/supabaseAdminClient";
-import { checkMintEligibility, updateOrderAirdropStatus } from "@/lib/supabaseClient";
+import {
+  checkMintEligibility,
+  updateOrderAirdropStatus,
+} from "@/lib/supabaseClient";
 import { CheckCircle, Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
