@@ -45,6 +45,7 @@ export type Collectible = {
     price_usd: number;
     location: string | null;
     location_note: string | null;
+    gallery_name: string | null;
     gallery_urls: string[];
     metadata_uri: string | null;
     nfc_public_key: string | null;
@@ -64,7 +65,7 @@ export type Collectible = {
     cta_text_list: { [key: string]: string }[];
     enable_card_payments?: boolean;
     only_card_payment?: boolean;
-    stripe_price_id?:string
+    stripe_price_id?: string
     is_irls: boolean | null;
     is_light_version: boolean;
     sponsor_id?: number | null;
@@ -519,7 +520,7 @@ export const fetchAllCollectibles = async (offset: number = 0, limit: number = 1
         return null;
     }
 
-    const allCollectibles : CollectibleDetailed[] = (await Promise.all(data.map(async (collectible) => {
+    const allCollectibles: CollectibleDetailed[] = (await Promise.all(data.map(async (collectible) => {
         const collection = await getCollectionById(collectible.collection_id);
         if (!collection) {
             console.error("Error fetching collection:", collection);
@@ -534,9 +535,8 @@ export const fetchAllCollectibles = async (offset: number = 0, limit: number = 1
             ...collectible,
             collection,
             artist
-        } as CollectibleDetailed;
+        } as unknown as CollectibleDetailed;
     }))).filter((item): item is CollectibleDetailed => item !== null);
-
     const { count } = await supabase
         .from("collectibles")
         .select("id", { count: 'exact', head: true }) as { count: number | null };

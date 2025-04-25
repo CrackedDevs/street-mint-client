@@ -78,15 +78,21 @@ export async function POST(request: Request) {
 
     await supabaseClient
       .from("collectibles")
-      .update({ nfc_public_key: nfcPublicKey })
+      .update({
+        nfc_public_key: nfcPublicKey,
+        gallery_name: null
+      })
       .eq("id", collectibleId);
 
     if (oldCollectible && oldCollectible.length > 0) {
       console.log("oldCollectible", oldCollectible);
       oldCollectible.forEach(async (collectible) => {
-        await supabaseClient
+        return await supabaseClient
           .from("collectibles")
-          .update({ nfc_public_key: null })
+          .update({
+            nfc_public_key: null,
+            gallery_name: null
+          })
           .eq("id", collectible.id);
       });
     }
