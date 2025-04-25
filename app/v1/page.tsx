@@ -38,15 +38,25 @@ export default async function NFTPage({
   }
 
   // Then fetch sponsor data if available
-  const sponsor_data = data ? await getSponsorImageByCollectibleId(data.collectibleData?.collectible?.id) : null;
+  const sponsor_data = data
+    ? await getSponsorImageByCollectibleId(
+        data.collectibleData?.collectible?.id
+      )
+    : null;
   console.log("Sponsor data:", sponsor_data);
 
   if (!data || data.collectibleData === null) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Image
-          src={sponsor_data?.img_url || (isIrlsDomain ? '/irlLogo.svg' : '/logo.svg')}
-          alt={sponsor_data?.name || (isIrlsDomain ? "IRLS logo" : "Street mint logo")}
+          src={
+            sponsor_data?.img_url ||
+            (isIrlsDomain ? "/irlLogo.svg" : "/logo.svg")
+          }
+          alt={
+            sponsor_data?.name ||
+            (isIrlsDomain ? "IRLS logo" : "Street mint logo")
+          }
           width={250}
           height={100}
           className="h-20 w-auto animate-pulse"
@@ -80,10 +90,7 @@ export default async function NFTPage({
   return (
     <div className="min-h-screen bg-white text-black">
       {/* Always include client-side loading overlay with sponsor logo if available */}
-      <LoadingOverlay
-        sponsorLogo={sponsorLogo}
-        sponsorName={sponsorName}
-      />
+      <LoadingOverlay sponsorLogo={sponsorLogo} sponsorName={sponsorName} />
 
       {/* Header */}
       <header className="py-4 px-6 border-b border-gray-200">
@@ -163,10 +170,10 @@ export default async function NFTPage({
                 stripe_price_id: collectible.stripe_price_id || undefined,
                 creator_royalty_array: collectible.creator_royalty_array as
                   | {
-                    creator_wallet_address: string;
-                    royalty_percentage: number;
-                    name: string;
-                  }[]
+                      creator_wallet_address: string;
+                      royalty_percentage: number;
+                      name: string;
+                    }[]
                   | null,
                 quantity_type: collectible.quantity_type as QuantityType,
                 whitelist: collectible.whitelist || false,
