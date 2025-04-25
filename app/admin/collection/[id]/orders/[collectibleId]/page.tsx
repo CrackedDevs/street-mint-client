@@ -175,15 +175,22 @@ export default function CollectionOrders() {
     },
     {
       accessorKey: "created_at",
-      header: "Timestamp",
+      header: "Date",
       cell: ({ row }) => {
-        const createdAt = row.getValue("created_at") as string;
-        const date = new Date(createdAt).toISOString();
-        return (
-          <div className="capitalize">
-            {date.slice(0, 19).replace("T", " ")}
-          </div>
-        );
+        const createdAt = new Date(row.getValue("created_at") as string);
+        const formattedDate = createdAt.toLocaleDateString("en-GB");
+
+        return <div className="capitalize">{formattedDate}</div>;
+      },
+    },
+    {
+      accessorKey: "created_at",
+      header: "Time",
+      cell: ({ row }) => {
+        const createdAt = new Date(row.getValue("created_at") as string);
+        const formattedTime = createdAt.toLocaleTimeString("en-GB");
+
+        return <div className="capitalize">{formattedTime}</div>;
       },
     },
     {
@@ -341,7 +348,12 @@ export default function CollectionOrders() {
 
       return {
         id: order.id,
-        created_at: order.created_at ?? "N/A",
+        date: order.created_at
+          ? new Date(order.created_at).toLocaleDateString("en-GB")
+          : "N/A",
+        time: order.created_at
+          ? new Date(order.created_at).toLocaleTimeString("en-GB")
+          : "N/A",
         wallet_address: order.wallet_address ?? "N/A",
         ...(isLightVersion && {
           email: order.email ?? "N/A",
