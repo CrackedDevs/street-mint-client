@@ -8,15 +8,17 @@ interface LoadingOverlayProps {
   sponsorName?: string;
 }
 
-export default function LoadingOverlay({ sponsorLogo, sponsorName }: LoadingOverlayProps) {
-    const [isLoading, setIsLoading] = useState(true);
-    
+export default function LoadingOverlay({
+  sponsorLogo,
+  sponsorName,
+}: LoadingOverlayProps) {
+  const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        // Show loading overlay for 3 seconds
-        const timer = setTimeout(() => {
-            setIsLoading(false);
-        }, 2000);
+  useEffect(() => {
+    // Show loading overlay for 3 seconds
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, []);
