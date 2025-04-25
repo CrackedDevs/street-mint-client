@@ -175,15 +175,22 @@ export default function CollectionOrders() {
     },
     {
       accessorKey: "created_at",
-      header: "Timestamp",
+      header: "Date",
       cell: ({ row }) => {
-        const createdAt = row.getValue("created_at") as string;
-        const date = new Date(createdAt).toISOString();
-        return (
-          <div className="capitalize">
-            {date.slice(0, 19).replace("T", " ")}
-          </div>
-        );
+        const createdAt = new Date(row.getValue("created_at") as string);
+        const formattedDate = createdAt.toLocaleDateString("en-GB");
+
+        return <div className="capitalize">{formattedDate}</div>;
+      },
+    },
+    {
+      accessorKey: "created_at",
+      header: "Time",
+      cell: ({ row }) => {
+        const createdAt = new Date(row.getValue("created_at") as string);
+        const formattedTime = createdAt.toLocaleTimeString("en-GB");
+
+        return <div className="capitalize">{formattedTime}</div>;
       },
     },
     {
