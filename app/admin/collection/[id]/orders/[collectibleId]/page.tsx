@@ -348,7 +348,12 @@ export default function CollectionOrders() {
 
       return {
         id: order.id,
-        created_at: order.created_at ?? "N/A",
+        date: order.created_at
+          ? new Date(order.created_at).toLocaleDateString("en-GB")
+          : "N/A",
+        time: order.created_at
+          ? new Date(order.created_at).toLocaleTimeString("en-GB")
+          : "N/A",
         wallet_address: order.wallet_address ?? "N/A",
         ...(isLightVersion && {
           email: order.email ?? "N/A",
