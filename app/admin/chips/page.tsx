@@ -462,7 +462,7 @@ export default function ChipsManagementPage() {
                           className="cursor-pointer text-red-600"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
-                          <span>Delete</span>
+                          <span>Disconnect</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
