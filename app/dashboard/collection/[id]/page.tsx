@@ -178,7 +178,7 @@ function Component() {
                     collectible.gallery_urls.length > 0 && (
                       <div className="mb-4">
                         <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                          Gallery
+                          {collectible.gallery_name ?? "Gallery"}
                         </h4>
                         <div className="flex space-x-2">
                           {collectible.gallery_urls.map((url, index) => (

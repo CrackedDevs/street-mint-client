@@ -40,8 +40,8 @@ export default async function NFTPage({
   // Then fetch sponsor data if available
   const sponsor_data = data
     ? await getSponsorImageByCollectibleId(
-        data.collectibleData?.collectible?.id
-      )
+      data.collectibleData?.collectible?.id
+    )
     : null;
   console.log("Sponsor data:", sponsor_data);
 
@@ -170,10 +170,10 @@ export default async function NFTPage({
                 stripe_price_id: collectible.stripe_price_id || undefined,
                 creator_royalty_array: collectible.creator_royalty_array as
                   | {
-                      creator_wallet_address: string;
-                      royalty_percentage: number;
-                      name: string;
-                    }[]
+                    creator_wallet_address: string;
+                    royalty_percentage: number;
+                    name: string;
+                  }[]
                   | null,
                 quantity_type: collectible.quantity_type as QuantityType,
                 whitelist: collectible.whitelist || false,
@@ -195,7 +195,7 @@ export default async function NFTPage({
             />
           </div>
         </div>
-        <div className="max-w-7xl mt-10  mx-auto w-full bg-black text-white rounded-xl  py-8">
+        <div className="max-w-7xl mt-10  mx-auto w-full bg-black text-white rounded-xl py-8">
           <div className="max-w-7xl  mx-auto px-4">
             <h2 className="text-2xl font-bold mb-4">Description</h2>
             {collectible.description.split("\n").map((paragraph, index) => (
@@ -212,8 +212,12 @@ export default async function NFTPage({
                 <p className="text-gray-400">Artist</p>
                 <p>{artist.username}</p>
               </div>
+              <div>
+                <p className="text-gray-400">Gallery</p>
+                <p>{collectible.gallery_name || "N/A"}</p>
+              </div>
               {collectible.location_note && (
-                <p className="text-md text-gray-400">
+                <p className="text-md text-gray-400 col-span-2">
                   <strong>Where:</strong> {collectible.location_note}
                 </p>
               )}
@@ -233,8 +237,7 @@ export default async function NFTPage({
                 <p>
                   {collectible.price_usd > 0 ? (
                     <>
-                      ${collectible.price_usd.toFixed(2)} (
-                      {priceInSOL.toFixed(2)} SOL)
+                      ${collectible.price_usd.toFixed(2)} ({priceInSOL.toFixed(2)} SOL)
                     </>
                   ) : (
                     "Free"
@@ -242,7 +245,7 @@ export default async function NFTPage({
                 </p>
               </div>
               <div>
-                <p className="text-gray-00">Blockchain</p>
+                <p className="text-gray-400">Blockchain</p>
                 <p>Solana</p>
               </div>
             </div>
