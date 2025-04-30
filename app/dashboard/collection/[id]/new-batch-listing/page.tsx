@@ -189,10 +189,10 @@ function CreateBatchListingPage() {
   }, [userProfile?.id, toast]);
 
   const handleBatchListingChange = (field: keyof BatchListing, value: any) => {
-    if (field === "name" && value.length > 32) {
+    if (field === "name" && value.length > 32 || field === "collectible_name" && value.length > 32) {
       toast({
         title: "Error",
-        description: "Batch listing name must not exceed 32 characters.",
+        description: "Batch listing and collectible name must not exceed 32 characters.",
         variant: "destructive",
       });
       return;
@@ -581,7 +581,7 @@ function CreateBatchListingPage() {
                       className="text-lg font-semibold flex items-center"
                     >
                       <CalendarIcon className="mr-2 h-5 w-5" />
-                      Minting Start Date
+                      Batch Start Date <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="batch-start-date"
@@ -595,6 +595,7 @@ function CreateBatchListingPage() {
                       }}
                       min={new Date().toISOString().split("T")[0]}
                       className="text-base w-fit"
+                      required
                     />
                   </div>
 
@@ -604,7 +605,7 @@ function CreateBatchListingPage() {
                       className="text-lg font-semibold flex items-center"
                     >
                       <CalendarIcon className="mr-2 h-5 w-5" />
-                      Minting End Date
+                      Batch End Date <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="batch-end-date"
@@ -615,6 +616,7 @@ function CreateBatchListingPage() {
                       }
                       min={batchListing.batch_start_date ?? ""}
                       className="text-base w-fit"
+                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -622,9 +624,9 @@ function CreateBatchListingPage() {
                       htmlFor="batch-hour"
                       className="text-lg font-semibold"
                     >
-                      Hour of the Day <span className="text-destructive">*</span>
+                      Batch Start Time <span className="text-destructive">*</span>
                     </Label>
-                    <div className="text-sm text-muted-foreground">Mention the timings in GMT</div>
+                    <div className="text-sm text-muted-foreground">Mention the timings in UTC format</div>
                     <select
                       id="batch-hour"
                       value={batchListing.batch_hour ?? ""}
@@ -1388,7 +1390,7 @@ function CreateBatchListingPage() {
                       htmlFor="free-mint-toggle"
                       className="text-lg font-semibold"
                     >
-                      Batch Listing Version{" "}
+                      Collectible Version{" "}
                       <span className="text-destructive">*</span>
                     </Label>
                   </div>

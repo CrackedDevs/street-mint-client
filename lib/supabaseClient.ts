@@ -5,7 +5,6 @@ import { AuthError, createClient, User } from '@supabase/supabase-js';
 import { pinata } from './pinataConfig';
 import { Database } from './types/database.types';
 
-
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -78,6 +77,8 @@ export type BatchListing = {
     id: number;
     name: string;
     description: string;
+    collectible_name: string;
+    collectible_description: string;
     primary_image_url: string;
     quantity_type: QuantityType;
     quantity: number | null;
@@ -85,7 +86,6 @@ export type BatchListing = {
     price_usd: number;
     location: string | null;
     location_note: string | null;
-    gallery_name: string | null;
     gallery_urls: string[];
     metadata_uri: string | null;
     nfc_public_key: string | null;
@@ -111,12 +111,11 @@ export type BatchListing = {
     custom_email: boolean | null;
     custom_email_subject: string | null;
     custom_email_body: string | null;
-    collectible_name: string;
-    collectible_description: string;
-    collection_id: number;
     batch_start_date: string | null;
     batch_end_date: string | null;
-    batch_hour: number;
+    batch_hour: number | null;
+    gallery_name: string | null;
+    collection_id: number;
 };
 
 export interface Order {
