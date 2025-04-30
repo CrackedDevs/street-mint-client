@@ -203,6 +203,11 @@ export default async function NFTPage({
                 {paragraph}
               </p>
             ))}
+            {collectible.location_note && (
+              <p className="text-md text-gray-400 col-span-2 mb-4">
+                <strong>Where:</strong> {collectible.location_note}
+              </p>
+            )}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div>
                 <p className="text-gray-400">Art title</p>
@@ -212,17 +217,7 @@ export default async function NFTPage({
                 <p className="text-gray-400">Artist</p>
                 <p>{artist.username}</p>
               </div>
-              {collectible.gallery_name && (
-                <div>
-                  <p className="text-gray-400">Gallery</p>
-                  <p>{collectible.gallery_name || "N/A"}</p>
-                </div>
-              )}
-              {collectible.location_note && (
-                <p className="text-md text-gray-400 col-span-2">
-                  <strong>Where:</strong> {collectible.location_note}
-                </p>
-              )}
+
               <div>
                 <p className="text-gray-400">Location to mint</p>
                 <a
@@ -250,6 +245,12 @@ export default async function NFTPage({
                 <p className="text-gray-400">Blockchain</p>
                 <p>Solana</p>
               </div>
+              {collectible.gallery_name && (
+                <div>
+                  <p className="text-gray-400">Gallery</p>
+                  <p>{collectible.gallery_name || "N/A"}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
