@@ -212,10 +212,12 @@ export default async function NFTPage({
                 <p className="text-gray-400">Artist</p>
                 <p>{artist.username}</p>
               </div>
-              <div>
-                <p className="text-gray-400">Gallery</p>
-                <p>{collectible.gallery_name || "N/A"}</p>
-              </div>
+              {collectible.gallery_name && (
+                <div>
+                  <p className="text-gray-400">Gallery</p>
+                  <p>{collectible.gallery_name || "N/A"}</p>
+                </div>
+              )}
               {collectible.location_note && (
                 <p className="text-md text-gray-400 col-span-2">
                   <strong>Where:</strong> {collectible.location_note}
