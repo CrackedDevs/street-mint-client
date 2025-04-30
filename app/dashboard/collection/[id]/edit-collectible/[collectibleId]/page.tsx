@@ -584,12 +584,11 @@ function EditCollectiblePage() {
                         />
                         <label
                           htmlFor={`chip-${chip.id}`}
-                          className={`flex-grow cursor-pointer ${
-                            chip.collectible_id !== null &&
-                            chip.collectible_id !== collectible?.id
+                          className={`flex-grow cursor-pointer ${chip.collectible_id !== null &&
+                              chip.collectible_id !== collectible?.id
                               ? "text-gray-400"
                               : ""
-                          }`}
+                            }`}
                         >
                           {chip.chip_id}
                           {chip.collectible_id !== null &&
@@ -864,6 +863,25 @@ function EditCollectiblePage() {
           </CardContent>
         </Card>
 
+        <div className="mb-6">
+          <Label
+            htmlFor="gallery-name"
+            className="text-lg font-semibold"
+          >
+            Gallery Name
+          </Label>
+          <Input
+            id="gallery-name"
+            value={collectible.gallery_name ?? ""}
+            onChange={(e) =>
+              handleCollectibleChange("gallery_name", e.target.value)
+            }
+            className="text-lg"
+            required
+            maxLength={32}
+          />
+        </div>
+
         {/* Sponsor Selection */}
         <Card className="mb-6">
           <CardHeader>
@@ -1056,8 +1074,8 @@ function EditCollectiblePage() {
                           {newCtaLogoImage
                             ? newCtaLogoImage.name
                             : collectible.cta_logo_url
-                            ? "Change Logo"
-                            : "Add Logo"}
+                              ? "Change Logo"
+                              : "Add Logo"}
                         </span>
                       </div>
                     </Label>

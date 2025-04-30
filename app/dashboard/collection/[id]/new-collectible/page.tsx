@@ -118,6 +118,7 @@ function CreateCollectiblePage() {
     quantity_type: QuantityType.Unlimited,
     quantity: 0,
     price_usd: 0,
+    gallery_name: "",
     gallery_urls: [],
     location: "",
     location_note: "",
@@ -1059,6 +1060,25 @@ function CreateCollectiblePage() {
 
                 <div className="space-y-2">
                   <Label
+                    htmlFor="gallery-name"
+                    className="text-lg font-semibold"
+                  >
+                    Gallery Name
+                  </Label>
+                  <Input
+                    id="gallery-name"
+                    value={collectible.gallery_name ?? ""}
+                    onChange={(e) =>
+                      handleCollectibleChange("gallery_name", e.target.value)
+                    }
+                    className="text-lg"
+                    required
+                    maxLength={32}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label
                     htmlFor="gallery-images"
                     className="text-lg font-semibold"
                   >
@@ -1086,9 +1106,8 @@ function CreateCollectiblePage() {
                         <UploadIcon className="w-6 h-6 text-muted-foreground" />
                         <span className="text-base font-medium text-muted-foreground">
                           {galleryImages.length > 0
-                            ? `${galleryImages.length} file${
-                                galleryImages.length > 1 ? "s" : ""
-                              } selected`
+                            ? `${galleryImages.length} file${galleryImages.length > 1 ? "s" : ""
+                            } selected`
                             : "Choose files"}
                         </span>
                       </div>
@@ -1304,11 +1323,10 @@ function CreateCollectiblePage() {
                       onClick={() =>
                         handleCollectibleChange("is_light_version", false)
                       }
-                      className={`flex-1 p-4 rounded-lg transition-colors relative ${
-                        collectible.is_light_version === false
-                          ? "bg-primary/20"
-                          : "bg-primary/5 hover:bg-primary/10"
-                      }`}
+                      className={`flex-1 p-4 rounded-lg transition-colors relative ${collectible.is_light_version === false
+                        ? "bg-primary/20"
+                        : "bg-primary/5 hover:bg-primary/10"
+                        }`}
                     >
                       <div className="absolute top-4 right-4 w-5 h-5 rounded-full border-2 border-black flex items-center justify-center">
                         {collectible.is_light_version === false && (
@@ -1331,11 +1349,10 @@ function CreateCollectiblePage() {
                       onClick={() =>
                         handleCollectibleChange("is_light_version", true)
                       }
-                      className={`flex-1 p-4 rounded-lg transition-colors relative ${
-                        collectible.is_light_version === true
-                          ? "bg-primary/20"
-                          : "bg-primary/5 hover:bg-primary/10"
-                      }`}
+                      className={`flex-1 p-4 rounded-lg transition-colors relative ${collectible.is_light_version === true
+                        ? "bg-primary/20"
+                        : "bg-primary/5 hover:bg-primary/10"
+                        }`}
                     >
                       <div className="absolute top-4 right-4 w-5 h-5 rounded-full border-2 border-black flex items-center justify-center">
                         {collectible.is_light_version === true && (
