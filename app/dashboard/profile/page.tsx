@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,9 +45,22 @@ function ProfileForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const avatarSrc = useMemo(() => {
+    if (avatarLocalFile) {
+      return URL.createObjectURL(avatarLocalFile);
+    }
+    if (avatarUrl) {
+      return avatarUrl;
+    }
+    return null;
+  }, [avatarLocalFile]);
+
   useEffect(() => {
     if (publicKey && userProfile) {
       setFormData(userProfile);
+      setAvatarUrl(userProfile.avatar_url || null);
+
       if (connected && !isLoading && userProfile && !userProfile.email) {
         setIsEditing(true);
       } else {
@@ -130,7 +143,7 @@ function ProfileForm() {
       }
     }
 
-    let uploadedUrl: string | null = formData.avatar_url;
+    let uploadedUrl: string | null = avatarUrl;
     if (avatarLocalFile) {
       uploadedUrl = await uploadFileToPinata(avatarLocalFile);
       if (uploadedUrl == null) {
@@ -144,19 +157,19 @@ function ProfileForm() {
 
     const profileData: ArtistWithoutWallet = {
       ...formData,
-      avatar_url: uploadedUrl,
+      avatar_url: uploadedUrl || "",
     };
 
     if (publicKey) {
       const { data, error } = userProfile
         ? await updateProfile({
-            ...profileData,
-            wallet_address: publicKey?.toString() || "",
-          })
+          ...profileData,
+          wallet_address: publicKey?.toString() || "",
+        })
         : await createProfile({
-            ...profileData,
-            wallet_address: publicKey?.toString() || "",
-          });
+          ...profileData,
+          wallet_address: publicKey?.toString() || "",
+        });
       if (error) {
         console.error("Error submitting profile:", error);
         toast({
@@ -167,9 +180,8 @@ function ProfileForm() {
       } else {
         toast({
           title: "Success",
-          description: `Your profile has been ${
-            userProfile ? "updated" : "created"
-          } successfully!`,
+          description: `Your profile has been ${userProfile ? "updated" : "created"
+            } successfully!`,
           variant: "default",
         });
         setIsEditing(false);
@@ -180,6 +192,13 @@ function ProfileForm() {
       }
     }
     setIsSubmitting(false);
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarLocalFile(file);
+    }
   };
 
   if (!publicKey) {
@@ -214,13 +233,8 @@ function ProfileForm() {
                         <UploadIcon className="w-8 h-8 text-white" />
                       </div>
                     )}
-                    {avatarLocalFile ? (
-                      <AvatarImage
-                        src={URL.createObjectURL(avatarLocalFile)}
-                        alt="Avatar"
-                      />
-                    ) : formData?.avatar_url ? (
-                      <AvatarImage src={formData.avatar_url} alt="Avatar" />
+                    {avatarSrc ? (
+                      <AvatarImage src={avatarSrc} alt="Avatar" />
                     ) : (
                       <AvatarFallback className="bg-background">
                         <UploadIcon className="w-12 h-12 text-gray-300 group-hover:text-primary transition-colors duration-200" />
@@ -228,6 +242,7 @@ function ProfileForm() {
                     )}
                   </Avatar>
                 </div>
+
                 {isEditing && (
                   <div>
                     <input
@@ -235,12 +250,7 @@ function ProfileForm() {
                       id="avatar-upload"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setAvatarLocalFile(file);
-                        }
-                      }}
+                      onChange={handleAvatarChange}
                     />
                     <Button
                       variant="outline"
@@ -269,9 +279,8 @@ function ProfileForm() {
                     name="username"
                     value={formData?.username || ""}
                     onChange={handleInputChange}
-                    className={`bg-background ${
-                      errors.username ? "border-red-500" : ""
-                    }`}
+                    className={`bg-background ${errors.username ? "border-red-500" : ""
+                      }`}
                     placeholder="michael"
                     readOnly={!isEditing}
                   />
@@ -291,9 +300,8 @@ function ProfileForm() {
                     type="email"
                     value={formData?.email || ""}
                     onChange={handleInputChange}
-                    className={`bg-background ${
-                      errors.email ? "border-red-500" : ""
-                    }`}
+                    className={`bg-background ${errors.email ? "border-red-500" : ""
+                      }`}
                     readOnly={!isEditing}
                   />
                   {errors.email && (
@@ -315,9 +323,8 @@ function ProfileForm() {
                 name="bio"
                 value={formData?.bio || ""}
                 onChange={handleInputChange}
-                className={`bg-background h-24 ${
-                  errors.bio ? "border-red-500" : ""
-                }`}
+                className={`bg-background h-24 ${errors.bio ? "border-red-500" : ""
+                  }`}
                 readOnly={!isEditing}
               />
               {errors.bio && (
