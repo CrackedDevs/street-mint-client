@@ -40,12 +40,12 @@ export async function GET(request: NextRequest) {
       const now = new Date();
       const currentUTCHour = now.getUTCHours();
 
-      if (listing.mint_hour_of_day === currentUTCHour) {
+      if (listing.batch_hour === currentUTCHour) {
         const mintStart = new Date(Date.UTC(
           now.getUTCFullYear(),
           now.getUTCMonth(),
           now.getUTCDate(),
-          listing.mint_hour_of_day,
+          listing.batch_hour,
           0,
           0,
           0
@@ -55,8 +55,8 @@ export async function GET(request: NextRequest) {
 
         const collectible: Collectible = {
           id: listing.id,
-          name: listing.name,
-          description: listing.description,
+          name: listing.collectible_name,
+          description: listing.collectible_description,
           primary_image_url: listing.primary_image_url,
           quantity_type: listing.quantity_type as QuantityType,
           quantity: listing.quantity,
@@ -91,6 +91,7 @@ export async function GET(request: NextRequest) {
           custom_email: listing.custom_email ? true : false,
           custom_email_subject: listing.custom_email_subject || null,
           custom_email_body: listing.custom_email_body || null,
+          gallery_name: listing.gallery_name,
         };
 
         const collectibleToInsert: Collectible & { collection_id: number } = {
