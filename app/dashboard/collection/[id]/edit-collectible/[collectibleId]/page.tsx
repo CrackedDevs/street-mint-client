@@ -812,6 +812,114 @@ function EditCollectiblePage() {
           </CardContent>
         </Card>
 
+        {/* Creator Royalties Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Creator Royalties</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-lg font-semibold">
+                    Creator Royalties
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Add creators and their royalty percentages
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddCreator}
+                  className="flex items-center gap-2"
+                >
+                  <PlusCircleIcon className="h-4 w-4" />
+                  Add Creator
+                </Button>
+              </div>
+
+              {collectible.creator_royalty_array?.map((creator, index) => (
+                <div
+                  key={index}
+                  className="space-y-4 bg-background/50 p-4 rounded-lg relative"
+                >
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={() => handleRemoveCreator(index)}
+                  >
+                    <XCircleIcon className="h-4 w-4 text-destructive" />
+                  </Button>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`creator-name-${index}`}>
+                      Creator Name
+                    </Label>
+                    <Input
+                      id={`creator-name-${index}`}
+                      value={creator.name}
+                      onChange={(e) =>
+                        handleCreatorChange(index, "name", e.target.value)
+                      }
+                      placeholder="Enter creator name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`creator-wallet-${index}`}>
+                      Wallet Address
+                    </Label>
+                    <Input
+                      id={`creator-wallet-${index}`}
+                      value={creator.creator_wallet_address}
+                      onChange={(e) =>
+                        handleCreatorChange(
+                          index,
+                          "creator_wallet_address",
+                          e.target.value.trim()
+                        )
+                      }
+                      placeholder="Enter wallet address"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`creator-royalty-${index}`}>
+                      Royalty Percentage
+                    </Label>
+                    <Input
+                      id={`creator-royalty-${index}`}
+                      type="text"
+                      value={creator.royalty_percentage}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d*\.?\d*$/.test(value)) {
+                          handleCreatorChange(
+                            index,
+                            "royalty_percentage",
+                            Number(value)
+                          );
+                        }
+                      }}
+                      placeholder="Enter percentage (0-100)"
+                    />
+                  </div>
+                </div>
+              ))}
+
+              {collectible.creator_royalty_array?.length === 0 && (
+                <p className="text-center text-muted-foreground py-4">
+                  No creators added. Click &apos;Add Creator&apos; to add
+                  creator royalties.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Add Date and Time Section */}
         <Card className="mb-6">
           <CardHeader>
