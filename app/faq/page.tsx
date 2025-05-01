@@ -101,10 +101,10 @@ export default function StreetMintPage() {
         <div
           className="bg-cover bg-center h-[32rem] md:h-[34rem]"
           style={{
-            backgroundImage: "url('/banner-image.jpeg')",
+            backgroundImage: "url('/irls-faq-banner.jpg')",
           }}
         >
-          <div className="h-full bg-black bg-opacity-50 flex flex-col items-center justify-center space-y-4 md:space-y-6 px-4">
+          {/* <div className="h-full bg-black bg-opacity-50 flex flex-col items-center justify-center space-y-4 md:space-y-6 px-4">
             <motion.p
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -137,7 +137,7 @@ export default function StreetMintPage() {
                 className="h-24 md:h-32 translate-x-2 md:translate-x-5"
               />
             </motion.div>
-          </div>
+          </div> */}
         </div>
 
         <div className="max-w-4xl mx-auto px-4 py-12">
@@ -217,10 +217,10 @@ export default function StreetMintPage() {
                     Feature
                   </TableHead>
                   <TableHead className="font-bold text-sm border-r border-gray-300">
-                    IRLS Connect (STANDARD)
+                    IRLS Connect
                   </TableHead>
                   <TableHead className="font-bold text-sm">
-                    IRLS Go (LIGHT)
+                    IRLS Go
                   </TableHead>
                 </TableRow>
               </TableHeader>
