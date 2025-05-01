@@ -35,7 +35,7 @@ export default function ClaimPopupModal() {
       >
         <h2 className="text-2xl font-bold mb-10 text-gray-800">ALMOST THERE 🚀</h2>
         <p className="text-lg mb-4 text-gray-700">
-          To claim your IRLS collectible you'll need a 
+          To claim your IRLS collectible you&#39;ll need a 
           <br />Solana wallet.
         </p>
         <p className="text-lg mb-12 text-gray-700">
