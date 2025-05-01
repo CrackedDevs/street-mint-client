@@ -91,7 +91,7 @@ export default function StreetMintPage() {
   const [isIrlsDomain, setIsIrlsDomain] = useState(false);
 
   useEffect(() => {
-    setIsIrlsDomain(window.location.hostname != "www.irls.xyz");
+    setIsIrlsDomain(window.location.hostname === "www.irls.xyz");
     console.log("hostname:", window.location.hostname);
   }, []);
 
