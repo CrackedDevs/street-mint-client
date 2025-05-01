@@ -208,7 +208,7 @@ export default async function NFTPage({
           <br />
           Download a phantom wallet{" "}
           <a
-            href="https://phantom.app/"
+            href="https://phantom.com/en-GB/download"
             className="text-blue-500 underline"
           >
             here
