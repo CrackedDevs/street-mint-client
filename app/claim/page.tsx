@@ -4,7 +4,6 @@ import Gallery from "@/components/gallery";
 import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
 import { headers } from "next/headers";
-import { useState, useEffect } from "react";
 import { checkLightVersionClaimAuthStatus } from "@/lib/claimAuth";
 import EditionInformationClaim from "@/components/EditionInformation-Claim";
 import dynamic from 'next/dynamic';
