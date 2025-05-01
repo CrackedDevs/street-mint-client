@@ -3,15 +3,13 @@ import { QuantityType } from "@/lib/supabaseClient";
 import Gallery from "@/components/gallery";
 import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
-import EditionInformation from "@/components/EditionInformation";
 import { headers } from "next/headers";
-import { useState, useEffect } from "react";
-import {
-  getLightOrderBySignatureCode,
-  LightOrder,
-} from "@/lib/supabaseAdminClient";
 import { checkLightVersionClaimAuthStatus } from "@/lib/claimAuth";
 import EditionInformationClaim from "@/components/EditionInformation-Claim";
+import dynamic from 'next/dynamic';
+
+// Use dynamic import with no SSR for the client component
+const ClaimPopupModal = dynamic(() => import('../components/ClaimPopupModal'), { ssr: false });
 
 export default async function NFTPage({
   searchParams,
@@ -69,6 +67,9 @@ export default async function NFTPage({
 
   return (
     <div className="min-h-screen bg-white text-black">
+      {/* Popup Modal */}
+      <ClaimPopupModal />
+      
       {/* Header */}
       <header className="py-4 px-6 border-b border-gray-200">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
