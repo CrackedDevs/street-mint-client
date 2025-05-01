@@ -45,16 +45,11 @@ export const checkAuthStatus = async (x: string, n: string, e: string, isCurrent
         throw new Error("Failed to authenticate with ixkio");
     }
 
-    // const data : {
-    //   UID: string;
-    //   xuid: string;
-    //   response: string;
-    // } = response.data;
-
-    const data ={
-      xuid: x,
-      response: "Pass"
-    }
+    const data : {
+      UID: string;
+      xuid: string;
+      response: string;
+    } = response.data;
     
     console.log("ixkio auth data", data);
     
