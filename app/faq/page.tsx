@@ -217,10 +217,10 @@ export default function StreetMintPage() {
                     Feature
                   </TableHead>
                   <TableHead className="font-bold text-sm border-r border-gray-300">
-                    IRLS Connect (STANDARD)
+                    IRLS Connect
                   </TableHead>
                   <TableHead className="font-bold text-sm">
-                    IRLS Go (LIGHT)
+                    IRLS Go
                   </TableHead>
                 </TableRow>
               </TableHeader>
