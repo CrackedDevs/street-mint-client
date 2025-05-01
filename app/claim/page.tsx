@@ -181,10 +181,10 @@ export default async function NFTPage({
           )}
         </div>
         <div className="max-w-7xl mt-10  mx-auto w-full rounded-xl  py-8">
-          You're just one step away from owning your unique IRLS Collectible!
+          You&apos;re just one step away from owning your unique IRLS Collectible!
           <br />
           <br />
-          But to claim it, you'll need a Solana wallet.
+          But to claim it, you&apos;ll need a Solana wallet.
           <br />
           <br />
           <span className="font-bold underline">
@@ -199,10 +199,10 @@ export default async function NFTPage({
           <span className="font-bold underline">Option 2: Create a New Wallet</span>
           <br />
           <br />
-          If you're new to Solana, we recommend setting up a Phantom wallet.
+          If you&apos;re new to Solana, we recommend setting up a Phantom wallet.
           <br />
           <br />
-          It's easy to use and works seamlessly with IRLS and the whole Solana
+          It&apos;s easy to use and works seamlessly with IRLS and the whole Solana
           ecosystem.
           <br />
           <br />
@@ -234,7 +234,7 @@ export default async function NFTPage({
           Visit our FAQ for a step-by-step guide on setting up a
           Solana wallet and claiming your collectible:{" "}
           <Link href="/faq" className="text-blue-500 font-bold underline">
-            FAQ's
+            FAQs
           </Link>
         </div>
       </main>
