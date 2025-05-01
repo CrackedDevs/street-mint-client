@@ -354,23 +354,6 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="mx-auto mt-40 max-w-7xl overflow-hidden px-6 pb-20 sm:mt-64 sm:pb-24 lg:px-8">
-        <nav
-          className="-mb-6 columns-2 sm:flex sm:justify-center sm:space-x-12"
-          aria-label="Footer"
-        >
-          {["About", "Blog", "Jobs", "Press", "Accessibility", "Partners"].map(
-            (item) => (
-              <div key={item} className="pb-6">
-                <a
-                  href="#"
-                  className="text-sm leading-6 text-gray-600 hover:text-gray-900"
-                >
-                  {item}
-                </a>
-              </div>
-            )
-          )}
-        </nav>
         <div className="mt-8 flex justify-center space-x-6">
           <a
             href="https://x.com/streetmint_xyz?s=21&t=xZGKcmC_jMnLKtBZj0ipNA"
