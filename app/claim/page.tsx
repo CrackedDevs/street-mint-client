@@ -10,7 +10,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 
 // Use dynamic import with no SSR for the client component
-const ClaimPopupModal = dynamic(() => import("../components/ClaimPopupModal"), {
+const ClaimPopupModal = dynamic(() => import("../../components/ClaimPopupModal"), {
   ssr: false,
 });
 
