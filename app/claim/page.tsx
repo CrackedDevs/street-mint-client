@@ -3,13 +3,8 @@ import { QuantityType } from "@/lib/supabaseClient";
 import Gallery from "@/components/gallery";
 import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
-import EditionInformation from "@/components/EditionInformation";
 import { headers } from "next/headers";
 import { useState, useEffect } from "react";
-import {
-  getLightOrderBySignatureCode,
-  LightOrder,
-} from "@/lib/supabaseAdminClient";
 import { checkLightVersionClaimAuthStatus } from "@/lib/claimAuth";
 import EditionInformationClaim from "@/components/EditionInformation-Claim";
 import dynamic from 'next/dynamic';

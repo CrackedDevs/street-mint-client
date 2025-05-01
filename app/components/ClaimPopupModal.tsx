@@ -33,7 +33,7 @@ export default function ClaimPopupModal() {
         className="bg-white p-10 rounded-lg shadow-xl max-w-md w-full mx-auto text-center"
         style={{ maxWidth: "500px", borderRadius: "15px" }}
       >
-        <h2 className="text-2xl font-bold mb-10 text-gray-800">ALMOST THERE!</h2>
+        <h2 className="text-2xl font-bold mb-10 text-gray-800">ALMOST THERE 🚀</h2>
         <p className="text-lg mb-4 text-gray-700">
           To claim your IRLS collectible you'll need a 
           <br />Solana wallet.
@@ -46,7 +46,7 @@ export default function ClaimPopupModal() {
           className="bg-black text-white py-2 px-10 rounded-full text-lg font-semibold tracking-wider hover:bg-gray-800 transition-colors"
           style={{ minWidth: "160px" }}
         >
-          GO
+          ✨ GO ✨
         </button>
       </div>
     </div>
