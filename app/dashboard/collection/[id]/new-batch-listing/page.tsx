@@ -1141,7 +1141,7 @@ function CreateBatchListingPage() {
                     htmlFor="gallery-name"
                     className="text-lg font-semibold"
                   >
-                    Gallery Name <span className="text-destructive">*</span>
+                    Gallery Name
                   </Label>
                   <Input
                     id="gallery-name"
