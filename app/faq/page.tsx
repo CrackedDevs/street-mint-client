@@ -88,7 +88,7 @@ Plus, you can design fun and engaging challenges for attendees to complete to un
 export default function StreetMintPage() {
   const currentOrigin = window.location.origin;
 
-  if (currentOrigin === "https://www.irls.xyz") {
+  if (currentOrigin === "https://www.irls.xyz" || currentOrigin === "http://localhost:3000") {
     return (
       <div className="min-h-screen bg-gray-100">
         <div
@@ -236,6 +236,17 @@ export default function StreetMintPage() {
               making real-world digital rewards accessible to everyone, regardless of their crypto knowledge,
               while offering different levels of immediate blockchain interaction and ownership.
             </p>
+          </Section>
+
+          <Section title="Get Involved!">
+            <p>
+              Are you an artist, gallery, local council, or street art enthusiast?
+              We&apos;d love to hear from you! Join us in bringing IRLS to
+              your city and transforming the way we experience and collect art.
+            </p>
+            <Link href="/contact-us">
+              <Button className="mt-4">Contact Us</Button>
+            </Link>
           </Section>
         </div>
       </div>
