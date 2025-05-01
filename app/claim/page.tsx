@@ -6,10 +6,13 @@ import ArtistInfoComponent from "@/components/ArtistInfoComponent";
 import { headers } from "next/headers";
 import { checkLightVersionClaimAuthStatus } from "@/lib/claimAuth";
 import EditionInformationClaim from "@/components/EditionInformation-Claim";
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
+import Link from "next/link";
 
 // Use dynamic import with no SSR for the client component
-const ClaimPopupModal = dynamic(() => import('../components/ClaimPopupModal'), { ssr: false });
+const ClaimPopupModal = dynamic(() => import("../../components/ClaimPopupModal"), {
+  ssr: false,
+});
 
 export default async function NFTPage({
   searchParams,
@@ -69,7 +72,7 @@ export default async function NFTPage({
     <div className="min-h-screen bg-white text-black">
       {/* Popup Modal */}
       <ClaimPopupModal />
-      
+
       {/* Header */}
       <header className="py-4 px-6 border-b border-gray-200">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
@@ -177,66 +180,63 @@ export default async function NFTPage({
             </div>
           )}
         </div>
-        <div className="max-w-7xl mt-10  mx-auto w-full bg-black text-white rounded-xl  py-8">
-          <div className="max-w-7xl  mx-auto px-4">
-            <h2 className="text-2xl font-bold mb-4">Description</h2>
-            {collectible.description.split("\n").map((paragraph, index) => (
-              <p key={index} className="text-md mb-2">
-                {paragraph}
-              </p>
-            ))}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <div>
-                <p className="text-gray-400">Art title</p>
-                <p>{collectible.name}</p>
-              </div>
-              <div>
-                <p className="text-gray-400">Artist</p>
-                <p>{artist.username}</p>
-              </div>
-              {collectible.location_note && (
-                <p className="text-md text-gray-400">
-                  <strong>Where:</strong> {collectible.location_note}
-                </p>
-              )}
-              <div>
-                <p className="text-gray-400">Location to mint</p>
-                <a
-                  className="text-blue-400 break-words"
-                  href={collectible.location || ""}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {collectible.location ? "Google Maps" : "N/A"}
-                </a>
-              </div>
-              <div>
-                <p className="text-gray-400">Price per edition</p>
-                <p>
-                  {collectible.price_usd > 0 ? (
-                    <>
-                      ${collectible.price_usd.toFixed(2)} (
-                      {priceInSOL.toFixed(2)} SOL)
-                    </>
-                  ) : (
-                    "Free"
-                  )}
-                </p>
-              </div>
-              <div>
-                <p className="text-gray-00">Blockchain</p>
-                <p>Solana</p>
-              </div>
-            </div>
-          </div>
+        <div className="max-w-7xl mt-10  mx-auto w-full rounded-xl  py-8">
+          You&apos;re just one step away from owning your unique IRLS Collectible!
+          <br />
+          <br />
+          But to claim it, you&apos;ll need a Solana wallet.
+          <br />
+          <br />
+          <span className="font-bold underline">
+            Option 1: Enter your Existing Wallet address above
+          </span>
+          <br />
+          <br />
+          If you already have a Solana wallet (like Phantom, Glow, or Solflare),
+          simply enter your wallet or .SOL address and hit the Collect button.
+          <br />
+          <br />
+          <span className="font-bold underline">Option 2: Create a New Wallet</span>
+          <br />
+          <br />
+          If you&apos;re new to Solana, we recommend setting up a Phantom wallet.
+          <br />
+          <br />
+          It&apos;s easy to use and works seamlessly with IRLS and the whole Solana
+          ecosystem.
+          <br />
+          <br />
+          Download a phantom wallet{" "}
+          <a
+            href="https://phantom.com/en-GB/download"
+            className="text-blue-500 underline"
+          >
+            here
+          </a>{" "}
+          for free and return to this page.
+          <br />
+          Enter your new Solana wallet address and hit the Collect button to
+          claim your collectible.
+          <br />
+          <br />
+          <span className="font-bold">What is a Solana wallet?</span>
+          <br />
+          <br />
+          Your Solana wallet is a secure place to store and manage your digital
+          assets on the Solana blockchain, including your IRLS Collectibles. It
+          allows you to prove ownership, trade them on the secondary market,
+          transfer them to others and interact with the exciting world of Web3.
+          <br />
+          <br />
+          Need Help?
+          <br />
+          <br />
+          Visit our FAQ for a step-by-step guide on setting up a
+          Solana wallet and claiming your collectible:{" "}
+          <Link href="/faq" className="text-blue-500 font-bold underline">
+            FAQs
+          </Link>
         </div>
-        {collectible.gallery_urls.length > 0 && (
-          <div className="w-full bg-white py-4">
-            <div className="max-w-7xl mx-auto px-4">
-              <Gallery images={collectible.gallery_urls} />
-            </div>
-          </div>
-        )}
       </main>
       <Toaster />
     </div>
