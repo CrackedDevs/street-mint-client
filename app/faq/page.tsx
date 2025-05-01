@@ -8,36 +8,38 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import type React from "react";
+import { useState, useEffect } from "react";
+
 const participantsFaqs = [
   {
     question: "What is a digital collectible?",
     answer: `It's like a unique digital asset (art, music, ticket, token etc) that only you can own and collect on your phone.
 
-It’s a fun new way brands and artists reward their loyal community for engaging with their brand in real life.
+It's a fun new way brands and artists reward their loyal community for engaging with their brand in real life.
 
-These digital assets can be traded or sold to other collectors on secondary marketplaces, potentially increasing their desirability and value over time.`
+These digital assets can be traded or sold to other collectors on secondary marketplaces, potentially increasing their desirability and value over time.`,
   },
   {
     question: "Do I need any crypto or special apps to start?",
     answer: `Nope! Just your phone and your email address. We handle the rest.
 
-You have the option to export your collectibles to a Solana wallet later if you want to explore more features like transferring or selling your collectibles.`
+You have the option to export your collectibles to a Solana wallet later if you want to explore more features like transferring or selling your collectibles.`,
   },
   {
     question: "How do I see the cool collectible I now own?",
     answer: `We'll send a link to your email where you can view it.
 
-Your unique digital collectible is now permanently linked to your email where you can keep it, share it, or even trade and sell it on the secondary market!`
+Your unique digital collectible is now permanently linked to your email where you can keep it, share it, or even trade and sell it on the secondary market!`,
   },
   {
     question: "Are these collectibles exclusive?",
-    answer: `Yes! IRLS collectibles are only available to those who physically attend events or interact with locations featuring our chips, making them unique and scarce.`
+    answer: `Yes! IRLS collectibles are only available to those who physically attend events or interact with locations featuring our chips, making them unique and scarce.`,
   },
   {
     question: "What are the benefits for me as a collector?",
@@ -45,8 +47,8 @@ Your unique digital collectible is now permanently linked to your email where yo
 - **Easy to Collect**: No complicated tech stuff needed to get started.  
 - **Cool Digital Souvenirs**: Collect fun digital items from the places you go and things you do.  
 - **Exclusive & Scarce**: These collectibles can only be obtained by being at the event with the IRLS chips.  
-- **Potential for Extra Fun**: Some collectibles might unlock extra surprises down the road!`
-  }
+- **Potential for Extra Fun**: Some collectibles might unlock extra surprises down the road!`,
+  },
 ];
 
 const artistFaqs = [
@@ -58,7 +60,7 @@ Reach everyone with a simple tap and email entry, and gain valuable insights int
 
 These unique IRLS collectibles are exclusively for attendees, creating a special connection with your brand.
 
-Plus, you can design fun and engaging challenges for attendees to complete to unlock and collect different digital rewards – all with a simple tap and email entry!`
+Plus, you can design fun and engaging challenges for attendees to complete to unlock and collect different digital rewards – all with a simple tap and email entry!`,
   },
   {
     question: "What kind of digital assets can we give away?",
@@ -72,7 +74,7 @@ Plus, you can design fun and engaging challenges for attendees to complete to un
 - Raffle tickets for exciting prizes  
 - Access to your brand's loyalty and rewards programs  
 
-**Contact us** to learn more about our exciting packages.`
+**Contact us** to learn more about our exciting packages.`,
   },
   {
     question: "Why use IRLS for your events?",
@@ -81,14 +83,19 @@ Plus, you can design fun and engaging challenges for attendees to complete to un
 - **See Who Your Real Fans Are**: Get valuable data (backed by the blockchain) on who's actually showing up to your events.  
 - **Learn What Makes Your Audience Tick**: Collect emails from people who are engaging with you IRL.  
 - **Reward Your Loyal Supporters**: Give extra special digital treats to those who participate the most.  
-- **Drive Further Engagement with Custom CTAs**: After claiming their collectible, attendees can be presented with custom calls to action, such as following your social media channels, visiting a website, or learning about upcoming events.`
-  }
+- **Drive Further Engagement with Custom CTAs**: After claiming their collectible, attendees can be presented with custom calls to action, such as following your social media channels, visiting a website, or learning about upcoming events.`,
+  },
 ];
 
 export default function StreetMintPage() {
-  const currentOrigin = window.location.origin;
+  const [isIrlsDomain, setIsIrlsDomain] = useState(false);
 
-  if (currentOrigin === "https://www.irls.xyz" || currentOrigin === "http://localhost:3000") {
+  useEffect(() => {
+    setIsIrlsDomain(window.location.hostname === "www.irls.xyz");
+    console.log("hostname:", window.location.hostname);
+  }, []);
+
+  if (isIrlsDomain) {
     return (
       <div className="min-h-screen bg-gray-100">
         <div
@@ -119,7 +126,9 @@ export default function StreetMintPage() {
                 height={200}
                 className="h-20 md:h-48"
               />
-              <span className="text-white text-3xl md:text-5xl font-bold">X</span>
+              <span className="text-white text-3xl md:text-5xl font-bold">
+                X
+              </span>
               <Image
                 src="/otz-logo-transparent.png"
                 alt="OTZ"
@@ -134,35 +143,55 @@ export default function StreetMintPage() {
         <div className="max-w-4xl mx-auto px-4 py-12">
           <Section title="Welcome to IRLS!">
             <p>
-              Turn your presence and interactions into cool digital collectibles and unlock exciting
-              rewards with the simplest tap. Collect with just your email – no crypto knowledge needed
-              to get started!
+              Turn your presence and interactions into cool digital collectibles
+              and unlock exciting rewards with the simplest tap. Collect with
+              just your email - no crypto knowledge needed to get started!
             </p>
           </Section>
 
           <Section title="What is IRLS?">
             <p>
-              IRLS connects your real-world engagement to unique digital collectibles and rewards.
-              Simply tap your phone on an IRLS NFC Chip and unlock a new way to experience events, art
-              and brand interactions.
+              IRLS connects your real-world engagement to unique digital
+              collectibles and rewards. Simply tap your phone on an IRLS NFC
+              Chip and unlock a new way to experience events, art and brand
+              interactions.
             </p>
           </Section>
 
           <Section title="How does it work?">
             <ul className="list-disc list-inside space-y-2">
-              <li><strong>Tap:</strong> Find the IRLS chip and tap it with your phone.</li>
-              <li><strong>Enter Your Email:</strong> Just type in your email address and hit collect – that&apos;s it!</li>
-              <li><strong>Claim Your Goodie:</strong> Your unique digital collectible is now yours, delivered straight to your inbox
-                with a link to view. You can optionally claim it with a Solana wallet or .sol domain for more features.</li>
+              <li>
+                <strong>Tap:</strong> Find the IRLS chip and tap it with your
+                phone.
+              </li>
+              <li>
+                <strong>Enter Your Email:</strong> Just type in your email
+                address and hit collect - that&apos;s it!
+              </li>
+              <li>
+                <strong>Claim Your Goodie:</strong> Your unique digital
+                collectible is now yours, delivered straight to your inbox with
+                a link to view. You can optionally claim it with a Solana wallet
+                or .sol domain for more features.
+              </li>
             </ul>
           </Section>
 
           <Section title="Why IRLS?">
             <ul className="list-disc list-inside space-y-2">
-              <li>Collect with Ease: If you can use email, you can collect with IRLS.</li>
+              <li>
+                Collect with Ease: If you can use email, you can collect with
+                IRLS.
+              </li>
               <li>Fun Rewards for Being There.</li>
-              <li>Collect Unique Digital Items: Exclusive art, memecoins, digital tokens, and mementos.</li>
-              <li>Maybe Unlock Extra Goodies: Some might grant access to perks or future fun!</li>
+              <li>
+                Collect Unique Digital Items: Exclusive art, memecoins, digital
+                tokens, and mementos.
+              </li>
+              <li>
+                Maybe Unlock Extra Goodies: Some might grant access to perks or
+                future fun!
+              </li>
             </ul>
           </Section>
 
@@ -176,73 +205,116 @@ export default function StreetMintPage() {
 
           <Section title="IRLS for Brands & Artists: Supercharge Your IRL Activations with Flexible Solutions">
             <p>
-              IRLS offers two powerful solutions – “IRLS Connect” and “IRLS Go” – designed to meet the diverse needs of your audience,
-              whether they are Web3 enthusiasts or completely new to the digital asset space.
+              IRLS offers two powerful solutions - &quot;IRLS Connect&quot; and &quot;IRLS Go&quot;
+              - designed to meet the diverse needs of your audience, whether
+              they are Web3 enthusiasts or completely new to the digital asset
+              space.
             </p>
             <Table className="my-4 border border-gray-300">
               <TableHeader>
                 <TableRow className="bg-gray-100 border-b border-gray-300">
-                  <TableHead className="font-bold text-sm border-r border-gray-300">Feature</TableHead>
-                  <TableHead className="font-bold text-sm border-r border-gray-300">IRLS Connect (STANDARD)</TableHead>
-                  <TableHead className="font-bold text-sm">IRLS Go (LIGHT)</TableHead>
+                  <TableHead className="font-bold text-sm border-r border-gray-300">
+                    Feature
+                  </TableHead>
+                  <TableHead className="font-bold text-sm border-r border-gray-300">
+                    IRLS Connect (STANDARD)
+                  </TableHead>
+                  <TableHead className="font-bold text-sm">
+                    IRLS Go (LIGHT)
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 <TableRow className="bg-gray-100 border-b border-gray-300">
-                  <TableCell className="border-r border-gray-300">Claim Options</TableCell>
-                  <TableCell className="border-r border-gray-300">Email, Solana wallet, .SOL domain</TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    Claim Options
+                  </TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    Email, Solana wallet, .SOL domain
+                  </TableCell>
                   <TableCell>Email only (wallet optional later)</TableCell>
                 </TableRow>
                 <TableRow className="bg-background border-b border-gray-300">
-                  <TableCell className="border-r border-gray-300">Ease of Use</TableCell>
-                  <TableCell className="border-r border-gray-300">Slightly more steps for full ownership</TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    Ease of Use
+                  </TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    Slightly more steps for full ownership
+                  </TableCell>
                   <TableCell>Very easy, email-only flow</TableCell>
                 </TableRow>
                 <TableRow className="bg-gray-100 border-b border-gray-300">
-                  <TableCell className="border-r border-gray-300">Wallet Requirement</TableCell>
-                  <TableCell className="border-r border-gray-300">None needed to start</TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    Wallet Requirement
+                  </TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    None needed to start
+                  </TableCell>
                   <TableCell>None needed to start</TableCell>
                 </TableRow>
                 <TableRow className="bg-background border-b border-gray-300">
-                  <TableCell className="border-r border-gray-300">Latency</TableCell>
-                  <TableCell className="border-r border-gray-300">May vary due to blockchain</TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    Latency
+                  </TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    May vary due to blockchain
+                  </TableCell>
                   <TableCell>Near instant (chain later)</TableCell>
                 </TableRow>
                 <TableRow className="bg-gray-100 border-b border-gray-300">
-                  <TableCell className="border-r border-gray-300">Ownership</TableCell>
-                  <TableCell className="border-r border-gray-300">Immediate via wallet or background creation</TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    Ownership
+                  </TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    Immediate via wallet or background creation
+                  </TableCell>
                   <TableCell>Delayed, linked to email</TableCell>
                 </TableRow>
                 <TableRow className="bg-background border-b border-gray-300">
-                  <TableCell className="border-r border-gray-300">Best For</TableCell>
-                  <TableCell className="border-r border-gray-300">Web3-savvy and general audiences</TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    Best For
+                  </TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    Web3-savvy and general audiences
+                  </TableCell>
                   <TableCell>Web2-friendly, noob-safe</TableCell>
                 </TableRow>
                 <TableRow className="bg-gray-100">
-                  <TableCell className="border-r border-gray-300">Data & Analytics</TableCell>
-                  <TableCell className="border-r border-gray-300">Emails + Wallets (on-chain data)</TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    Data & Analytics
+                  </TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    Emails + Wallets (on-chain data)
+                  </TableCell>
                   <TableCell>Emails only</TableCell>
                 </TableRow>
                 <TableRow className="bg-background">
-                  <TableCell className="border-r border-gray-300">Cost</TableCell>
-                  <TableCell className="border-r border-gray-300">$175+, small gas fee (brand covers)</TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    Cost
+                  </TableCell>
+                  <TableCell className="border-r border-gray-300">
+                    $175+, small gas fee (brand covers)
+                  </TableCell>
                   <TableCell>$175+, lower gas at scale</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
 
             <p>
-              In a nutshell: Both IRLS Connect and Go prioritise a seamless, email-first collection experience,
-              making real-world digital rewards accessible to everyone, regardless of their crypto knowledge,
-              while offering different levels of immediate blockchain interaction and ownership.
+              In a nutshell: Both IRLS Connect and Go prioritise a seamless,
+              email-first collection experience, making real-world digital
+              rewards accessible to everyone, regardless of their crypto
+              knowledge, while offering different levels of immediate blockchain
+              interaction and ownership.
             </p>
           </Section>
 
           <Section title="Get Involved!">
             <p>
-              Are you an artist, gallery, local council, or street art enthusiast?
-              We&apos;d love to hear from you! Join us in bringing IRLS to
-              your city and transforming the way we experience and collect art.
+              Are you an artist, gallery, local council, or street art
+              enthusiast? We&apos;d love to hear from you! Join us in bringing
+              IRLS to your city and transforming the way we experience and
+              collect art.
             </p>
             <Link href="/contact-us">
               <Button className="mt-4">Contact Us</Button>

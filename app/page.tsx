@@ -12,16 +12,17 @@ import Link from "next/link";
 
 export default function LandingPage() {
   const [collectibles, setCollectibles] = useState<CollectibleDetailed[]>([]);
+  const [isIrlsDomain, setIsIrlsDomain] = useState(false);
+  const [brandName, setBrandName] = useState("");
 
-  // Check if we're on irls.xyz domain
-  const isIrlsDomain =
-    typeof window !== "undefined" &&
-    window.location.hostname === "www.irls.xyz";
-  console.log(
-    "isIrlsDomain",
-    typeof window !== "undefined" && window.location.hostname
-  );
-  const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
+  useEffect(() => {
+    setIsIrlsDomain(window.location.hostname === "www.irls.xyz");
+    console.log("hostname:", window.location.hostname);
+  }, []);
+
+  useEffect(() => {
+    setBrandName(isIrlsDomain ? "IRLS" : "Street Mint");
+  }, [isIrlsDomain]);
 
   useEffect(() => {
     async function fetchCollectibles() {
@@ -48,7 +49,7 @@ export default function LandingPage() {
       <header className="absolute inset-x-0 top-0 z-50">
         <nav className="flex justify-center p-6 lg:px-8" aria-label="Global">
           <a href="#" className="-m-1.5 p-1.5">
-            <span className="sr-only">{BRAND_NAME}</span>
+            <span className="sr-only">{brandName}</span>
             <Image
               src={isIrlsDomain ? "/irlLogo.svg" : "/logo.svg"}
               alt={isIrlsDomain ? "IRLS logo" : "Street mint logo"}
@@ -71,12 +72,12 @@ export default function LandingPage() {
               Everything you need to create and share digital collectibles
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              {BRAND_NAME} combines the power of Solana blockchain with NFC
+              {brandName} combines the power of Solana blockchain with NFC
               technology to bring your digital collectibles into the physical
               world.
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-900 font-semibold">
-              Want to work with {BRAND_NAME}?{" "}
+              Want to work with {brandName}?{" "}
               <Link
                 href="/contact-us"
                 className="underline hover:text-gray-700 transition-colors"
@@ -134,7 +135,7 @@ export default function LandingPage() {
 
         <div>
           <h1 className="mx-auto mt-24 text-4xl font-bold text-black lg:text-center">
-            {BRAND_NAME} Showcase
+            {brandName} Showcase
           </h1>
           <div>
             <div className="w-full max-w-[90vw] mx-auto space-y-16 py-8 relative">
@@ -280,7 +281,7 @@ export default function LandingPage() {
               Simple Process
             </h2>
             <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              How {BRAND_NAME} Works
+              How {brandName} Works
             </p>
           </div>
           <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
@@ -288,7 +289,7 @@ export default function LandingPage() {
               {[
                 {
                   title: "Create Your Collection",
-                  description: `Log in to ${BRAND_NAME} and create your unique NFT collection on the Solana blockchain.`,
+                  description: `Log in to ${brandName} and create your unique NFT collection on the Solana blockchain.`,
                 },
                 {
                   title: "Receive NFC Chips",
@@ -331,7 +332,7 @@ export default function LandingPage() {
               Ready to bring your digital collectibles to life?
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-600">
-              Join {BRAND_NAME} today and start creating unforgettable
+              Join {brandName} today and start creating unforgettable
               experiences with your collectibles.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
@@ -383,7 +384,7 @@ export default function LandingPage() {
           </a>
         </div>
         <p className="mt-10 text-center text-xs leading-5 text-gray-500">
-          &copy; {new Date().getFullYear()} {BRAND_NAME}, Inc. All rights
+          &copy; {new Date().getFullYear()} {brandName}, Inc. All rights
           reserved.
         </p>
       </footer>
