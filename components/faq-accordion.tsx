@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 const faqs = [
   {
@@ -47,17 +48,17 @@ const faqs = [
   },
 ];
 
-export default function FAQAccordion() {
+export default function FAQAccordion({ loaded }: { loaded?: { question: string; answer: string }[] }) {
   return (
     <div className="space-y-4 pt-2">
-      {faqs.map((faq, index) => (
-        <FAQItem key={index} question={faq.question} answer={faq.answer} />
+      {(loaded ?? faqs).map((faq: { question: string; answer: string }, index: number) => (
+        <FAQItem key={index} question={faq.question} answer={faq.answer} isLoaded={loaded !== undefined} />
       ))}
     </div>
   );
 }
 
-function FAQItem({ question, answer }: { question: string; answer: string }) {
+function FAQItem({ question, answer, isLoaded }: { question: string; answer: string, isLoaded?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -82,8 +83,12 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="p-4 bg-gray-50">
-              <p className="text-gray-600">{answer}</p>
+            <div className="p-4 bg-gray-50 text-gray-600">
+              {isLoaded ? (
+                <ReactMarkdown>{answer}</ReactMarkdown>
+              ) : (
+                <p>{answer}</p>
+              )}
             </div>
           </motion.div>
         )}
