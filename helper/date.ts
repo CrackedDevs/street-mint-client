@@ -2,8 +2,8 @@ import { parse, format } from "date-fns";
 
 export const formatDate = (
   date: string,
+  formatDate: string = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
   parseFormat: string = "yyyy-MM-dd'T'HH:mm",
-  formatDate: string = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
 ) => {
   if (!date) return "";
   const parsedDate = parse(date, parseFormat, new Date());

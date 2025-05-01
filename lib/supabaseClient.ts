@@ -1,10 +1,9 @@
-import { AuthError, createClient, User } from '@supabase/supabase-js';
-import { Database } from './types/database.types';
-import { isSignatureValid } from './nfcVerificationHellper';
-import { GalleryItem } from '@/app/gallery/galleryGrid';
 import { resolveSolDomain } from '@/app/api/collection/collection.helper';
+import { GalleryItem } from '@/app/gallery/galleryGrid';
 import { Connection } from '@solana/web3.js';
+import { AuthError, createClient, User } from '@supabase/supabase-js';
 import { pinata } from './pinataConfig';
+import { Database } from './types/database.types';
 
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -75,7 +74,52 @@ export type Collectible = {
     custom_email_body: string | null;
 };
 
-interface Order {
+export type BatchListing = {
+    id: number;
+    name: string;
+    description: string;
+    primary_image_url: string;
+    quantity_type: QuantityType;
+    quantity: number | null;
+    creator_royalty_array?: { creator_wallet_address: string; royalty_percentage: number; name: string; }[] | null;
+    price_usd: number;
+    location: string | null;
+    location_note: string | null;
+    gallery_name: string | null;
+    gallery_urls: string[];
+    metadata_uri: string | null;
+    nfc_public_key: string | null;
+    airdrop_eligibility_index: number | null;
+    whitelist: boolean;
+    cta_enable: boolean;
+    cta_title: string | null;
+    cta_description: string | null;
+    cta_logo_url: string | null;
+    cta_text: string | null;
+    cta_link: string | null;
+    cta_has_email_capture: boolean;
+    cta_has_text_capture: boolean;
+    cta_email_list: { [key: string]: string }[];
+    cta_text_list: { [key: string]: string }[];
+    enable_card_payments?: boolean;
+    only_card_payment?: boolean;
+    stripe_price_id?: string
+    is_irls: boolean | null;
+    is_light_version: boolean;
+    sponsor_id?: number | null;
+    primary_media_type: string | null;
+    custom_email: boolean | null;
+    custom_email_subject: string | null;
+    custom_email_body: string | null;
+    collectible_name: string;
+    collectible_description: string;
+    collection_id: number;
+    batch_start_date: string | null;
+    batch_end_date: string | null;
+    batch_hour: number;
+};
+
+export interface Order {
     id: string;
     wallet_address: string;
     collectible_id: number;
@@ -87,7 +131,6 @@ interface Order {
     mint_signature: string;
     transaction_signature: string;
     device_id: string;
-    // Add other fields as necessary
 }
 
 export type PopulatedCollection = {
@@ -249,7 +292,6 @@ export const createCollectible = async (collectible: Omit<Collectible, 'id'>, co
         return null;
     }
 
-
     const collectibleToInsert = {
         ...collectible,
         collection_id: collectionId,
@@ -272,6 +314,152 @@ export const createCollectible = async (collectible: Omit<Collectible, 'id'>, co
     return null;
 };
 
+
+
+export const createBatchListing = async (batchListing: Omit<BatchListing, 'id'>, collectionId: number): Promise<BatchListing | null> => {
+    const nftMetadata = {
+        name: batchListing.name,
+        description: batchListing.description,
+        image: batchListing.primary_image_url,
+        external_url: "https://streetmint.xyz/",
+        properties: {
+            files: [
+                {
+                    uri: batchListing.primary_image_url,
+                    type: "image/jpg"
+                },
+                ...batchListing.gallery_urls.map(url => ({
+                    uri: url,
+                    type: "image/jpg"
+                }))
+            ],
+            category: "image"
+        }
+    };
+
+    const nftMetadataFileName = `${Date.now()}-${batchListing.name}-metadata.json`;
+
+    // Create a JSON file from the NFT metadata
+    const nftMetadataFile = new File([JSON.stringify(nftMetadata)], nftMetadataFileName, {
+        type: "application/json",
+    });
+
+    // Upload the JSON file to Pinata
+    const metadataUrl = await uploadFileToPinata(nftMetadataFile);
+
+    if (!metadataUrl) {
+        console.error('Error uploading NFT metadata to Pinata');
+        return null;
+    }
+
+    const batchListingToInsert = {
+        ...batchListing,
+        collection_id: collectionId,
+        metadata_uri: metadataUrl
+    };
+
+    const { data: insertedBatchListing, error: nftError } = await supabase
+        .from('batch_listings')
+        .insert(batchListingToInsert)
+        .select();
+
+    if (nftError) {
+        console.error('Error creating collectible:', nftError);
+        return null;
+    }
+
+
+    if (insertedBatchListing && insertedBatchListing[0]) {
+        return insertedBatchListing[0] as BatchListing;
+    }
+    return null;
+};
+
+export const updateBatchListing = async (batchListing: BatchListing): Promise<{ success: boolean; error: Error | null }> => {
+    const { user, error: authError } = await getAuthenticatedUser();
+    if (!user || authError) {
+        return { success: false, error: authError || null };
+    }
+    const { error } = await supabase
+        .from('batch_listings')
+        .update(batchListing)
+        .eq('id', batchListing.id);
+
+    if (error) {
+        console.error("Error updating collectible:", error);
+        return { success: false, error: error as unknown as Error };
+    }
+
+    return { success: true, error: null };
+}
+
+export const deleteBatchListingById = async (id: number): Promise<{ success: boolean; error: Error | null }> => {
+    const { user, error: authError } = await getAuthenticatedUser();
+    if (!user || authError) {
+        return { success: false, error: authError || null };
+    }
+    const { error } = await supabase
+        .from('batch_listings')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        console.error("Error deleting collectible:", error);
+        return { success: false, error: error as unknown as Error };
+    }
+
+    return { success: true, error: null };
+}
+export const getBatchListingByArtistId = async (artistId: number): Promise<BatchListing[] | null> => {
+    const { user, error: authError } = await getAuthenticatedUser();
+    if (!user || authError) {
+        return null
+    }
+
+    const { data: collection, error: collectionError } = await supabase
+        .from("collections")
+        .select("*")
+        .eq("artist", artistId)
+        .single();
+
+    if (collectionError) {
+        console.error("Error fetching collection:", collectionError);
+        return null;
+    }
+
+    const { data, error } = await supabase
+        .from("batch_listings")
+        .select("*")
+        .eq("collection_id", collection.id)
+
+    if (error) {
+        console.error("Error fetching artist:", error);
+        return null;
+    }
+
+    return data as BatchListing[];
+}
+
+export const getBatchListingById = async (id: number): Promise<BatchListing | null> => {
+    const { user, error: authError } = await getAuthenticatedUser();
+    if (!user || authError) {
+        return null
+    }
+
+    const { data, error } = await supabase
+        .from("batch_listings")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    if (error) {
+        console.error("Error fetching artist:", error);
+        return null;
+    }
+
+    return data as BatchListing;
+}
+
 export const uploadFileToPinata = async (file: File) => {
     try {
         const { user, error: authError } = await getAuthenticatedUser();
@@ -288,8 +476,6 @@ export const uploadFileToPinata = async (file: File) => {
         return null;
     }
 };
-
-
 
 export const getArtistById = async (id: number): Promise<Artist | null> => {
     const { data, error } = await supabase
@@ -881,8 +1067,3 @@ export type Sponsor = {
     artist_id: number | null;
     created_at: string;
 };
-
-
-
-
-

@@ -1,52 +1,18 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
+import Delivery from "@/app/assets/delivery.svg";
+import withAuth from "@/app/dashboard/withAuth";
+import { useUserProfile } from "@/app/providers/UserProfileProvider";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
-import {
-  TrashIcon,
-  Loader2,
-  ArrowLeftIcon,
-  UploadIcon,
-  MapPinIcon,
-  CalendarIcon,
-  PlusCircleIcon,
-  XCircleIcon,
-} from "lucide-react";
-import {
-  Collectible,
-  createCollectible,
-  QuantityType,
-  uploadFileToPinata,
-  Brand,
-  Sponsor,
-} from "@/lib/supabaseClient";
-import { useToast } from "@/hooks/use-toast";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { NumericUUID } from "@/lib/utils";
-import { useUserProfile } from "@/app/providers/UserProfileProvider";
-import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { motion, AnimatePresence } from "framer-motion";
-import Delivery from "@/app/assets/delivery.svg";
-import withAuth from "@/app/dashboard/withAuth";
-import { createProduct } from "@/helpers/stripe";
-import { formatDate } from "@/helper/date";
-import {
-  getChipLinksByArtistId,
-  getSponsorsByArtistId,
-  updateChipLink,
-} from "@/lib/supabaseAdminClient";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -54,7 +20,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { formatDate } from "@/helper/date";
+import { createProduct } from "@/helpers/stripe";
+import { useToast } from "@/hooks/use-toast";
+import {
+  getChipLinksByArtistId,
+  getSponsorsByArtistId,
+  updateChipLink,
+} from "@/lib/supabaseAdminClient";
+import {
+  BatchListing,
+  Brand,
+  createBatchListing,
+  QuantityType,
+  Sponsor,
+  uploadFileToPinata
+} from "@/lib/supabaseClient";
+import { NumericUUID } from "@/lib/utils";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  ArrowLeftIcon,
+  CalendarIcon,
+  Loader2,
+  MapPinIcon,
+  PlusCircleIcon,
+  TrashIcon,
+  UploadIcon,
+  XCircleIcon
+} from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -64,7 +64,7 @@ interface CreatorRoyalty {
   name: string;
 }
 
-function CreateCollectiblePage() {
+function CreateBatchListingPage() {
   const router = useRouter();
   const { id: collectionId } = useParams();
 
@@ -110,22 +110,23 @@ function CreateCollectiblePage() {
     fetchArtistChips();
   }, [userProfile?.id, toast]);
 
-  const [collectible, setCollectible] = useState<Collectible>({
+  const [batchListing, setBatchListing] = useState<BatchListing>({
     id: NumericUUID(),
     name: "",
     description: "",
+    collectible_name: "",
+    collectible_description: "",
     primary_image_url: "",
     quantity_type: QuantityType.Unlimited,
     quantity: 0,
     price_usd: 0,
     gallery_name: "",
     gallery_urls: [],
+
     location: "",
     location_note: "",
     metadata_uri: "",
     nfc_public_key: "",
-    mint_start_date: "",
-    mint_end_date: "",
     airdrop_eligibility_index: null,
     whitelist: false,
     cta_enable: false,
@@ -149,6 +150,10 @@ function CreateCollectiblePage() {
     custom_email: false,
     custom_email_subject: "",
     custom_email_body: "",
+    batch_start_date: "",
+    batch_end_date: "",
+    batch_hour: 0,
+    collection_id: Number(collectionId),
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -183,18 +188,18 @@ function CreateCollectiblePage() {
     fetchSponsors();
   }, [userProfile?.id, toast]);
 
-  const handleCollectibleChange = (field: keyof Collectible, value: any) => {
+  const handleBatchListingChange = (field: keyof BatchListing, value: any) => {
     if (field === "name" && value.length > 32) {
       toast({
         title: "Error",
-        description: "Collectible name must not exceed 32 characters.",
+        description: "Batch listing name must not exceed 32 characters.",
         variant: "destructive",
       });
       return;
     }
 
     if (field === "enable_card_payments" && value === true) {
-      if (collectible.price_usd < 1) {
+      if (batchListing.price_usd < 1) {
         toast({
           title: "Error",
           description: "Card payments require a minimum price of $1.",
@@ -206,7 +211,7 @@ function CreateCollectiblePage() {
 
     if (
       field === "price_usd" &&
-      collectible.enable_card_payments &&
+      batchListing.enable_card_payments &&
       value < 1
     ) {
       toast({
@@ -214,7 +219,7 @@ function CreateCollectiblePage() {
         description: "Card payments will be disabled as price is less than $1.",
         variant: "default",
       });
-      setCollectible((prev) => ({
+      setBatchListing((prev) => ({
         ...prev,
         enable_card_payments: false,
         [field]: value,
@@ -222,7 +227,7 @@ function CreateCollectiblePage() {
       return;
     }
 
-    setCollectible((prev) => ({ ...prev, [field]: value }));
+    setBatchListing((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -237,14 +242,14 @@ function CreateCollectiblePage() {
         return;
       }
       if (file.type.includes("video")) {
-        handleCollectibleChange("primary_media_type", "video");
+        handleBatchListingChange("primary_media_type", "video");
       } else if (file.type.includes("audio")) {
-        handleCollectibleChange("primary_media_type", "audio");
+        handleBatchListingChange("primary_media_type", "audio");
       } else {
-        handleCollectibleChange("primary_media_type", "image");
+        handleBatchListingChange("primary_media_type", "image");
       }
       setPrimaryImageLocalFile(file);
-      handleCollectibleChange("primary_image_url", URL.createObjectURL(file));
+      handleBatchListingChange("primary_image_url", URL.createObjectURL(file));
     }
   };
 
@@ -270,7 +275,7 @@ function CreateCollectiblePage() {
         toast({
           title: "Error",
           description:
-            "You can only upload a maximum of 5 images per collectible.",
+            "You can only upload a maximum of 5 images per batch listing.",
           variant: "destructive",
         });
       }
@@ -280,8 +285,8 @@ function CreateCollectiblePage() {
   const handleFreeMintToggle = (checked: boolean) => {
     setIsFreeMint(checked);
     if (checked) {
-      handleCollectibleChange("price_usd", 0);
-      handleCollectibleChange("enable_card_payments", false);
+      handleBatchListingChange("price_usd", 0);
+      handleBatchListingChange("enable_card_payments", false);
     }
   };
 
@@ -311,7 +316,7 @@ function CreateCollectiblePage() {
       name: "",
     };
 
-    setCollectible((prev) => ({
+    setBatchListing((prev) => ({
       ...prev,
       creator_royalty_array: [
         ...(prev.creator_royalty_array || []),
@@ -321,7 +326,7 @@ function CreateCollectiblePage() {
   };
 
   const handleRemoveCreator = (index: number) => {
-    setCollectible((prev) => ({
+    setBatchListing((prev) => ({
       ...prev,
       creator_royalty_array:
         prev.creator_royalty_array?.filter((_, i) => i !== index) || [],
@@ -333,7 +338,7 @@ function CreateCollectiblePage() {
     field: keyof CreatorRoyalty,
     value: string | number
   ) => {
-    setCollectible((prev) => {
+    setBatchListing((prev) => {
       const updatedCreators = [...(prev.creator_royalty_array || [])];
       updatedCreators[index] = {
         ...updatedCreators[index],
@@ -368,8 +373,8 @@ function CreateCollectiblePage() {
       return;
     }
     if (
-      collectible.quantity_type === QuantityType.Limited &&
-      !collectible.quantity
+      batchListing.quantity_type === QuantityType.Limited &&
+      !batchListing.quantity
     ) {
       toast({
         title: "Enter quantity",
@@ -378,15 +383,15 @@ function CreateCollectiblePage() {
       });
       return;
     }
-    if (collectible.name.length > 32) {
+    if (batchListing.name.length > 32) {
       toast({
         title: "Error",
-        description: "Collectible name must not exceed 32 characters.",
+        description: "batchListing name must not exceed 32 characters.",
         variant: "destructive",
       });
       return;
     }
-    if (collectible.enable_card_payments && collectible.price_usd < 1) {
+    if (batchListing.enable_card_payments && batchListing.price_usd < 1) {
       toast({
         title: "Error",
         description: "Card payments require a minimum price of $1.",
@@ -413,37 +418,31 @@ function CreateCollectiblePage() {
         : null;
 
       let stripePriceId: string | null = null;
-      if (collectible.enable_card_payments) {
+      if (batchListing.enable_card_payments) {
         stripePriceId = await createProduct(
-          collectible.name,
-          collectible.price_usd
+          batchListing.name,
+          batchListing.price_usd
         );
       }
 
-      const mintStartDate = new Date(collectible.mint_start_date ?? "").toISOString();
-      const mintEndDate = new Date(collectible.mint_end_date ?? "").toISOString();
-
-      console.log(mintStartDate, mintEndDate);
-      
-
-      const newCollectible: Collectible = {
-        ...collectible,
+      const newBatchListing: BatchListing = {
+        ...batchListing,
         primary_image_url: primaryImageUrl,
         gallery_urls: uploadedGalleryUrls.filter(Boolean),
         id: NumericUUID(),
-        price_usd: isFreeMint ? 0 : collectible.price_usd,
+        price_usd: isFreeMint ? 0 : batchListing.price_usd,
         cta_logo_url: uploadedCtaLogoUrl,
         stripe_price_id: stripePriceId || "",
-        mint_start_date: mintStartDate,
-        mint_end_date: mintEndDate,
+        batch_start_date: formatDate(`${batchListing.batch_start_date}T00:00`),
+        batch_end_date: formatDate(`${batchListing.batch_end_date}T00:00`),
       };
 
-      const createdCollectible = await createCollectible(
-        newCollectible,
+      const createdBatchListing = await createBatchListing(
+        newBatchListing,
         Number(collectionId)
       );
 
-      if (createdCollectible) {
+      if (createdBatchListing) {
         // Update multiple chip links
         if (selectedChipIds.length > 0) {
           try {
@@ -454,7 +453,7 @@ function CreateCollectiblePage() {
                   chip_id:
                     availableChips.find((chip) => chip.id === chipId)
                       ?.chip_id || "",
-                  collectible_id: createdCollectible.id,
+                  collectible_id: createdBatchListing.id,
                   active: true,
                   created_at: new Date().toISOString(),
                   artists_id: userProfile.id,
@@ -466,7 +465,7 @@ function CreateCollectiblePage() {
             toast({
               title: "Warning",
               description:
-                "Collectible created but some chip links failed. Please try linking them manually.",
+                "Batch Listing created but some chip links failed. Please try linking them manually.",
               variant: "destructive",
             });
           }
@@ -474,14 +473,14 @@ function CreateCollectiblePage() {
 
         setShowSuccessModal(true);
       } else {
-        throw new Error("Failed to create collectible");
+        throw new Error("Failed to create batch listing");
       }
     } catch (error) {
       console.log(error);
-      
+
       toast({
         title: "Error",
-        description: "Failed to create collectible",
+        description: "Failed to create batch listing",
         variant: "destructive",
       });
     } finally {
@@ -528,7 +527,7 @@ function CreateCollectiblePage() {
                 </motion.div>
 
                 <h2 className="text-3xl font-bold mb-4 text-primary">
-                  Collectible Created ⭐!
+                  Batch Listing Created ⭐!
                 </h2>
 
                 <p className="text-lg mb-6">
@@ -566,15 +565,132 @@ function CreateCollectiblePage() {
         <Card className="w-full shadow-lg">
           <CardHeader className="space-y-1 pb-8">
             <CardTitle className="text-4xl font-bold text-center">
-              Create New Collectible
+              Create New Batch Listing
             </CardTitle>
             <CardDescription className="text-center text-lg">
-              Fill in the details below to create your new collectible.
+              Fill in the details below to create your new batch listing.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-8">
               <div className="space-y-6">
+                <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="batch-start-date"
+                      className="text-lg font-semibold flex items-center"
+                    >
+                      <CalendarIcon className="mr-2 h-5 w-5" />
+                      Minting Start Date
+                    </Label>
+                    <Input
+                      id="batch-start-date"
+                      type="date"
+                      value={batchListing.batch_start_date ?? ""}
+                      onChange={(e) => {
+                        handleBatchListingChange(
+                          "batch_start_date",
+                          e.target.value
+                        );
+                      }}
+                      min={new Date().toISOString().split("T")[0]}
+                      className="text-base w-fit"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="batch-end-date"
+                      className="text-lg font-semibold flex items-center"
+                    >
+                      <CalendarIcon className="mr-2 h-5 w-5" />
+                      Minting End Date
+                    </Label>
+                    <Input
+                      id="batch-end-date"
+                      type="date"
+                      value={batchListing.batch_end_date ?? ""}
+                      onChange={(e) =>
+                        handleBatchListingChange("batch_end_date", e.target.value)
+                      }
+                      min={batchListing.batch_start_date ?? ""}
+                      className="text-base w-fit"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="batch-hour"
+                      className="text-lg font-semibold"
+                    >
+                      Hour of the Day <span className="text-destructive">*</span>
+                    </Label>
+                    <div className="text-sm text-muted-foreground">Mention the timings in GMT</div>
+                    <select
+                      id="batch-hour"
+                      value={batchListing.batch_hour ?? ""}
+                      onChange={(e) =>
+                        handleBatchListingChange(
+                          "batch_hour",
+                          parseInt(e.target.value)
+                        )
+                      }
+                      className="w-full p-2 border rounded-md text-base"
+                      required
+                    >
+                      {Array.from({ length: 24 }, (_, i) => (
+                        <option key={i} value={i.toString()}>
+                          {i}:00
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <span className="mt-2 ">You can edit this later</span>
+                </div>
+
+                {/* Batch Info */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="batchListing-name"
+                    className="text-lg font-semibold"
+                  >
+                    Name <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="batchListing-name"
+                    value={batchListing.name}
+                    onChange={(e) =>
+                      handleBatchListingChange("name", e.target.value)
+                    }
+                    className="text-lg"
+                    required
+                    maxLength={32}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    {batchListing.name.length}/32 characters
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="batchListing-description"
+                    className="text-lg font-semibold"
+                  >
+                    Description{" "}
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    id="batchListing-description"
+                    value={batchListing.description}
+                    onChange={(e) =>
+                      handleBatchListingChange("description", e.target.value)
+                    }
+                    className="min-h-[120px] text-base"
+                    required
+                  />
+                </div>
+
+                {/* Collectible Info */}
                 <div className="space-y-2">
                   <Label
                     htmlFor="collectible-name"
@@ -584,16 +700,16 @@ function CreateCollectiblePage() {
                   </Label>
                   <Input
                     id="collectible-name"
-                    value={collectible.name}
+                    value={batchListing.collectible_name}
                     onChange={(e) =>
-                      handleCollectibleChange("name", e.target.value)
+                      handleBatchListingChange("collectible_name", e.target.value)
                     }
                     className="text-lg"
                     required
                     maxLength={32}
                   />
                   <p className="text-sm text-muted-foreground">
-                    {collectible.name.length}/32 characters
+                    {batchListing.name.length}/32 characters
                   </p>
                 </div>
 
@@ -607,9 +723,9 @@ function CreateCollectiblePage() {
                   </Label>
                   <Textarea
                     id="collectible-description"
-                    value={collectible.description}
+                    value={batchListing.collectible_description}
                     onChange={(e) =>
-                      handleCollectibleChange("description", e.target.value)
+                      handleBatchListingChange("collectible_description", e.target.value)
                     }
                     className="min-h-[120px] text-base"
                     required
@@ -711,7 +827,7 @@ function CreateCollectiblePage() {
 
                 <div className="space-y-2">
                   <Label
-                    htmlFor="collectible-image"
+                    htmlFor="batchListing-image"
                     className="text-lg font-semibold"
                   >
                     Collectible Media{" "}
@@ -723,7 +839,7 @@ function CreateCollectiblePage() {
                   </p>
                   <div className="relative">
                     <Input
-                      id="collectible-image"
+                      id="batchListing-image"
                       type="file"
                       accept="image/*,video/*,.gif,audio/*"
                       onChange={handleImageChange}
@@ -731,7 +847,7 @@ function CreateCollectiblePage() {
                       className="sr-only"
                     />
                     <Label
-                      htmlFor="collectible-image"
+                      htmlFor="batchListing-image"
                       className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/50 transition-colors"
                     >
                       <div className="flex items-center space-x-2">
@@ -748,16 +864,16 @@ function CreateCollectiblePage() {
 
                 <div className="space-y-2">
                   <Label
-                    htmlFor="collectible-brand"
+                    htmlFor="batchListing-brand"
                     className="text-lg font-semibold"
                   >
                     Brand <span className="text-destructive">*</span>
                   </Label>
                   <select
-                    id="collectible-brand"
-                    value={collectible.is_irls ? Brand.IRLS : Brand.StreetMint}
+                    id="batchListing-brand"
+                    value={batchListing.is_irls ? Brand.IRLS : Brand.StreetMint}
                     onChange={(e) =>
-                      handleCollectibleChange(
+                      handleBatchListingChange(
                         "is_irls",
                         e.target.value === Brand.IRLS
                       )
@@ -772,16 +888,16 @@ function CreateCollectiblePage() {
 
                 <div className="space-y-2">
                   <Label
-                    htmlFor="collectible-quantity-type"
+                    htmlFor="batchListing-quantity-type"
                     className="text-lg font-semibold"
                   >
                     Quantity Type <span className="text-destructive">*</span>
                   </Label>
                   <select
-                    id="collectible-quantity-type"
-                    value={collectible.quantity_type}
+                    id="batchListing-quantity-type"
+                    value={batchListing.quantity_type}
                     onChange={(e) =>
-                      handleCollectibleChange(
+                      handleBatchListingChange(
                         "quantity_type",
                         e.target.value as QuantityType
                       )
@@ -797,20 +913,20 @@ function CreateCollectiblePage() {
                   </select>
                 </div>
 
-                {collectible.quantity_type === QuantityType.Limited && (
+                {batchListing.quantity_type === QuantityType.Limited && (
                   <div className="space-y-2">
                     <Label
-                      htmlFor="collectible-quantity"
+                      htmlFor="batchListing-quantity"
                       className="text-lg font-semibold"
                     >
                       Quantity <span className="text-destructive">*</span>
                     </Label>
                     <Input
-                      id="collectible-quantity"
+                      id="batchListing-quantity"
                       type="number"
-                      value={collectible?.quantity || ""}
+                      value={batchListing?.quantity || ""}
                       onChange={(e) =>
-                        handleCollectibleChange(
+                        handleBatchListingChange(
                           "quantity",
                           parseInt(e.target.value)
                         )
@@ -839,18 +955,18 @@ function CreateCollectiblePage() {
                     <>
                       <div className="space-y-2">
                         <Label
-                          htmlFor="collectible-price"
+                          htmlFor="batchListing-price"
                           className="text-lg font-semibold"
                         >
                           Price (USD){" "}
                           <span className="text-destructive">*</span>
                         </Label>
                         <Input
-                          id="collectible-price"
+                          id="batchListing-price"
                           type="number"
-                          value={collectible.price_usd}
+                          value={batchListing.price_usd}
                           onChange={(e) =>
-                            handleCollectibleChange(
+                            handleBatchListingChange(
                               "price_usd",
                               parseFloat(e.target.value)
                             )
@@ -875,9 +991,9 @@ function CreateCollectiblePage() {
                         </div>
                         <Switch
                           id="card-payments-toggle"
-                          checked={collectible.enable_card_payments}
+                          checked={batchListing.enable_card_payments}
                           onCheckedChange={(checked) =>
-                            handleCollectibleChange(
+                            handleBatchListingChange(
                               "enable_card_payments",
                               checked
                             )
@@ -886,7 +1002,7 @@ function CreateCollectiblePage() {
                         />
                       </div>
 
-                      {collectible.enable_card_payments && (
+                      {batchListing.enable_card_payments && (
                         <div className="flex items-center justify-between pt-4 pl-6 mt-2">
                           <div>
                             <Label
@@ -901,9 +1017,9 @@ function CreateCollectiblePage() {
                           </div>
                           <Switch
                             id="only-card-payments-toggle"
-                            checked={collectible.only_card_payment || false}
+                            checked={batchListing.only_card_payment || false}
                             onCheckedChange={(checked) =>
-                              handleCollectibleChange(
+                              handleBatchListingChange(
                                 "only_card_payment",
                                 checked
                               )
@@ -929,7 +1045,7 @@ function CreateCollectiblePage() {
                       checked={customEmail}
                       onCheckedChange={(checked) => {
                         setCustomEmail(checked);
-                        handleCollectibleChange("custom_email", checked);
+                        handleBatchListingChange("custom_email", checked);
                       }}
                       className="scale-125"
                     />
@@ -945,9 +1061,9 @@ function CreateCollectiblePage() {
                         </Label>
                         <Input
                           id="custom-email-subject"
-                          value={collectible.custom_email_subject ?? ""}
+                          value={batchListing.custom_email_subject ?? ""}
                           onChange={(e) =>
-                            handleCollectibleChange(
+                            handleBatchListingChange(
                               "custom_email_subject",
                               e.target.value
                             )
@@ -963,10 +1079,10 @@ function CreateCollectiblePage() {
                         </Label>
                         <Textarea
                           id="custom-email-content"
-                          value={collectible.custom_email_body ?? ""}
+                          value={batchListing.custom_email_body ?? ""}
                           className="min-h-[120px] text-base"
                           onChange={(e) =>
-                            handleCollectibleChange(
+                            handleBatchListingChange(
                               "custom_email_body",
                               e.target.value
                             )
@@ -980,17 +1096,17 @@ function CreateCollectiblePage() {
                 <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
                   <div className="space-y-2">
                     <Label
-                      htmlFor="collectible-location"
+                      htmlFor="batchListing-location"
                       className="text-lg font-semibold flex items-center"
                     >
                       <MapPinIcon className="mr-2 h-5 w-5" />
                       Location (Google Maps URL) *
                     </Label>
                     <Input
-                      id="collectible-location"
-                      value={collectible.location ?? ""}
+                      id="batchListing-location"
+                      value={batchListing.location ?? ""}
                       onChange={(e) =>
-                        handleCollectibleChange("location", e.target.value)
+                        handleBatchListingChange("location", e.target.value)
                       }
                       placeholder="Enter Google Maps URL"
                       className="text-base"
@@ -1000,65 +1116,19 @@ function CreateCollectiblePage() {
 
                   <div className="space-y-2">
                     <Label
-                      htmlFor="collectible-location-note"
+                      htmlFor="batchListing-location-note"
                       className="text-lg font-semibold"
                     >
                       Location Note
                     </Label>
                     <Textarea
-                      id="collectible-location-note"
-                      value={collectible.location_note ?? ""}
+                      id="batchListing-location-note"
+                      value={batchListing.location_note ?? ""}
                       onChange={(e) =>
-                        handleCollectibleChange("location_note", e.target.value)
+                        handleBatchListingChange("location_note", e.target.value)
                       }
                       placeholder="Add any additional details about the location"
                       className="min-h-[80px] text-base"
-                    />
-                  </div>
-                  <span className="mt-2 ">You can edit this later</span>
-                </div>
-
-                <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="mint-start-date"
-                      className="text-lg font-semibold flex items-center"
-                    >
-                      <CalendarIcon className="mr-2 h-5 w-5" />
-                      Minting Start Date and Time
-                    </Label>
-                    <span>Mention the timings in GMT</span>
-                    <Input
-                      id="mint-start-date"
-                      type="datetime-local"
-                      value={collectible.mint_start_date ?? ""}
-                      onChange={(e) => {
-                        handleCollectibleChange(
-                          "mint_start_date",
-                          e.target.value
-                        );
-                      }}
-                      className="text-base w-fit"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="mint-end-date"
-                      className="text-lg font-semibold flex items-center"
-                    >
-                      <CalendarIcon className="mr-2 h-5 w-5" />
-                      Minting End Date and Time
-                    </Label>
-                    <span>Mention the timings in GMT</span>
-                    <Input
-                      id="mint-end-date"
-                      type="datetime-local"
-                      value={collectible.mint_end_date ?? ""}
-                      onChange={(e) =>
-                        handleCollectibleChange("mint_end_date", e.target.value)
-                      }
-                      className="text-base w-fit"
                     />
                   </div>
                   <span className="mt-2 ">You can edit this later</span>
@@ -1069,13 +1139,13 @@ function CreateCollectiblePage() {
                     htmlFor="gallery-name"
                     className="text-lg font-semibold"
                   >
-                    Gallery Name
+                    Gallery Name <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="gallery-name"
-                    value={collectible.gallery_name ?? ""}
+                    value={batchListing.gallery_name ?? ""}
                     onChange={(e) =>
-                      handleCollectibleChange("gallery_name", e.target.value)
+                      handleBatchListingChange("gallery_name", e.target.value)
                     }
                     className="text-lg"
                     maxLength={32}
@@ -1157,20 +1227,20 @@ function CreateCollectiblePage() {
                         Call to Action
                       </Label>
                       <p className="text-sm text-muted-foreground mb-2">
-                        Add a call to action to your collectible.
+                        Add a call to action to your batchListing.
                       </p>
                     </div>
 
                     <Switch
                       id="call-to-action-toggle"
-                      checked={collectible.cta_enable}
+                      checked={batchListing.cta_enable}
                       onCheckedChange={(checked) =>
-                        handleCollectibleChange("cta_enable", checked)
+                        handleBatchListingChange("cta_enable", checked)
                       }
                       className="scale-125"
                     />
                   </div>
-                  {collectible.cta_enable && (
+                  {batchListing.cta_enable && (
                     <div className="space-y-4">
                       <div>
                         <Label
@@ -1182,11 +1252,11 @@ function CreateCollectiblePage() {
                         </Label>
                         <Input
                           id="call-to-action-title"
-                          value={collectible.cta_title ?? ""}
+                          value={batchListing.cta_title ?? ""}
                           placeholder="Join our newsletter"
                           required
                           onChange={(e) =>
-                            handleCollectibleChange("cta_title", e.target.value)
+                            handleBatchListingChange("cta_title", e.target.value)
                           }
                         />
                       </div>
@@ -1202,9 +1272,9 @@ function CreateCollectiblePage() {
                           id="call-to-action-description"
                           required
                           placeholder="Join our newsletter to get exclusive updates and early access to new drops."
-                          value={collectible.cta_description ?? ""}
+                          value={batchListing.cta_description ?? ""}
                           onChange={(e) =>
-                            handleCollectibleChange(
+                            handleBatchListingChange(
                               "cta_description",
                               e.target.value
                             )
@@ -1250,9 +1320,9 @@ function CreateCollectiblePage() {
                         <Input
                           id="call-to-action-cta-text"
                           placeholder="Signup"
-                          value={collectible.cta_text ?? ""}
+                          value={batchListing.cta_text ?? ""}
                           onChange={(e) =>
-                            handleCollectibleChange("cta_text", e.target.value)
+                            handleBatchListingChange("cta_text", e.target.value)
                           }
                         />
                       </div>
@@ -1265,10 +1335,10 @@ function CreateCollectiblePage() {
                         </Label>
                         <Input
                           id="call-to-action-cta-link"
-                          value={collectible.cta_link ?? ""}
+                          value={batchListing.cta_link ?? ""}
                           placeholder="https://streetmint.xyz"
                           onChange={(e) =>
-                            handleCollectibleChange("cta_link", e.target.value)
+                            handleBatchListingChange("cta_link", e.target.value)
                           }
                         />
                       </div>
@@ -1281,11 +1351,11 @@ function CreateCollectiblePage() {
                         </Label>
                         <Switch
                           id="call-to-action-has-email-capture"
-                          checked={collectible.cta_has_email_capture}
+                          checked={batchListing.cta_has_email_capture}
                           onCheckedChange={() =>
-                            handleCollectibleChange(
+                            handleBatchListingChange(
                               "cta_has_email_capture",
-                              !collectible.cta_has_email_capture
+                              !batchListing.cta_has_email_capture
                             )
                           }
                         />
@@ -1299,11 +1369,11 @@ function CreateCollectiblePage() {
                         </Label>
                         <Switch
                           id="call-to-action-has-text-capture"
-                          checked={collectible.cta_has_text_capture}
+                          checked={batchListing.cta_has_text_capture}
                           onCheckedChange={() =>
-                            handleCollectibleChange(
+                            handleBatchListingChange(
                               "cta_has_text_capture",
-                              !collectible.cta_has_text_capture
+                              !batchListing.cta_has_text_capture
                             )
                           }
                         />
@@ -1318,7 +1388,7 @@ function CreateCollectiblePage() {
                       htmlFor="free-mint-toggle"
                       className="text-lg font-semibold"
                     >
-                      Collectible Version{" "}
+                      Batch Listing Version{" "}
                       <span className="text-destructive">*</span>
                     </Label>
                   </div>
@@ -1326,15 +1396,15 @@ function CreateCollectiblePage() {
                     <button
                       type="button"
                       onClick={() =>
-                        handleCollectibleChange("is_light_version", false)
+                        handleBatchListingChange("is_light_version", false)
                       }
-                      className={`flex-1 p-4 rounded-lg transition-colors relative ${collectible.is_light_version === false
+                      className={`flex-1 p-4 rounded-lg transition-colors relative ${batchListing.is_light_version === false
                         ? "bg-primary/20"
                         : "bg-primary/5 hover:bg-primary/10"
                         }`}
                     >
                       <div className="absolute top-4 right-4 w-5 h-5 rounded-full border-2 border-black flex items-center justify-center">
-                        {collectible.is_light_version === false && (
+                        {batchListing.is_light_version === false && (
                           <div className="w-3 h-3 rounded-full bg-black"></div>
                         )}
                       </div>
@@ -1352,15 +1422,15 @@ function CreateCollectiblePage() {
                     <button
                       type="button"
                       onClick={() =>
-                        handleCollectibleChange("is_light_version", true)
+                        handleBatchListingChange("is_light_version", true)
                       }
-                      className={`flex-1 p-4 rounded-lg transition-colors relative ${collectible.is_light_version === true
+                      className={`flex-1 p-4 rounded-lg transition-colors relative ${batchListing.is_light_version === true
                         ? "bg-primary/20"
                         : "bg-primary/5 hover:bg-primary/10"
                         }`}
                     >
                       <div className="absolute top-4 right-4 w-5 h-5 rounded-full border-2 border-black flex items-center justify-center">
-                        {collectible.is_light_version === true && (
+                        {batchListing.is_light_version === true && (
                           <div className="w-3 h-3 rounded-full bg-black"></div>
                         )}
                       </div>
@@ -1398,7 +1468,7 @@ function CreateCollectiblePage() {
                     </Button>
                   </div>
 
-                  {collectible.creator_royalty_array?.map((creator, index) => (
+                  {batchListing.creator_royalty_array?.map((creator, index) => (
                     <div
                       key={index}
                       className="space-y-4 bg-background/50 p-4 rounded-lg relative"
@@ -1469,7 +1539,7 @@ function CreateCollectiblePage() {
                     </div>
                   ))}
 
-                  {collectible.creator_royalty_array?.length === 0 && (
+                  {batchListing.creator_royalty_array?.length === 0 && (
                     <p className="text-center text-muted-foreground py-4">
                       No creators added. Click &apos;Add Creator&apos; to add
                       creator royalties.
@@ -1482,7 +1552,7 @@ function CreateCollectiblePage() {
                     <CardHeader>
                       <CardTitle>Sponsor</CardTitle>
                       <CardDescription>
-                        Select a sponsor to associate with this collectible
+                        Select a sponsor to associate with this batchListing
                         (optional)
                       </CardDescription>
                     </CardHeader>
@@ -1509,11 +1579,11 @@ function CreateCollectiblePage() {
                           ) : (
                             <Select
                               value={
-                                collectible.sponsor_id?.toString() || "none"
+                                batchListing.sponsor_id?.toString() || "none"
                               }
                               onValueChange={(value) => {
                                 console.log("Selected sponsor value:", value);
-                                handleCollectibleChange(
+                                handleBatchListingChange(
                                   "sponsor_id",
                                   value === "none" ? null : parseInt(value)
                                 );
@@ -1550,10 +1620,10 @@ function CreateCollectiblePage() {
                 {isSubmitting ? (
                   <div className="flex items-center gap-6 justify-center">
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                    Creating Collectible...
+                    Creating Batch Listing...
                   </div>
                 ) : (
-                  "Create Collectible"
+                  "Create Batch Listing"
                 )}
               </Button>
             </form>
@@ -1563,4 +1633,4 @@ function CreateCollectiblePage() {
     </div>
   );
 }
-export default withAuth(CreateCollectiblePage);
+export default withAuth(CreateBatchListingPage);
