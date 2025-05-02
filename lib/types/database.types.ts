@@ -86,165 +86,6 @@ export type Database = {
         }
         Relationships: []
       }
-      batch_listings: {
-        Row: {
-          airdrop_eligibility_index: number | null
-          batch_end_date: string | null
-          batch_hour: number | null
-          batch_start_date: string | null
-          chain: string | null
-          collectible_description: string
-          collectible_name: string
-          collection_id: number
-          created_at: string
-          creator_royalty_array: Json | null
-          cta_description: string | null
-          cta_email_list: Json[] | null
-          cta_enable: boolean | null
-          cta_has_email_capture: boolean | null
-          cta_has_text_capture: boolean | null
-          cta_link: string | null
-          cta_logo_url: string | null
-          cta_text: string | null
-          cta_text_list: Json[] | null
-          cta_title: string | null
-          custom_email: boolean | null
-          custom_email_body: string | null
-          custom_email_subject: string | null
-          description: string | null
-          enable_card_payments: boolean | null
-          gallery_name: string | null
-          gallery_urls: string[]
-          id: number
-          is_irls: boolean | null
-          is_light_version: boolean
-          is_video: boolean | null
-          location: string | null
-          location_note: string | null
-          metadata_uri: string | null
-          name: string | null
-          nfc_public_key: string | null
-          only_card_payment: boolean | null
-          price_usd: number
-          primary_image_url: string
-          primary_media_type: string | null
-          quantity: number | null
-          quantity_type: Database["public"]["Enums"]["quantity_type"]
-          sponsor_id: number | null
-          stripe_price_id: string | null
-          whitelist: boolean | null
-        }
-        Insert: {
-          airdrop_eligibility_index?: number | null
-          batch_end_date?: string | null
-          batch_hour?: number | null
-          batch_start_date?: string | null
-          chain?: string | null
-          collectible_description: string
-          collectible_name: string
-          collection_id: number
-          created_at?: string
-          creator_royalty_array?: Json | null
-          cta_description?: string | null
-          cta_email_list?: Json[] | null
-          cta_enable?: boolean | null
-          cta_has_email_capture?: boolean | null
-          cta_has_text_capture?: boolean | null
-          cta_link?: string | null
-          cta_logo_url?: string | null
-          cta_text?: string | null
-          cta_text_list?: Json[] | null
-          cta_title?: string | null
-          custom_email?: boolean | null
-          custom_email_body?: string | null
-          custom_email_subject?: string | null
-          description?: string | null
-          enable_card_payments?: boolean | null
-          gallery_name?: string | null
-          gallery_urls: string[]
-          id?: number
-          is_irls?: boolean | null
-          is_light_version?: boolean
-          is_video?: boolean | null
-          location?: string | null
-          location_note?: string | null
-          metadata_uri?: string | null
-          name?: string | null
-          nfc_public_key?: string | null
-          only_card_payment?: boolean | null
-          price_usd: number
-          primary_image_url: string
-          primary_media_type?: string | null
-          quantity?: number | null
-          quantity_type: Database["public"]["Enums"]["quantity_type"]
-          sponsor_id?: number | null
-          stripe_price_id?: string | null
-          whitelist?: boolean | null
-        }
-        Update: {
-          airdrop_eligibility_index?: number | null
-          batch_end_date?: string | null
-          batch_hour?: number | null
-          batch_start_date?: string | null
-          chain?: string | null
-          collectible_description?: string
-          collectible_name?: string
-          collection_id?: number
-          created_at?: string
-          creator_royalty_array?: Json | null
-          cta_description?: string | null
-          cta_email_list?: Json[] | null
-          cta_enable?: boolean | null
-          cta_has_email_capture?: boolean | null
-          cta_has_text_capture?: boolean | null
-          cta_link?: string | null
-          cta_logo_url?: string | null
-          cta_text?: string | null
-          cta_text_list?: Json[] | null
-          cta_title?: string | null
-          custom_email?: boolean | null
-          custom_email_body?: string | null
-          custom_email_subject?: string | null
-          description?: string | null
-          enable_card_payments?: boolean | null
-          gallery_name?: string | null
-          gallery_urls?: string[]
-          id?: number
-          is_irls?: boolean | null
-          is_light_version?: boolean
-          is_video?: boolean | null
-          location?: string | null
-          location_note?: string | null
-          metadata_uri?: string | null
-          name?: string | null
-          nfc_public_key?: string | null
-          only_card_payment?: boolean | null
-          price_usd?: number
-          primary_image_url?: string
-          primary_media_type?: string | null
-          quantity?: number | null
-          quantity_type?: Database["public"]["Enums"]["quantity_type"]
-          sponsor_id?: number | null
-          stripe_price_id?: string | null
-          whitelist?: boolean | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "batch_listings_collection_id_fkey"
-            columns: ["collection_id"]
-            isOneToOne: false
-            referencedRelation: "collections"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "batch_listings_sponsor_id_fkey"
-            columns: ["sponsor_id"]
-            isOneToOne: false
-            referencedRelation: "sponsors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       chip_links: {
         Row: {
           active: boolean
@@ -442,7 +283,7 @@ export type Database = {
           custom_email_subject?: string | null
           description: string
           enable_card_payments?: boolean | null
-          gallery_name?: string | null
+          gallery_name: string | null
           gallery_urls: string[]
           id?: number
           is_irls?: boolean | null
@@ -486,7 +327,7 @@ export type Database = {
           custom_email_subject?: string | null
           description?: string
           enable_card_payments?: boolean | null
-          gallery_name?: string | null
+          gallery_name: string | null
           gallery_urls?: string[]
           id?: number
           is_irls?: boolean | null
@@ -841,116 +682,99 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type PublicSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  PublicTableNameOrOptions extends
+  | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+  | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+  ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+    Database[PublicTableNameOrOptions["schema"]]["Views"])
+  : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+    Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-    ? R
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
+  ? R
+  : never
+  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
+    PublicSchema["Views"])
+  ? (PublicSchema["Tables"] &
+    PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+      Row: infer R
+    }
+  ? R
+  : never
+  : never
 
 export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+  PublicTableNameOrOptions extends
+  | keyof PublicSchema["Tables"]
+  | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+  ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+    Insert: infer I
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
+  ? I
+  : never
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+  ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+    Insert: infer I
+  }
+  ? I
+  : never
+  : never
 
 export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+  PublicTableNameOrOptions extends
+  | keyof PublicSchema["Tables"]
+  | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+  ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+    Update: infer U
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
+  ? U
+  : never
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+  ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+    Update: infer U
+  }
+  ? U
+  : never
+  : never
 
 export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+  PublicEnumNameOrOptions extends
+  | keyof PublicSchema["Enums"]
+  | { schema: keyof Database },
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  : never = never,
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
+  ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+  | keyof PublicSchema["CompositeTypes"]
+  | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof Database
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+  ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+  : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
   ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
-
-export const Constants = {
-  public: {
-    Enums: {
-      collectible_type: ["IRLS", "STREETMINT", "TEST_IRLS", "TEST_STREETMINT"],
-      quantity_type: ["limited", "unlimited", "single"],
-    },
-  },
-} as const
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+  ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
