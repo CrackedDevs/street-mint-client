@@ -86,17 +86,30 @@ function Component() {
             <ChevronLeft className="mr-1 h-4 w-4" />
             Back to Collections
           </Link>
-          <Button
-            className="inline-flex items-center"
-            onClick={() => {
-              router.push(
-                `/dashboard/collection/${collection.id}/new-collectible`
-              );
-            }}
-          >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add New Collectible
-          </Button>
+          <div className="flex space-x-2">
+            <Button
+              className="inline-flex items-center"
+              onClick={() => {
+                router.push(
+                  `/dashboard/collection/${collection.id}/new-batch-listing`
+                );
+              }}
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add New Batch Listing
+            </Button>
+            <Button
+              className="inline-flex items-center"
+              onClick={() => {
+                router.push(
+                  `/dashboard/collection/${collection.id}/new-collectible`
+                );
+              }}
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add New Collectible
+            </Button>
+          </div>
         </div>
         <Card className="mb-8 bg-white shadow-lg">
           <CardHeader>
@@ -155,8 +168,8 @@ function Component() {
                         {collectible.quantity_type === "limited"
                           ? `Limited (${collectible.quantity})`
                           : collectible.quantity_type === "single"
-                          ? "1 of 1"
-                          : "Open Edition"}
+                            ? "1 of 1"
+                            : "Open Edition"}
                       </Badge>
                       <Badge
                         variant="secondary"
