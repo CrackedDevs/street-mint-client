@@ -9,6 +9,10 @@
     {
       "path": "/api/schedule-collectible",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/create-daily-collectibles",
+      "schedule": "0 * * * *"
     }
   ]
 }
