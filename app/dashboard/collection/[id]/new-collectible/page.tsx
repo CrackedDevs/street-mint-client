@@ -411,6 +411,8 @@ function CreateCollectiblePage() {
       const uploadedCtaLogoUrl = newCtaLogoImage
         ? await uploadFileToPinata(newCtaLogoImage)
         : null;
+      const mintStartDate = formatDate(collectible.mint_start_date ?? "");
+      const mintEndDate = formatDate(collectible.mint_end_date ?? "");
 
       let stripePriceId: string | null = null;
       if (collectible.enable_card_payments) {
@@ -419,12 +421,6 @@ function CreateCollectiblePage() {
           collectible.price_usd
         );
       }
-
-      const mintStartDate = new Date(collectible.mint_start_date ?? "").toISOString();
-      const mintEndDate = new Date(collectible.mint_end_date ?? "").toISOString();
-
-      console.log(mintStartDate, mintEndDate);
-      
 
       const newCollectible: Collectible = {
         ...collectible,
@@ -477,8 +473,6 @@ function CreateCollectiblePage() {
         throw new Error("Failed to create collectible");
       }
     } catch (error) {
-      console.log(error);
-      
       toast({
         title: "Error",
         description: "Failed to create collectible",
@@ -1078,6 +1072,7 @@ function CreateCollectiblePage() {
                       handleCollectibleChange("gallery_name", e.target.value)
                     }
                     className="text-lg"
+                    required
                     maxLength={32}
                   />
                 </div>
