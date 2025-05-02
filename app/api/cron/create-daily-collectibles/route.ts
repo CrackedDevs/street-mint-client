@@ -5,15 +5,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
-    const secret = request.headers.get('x-cron-secret');
+    // const secret = request.headers.get('x-cron-secret');
 
-    if (secret !== process.env.CRON_SECRET) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    // if (secret !== process.env.CRON_SECRET) {
+    //   return NextResponse.json(
+    //     { message: 'Unauthorized' },
+    //     { status: 401 }
+    //   );
+    // }
     const supabaseAdmin = await getSupabaseAdmin();
 
     const { data: batchListings, error: fetchError } = await supabaseAdmin

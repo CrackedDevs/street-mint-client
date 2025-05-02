@@ -554,7 +554,6 @@ function CreateBatchListingPage() {
                           e.target.value
                         );
                       }}
-                      min={new Date().toISOString().split("T")[0]}
                       className="text-base w-fit"
                       required
                     />
@@ -575,7 +574,6 @@ function CreateBatchListingPage() {
                       onChange={(e) =>
                         handleBatchListingChange("batch_end_date", e.target.value)
                       }
-                      min={batchListing.batch_end_date ?? ""}
                       className="text-base w-fit"
                       required
                     />
