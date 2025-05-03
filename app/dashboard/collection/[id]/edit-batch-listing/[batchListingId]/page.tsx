@@ -150,6 +150,7 @@ function CreateBatchListingPage() {
     batch_hour: 0,
     collection_id: Number(collectionId),
     gallery_name: null,
+    chip_link_id: null,
   });
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [isFreeMint, setIsFreeMint] = useState(false);
@@ -200,6 +201,7 @@ function CreateBatchListingPage() {
 
             setIsFreeMint(batchListing.price_usd === 0);
             setGalleryImages([]);
+            setSelectedChipIds(batchListing.chip_link_id ? [(batchListing.chip_link_id)] : []);
             batchListing.gallery_urls?.forEach((url) => {
               fetch(url)
                 .then((res) => res.blob())

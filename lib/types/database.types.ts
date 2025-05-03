@@ -93,6 +93,7 @@ export type Database = {
           batch_hour: number | null
           batch_start_date: string | null
           chain: string | null
+          chip_link_id: number | null
           collectible_description: string
           collectible_name: string
           collection_id: number
@@ -141,6 +142,7 @@ export type Database = {
           batch_hour?: number | null
           batch_start_date?: string | null
           chain?: string | null
+          chip_link_id?: number | null
           collectible_description: string
           collectible_name: string
           collection_id: number
@@ -189,6 +191,7 @@ export type Database = {
           batch_hour?: number | null
           batch_start_date?: string | null
           chain?: string | null
+          chip_link_id?: number | null
           collectible_description?: string
           collectible_name?: string
           collection_id?: number
@@ -232,6 +235,13 @@ export type Database = {
           whitelist?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "batch_listings_chip_link_id_fkey"
+            columns: ["chip_link_id"]
+            isOneToOne: false
+            referencedRelation: "chip_links"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "batch_listings_collection_id_fkey"
             columns: ["collection_id"]

@@ -119,6 +119,7 @@ export type BatchListing = {
     batch_hour: number | null;
     gallery_name: string | null;
     collection_id: number;
+    chip_link_id: number | null;
 };
 
 export interface Order {
