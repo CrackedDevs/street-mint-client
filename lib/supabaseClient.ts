@@ -1123,3 +1123,27 @@ export const getCollectiblesAndOrdersByBatchListingId = async (
         orders: allOrders,
     };
 };
+
+export const getChipsByArtistId = async (artistId: number) => {
+    const { user, error: authError } = await getAuthenticatedUser();
+    if (!user || authError) {
+        return null
+    }
+
+    const { data: chipLinks, error: collectionError } = await supabase
+        .from("chip_links")
+        .select("*")
+        .eq("artists_id", artistId);
+
+    if (collectionError) {
+        console.error("Error fetching chipLinks:", collectionError);
+        return null;
+    }
+
+    if (!chipLinks || chipLinks.length === 0) {
+        console.log("No chipLinks found for artist");
+        return [];
+    }
+
+    return chipLinks;
+}

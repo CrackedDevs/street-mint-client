@@ -25,9 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createProduct } from "@/helpers/stripe";
 import { useToast } from "@/hooks/use-toast";
 import {
-  getChipLinksByArtistId,
-  getSponsorsByArtistId,
-  updateChipLink,
+  getSponsorsByArtistId
 } from "@/lib/supabaseAdminClient";
 import {
   BatchListing,
@@ -72,40 +70,6 @@ function CreateBatchListingPage() {
   const { userProfile } = useUserProfile();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [newCtaLogoImage, setNewCtaLogoImage] = useState<File | null>(null);
-  const [availableChips, setAvailableChips] = useState<
-    Array<{ id: number; chip_id: string; active: boolean }>
-  >([]);
-  const [selectedChipIds, setSelectedChipIds] = useState<number[]>([]);
-  const [isLoadingChips, setIsLoadingChips] = useState(false);
-
-  // Fetch available chips for the artist
-  useEffect(() => {
-    const fetchArtistChips = async () => {
-      if (userProfile?.id) {
-        setIsLoadingChips(true);
-        try {
-          const chips = await getChipLinksByArtistId(userProfile.id);
-          if (chips) {
-            // Filter out chips that are already assigned to collectibles
-            const availableChips = chips.filter((chip) => !chip.collectible_id);
-            setAvailableChips(availableChips);
-          }
-        } catch (error) {
-          console.error("Error fetching artist chips:", error);
-          toast({
-            title: "Error",
-            description:
-              "Failed to load your assigned chips. Please try again.",
-            variant: "destructive",
-          });
-        } finally {
-          setIsLoadingChips(false);
-        }
-      }
-    };
-
-    fetchArtistChips();
-  }, [userProfile?.id, toast]);
 
   const [batchListing, setBatchListing] = useState<BatchListing>({
     id: NumericUUID(),
@@ -201,7 +165,6 @@ function CreateBatchListingPage() {
 
             setIsFreeMint(batchListing.price_usd === 0);
             setGalleryImages([]);
-            setSelectedChipIds(batchListing.chip_link_id ? [(batchListing.chip_link_id)] : []);
             batchListing.gallery_urls?.forEach((url) => {
               fetch(url)
                 .then((res) => res.blob())
@@ -414,34 +377,6 @@ function CreateBatchListingPage() {
       const updatedBatchListing = await updateBatchListing(newBatchListing);
 
       if (updatedBatchListing) {
-        // Update multiple chip links
-        if (selectedChipIds.length > 0) {
-          try {
-            await Promise.all(
-              selectedChipIds.map(async (chipId) => {
-                await updateChipLink(chipId, {
-                  id: chipId,
-                  chip_id:
-                    availableChips.find((chip) => chip.id === chipId)
-                      ?.chip_id || "",
-                  collectible_id: null,
-                  active: true,
-                  created_at: new Date().toISOString(),
-                  artists_id: userProfile.id,
-                });
-              })
-            );
-          } catch (error) {
-            console.error("Error updating chip links:", error);
-            toast({
-              title: "Warning",
-              description:
-                "Batch Listing created but some chip links failed. Please try linking them manually.",
-              variant: "destructive",
-            });
-          }
-        }
-
         setShowSuccessModal(true);
       } else {
         throw new Error("Failed to create batch listing");
@@ -690,99 +625,6 @@ function CreateBatchListingPage() {
                     className="min-h-[120px] text-base"
                     required
                   />
-                </div>
-
-                {/* Chip Selection */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="chip-selection"
-                    className="text-lg font-semibold"
-                  >
-                    Assign NFC Chips
-                  </Label>
-                  {isLoadingChips ? (
-                    <div className="flex items-center space-x-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Loading your assigned chips...</span>
-                    </div>
-                  ) : availableChips.length > 0 ? (
-                    <div className="space-y-2">
-                      <div className="max-h-48 overflow-y-auto border rounded-md p-2">
-                        {availableChips.map((chip) => (
-                          <div
-                            key={chip.id}
-                            className="flex items-center space-x-2 p-2 hover:bg-primary/5 rounded-md"
-                          >
-                            <input
-                              type="checkbox"
-                              id={`chip-${chip.id}`}
-                              checked={selectedChipIds.includes(chip.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedChipIds([
-                                    ...selectedChipIds,
-                                    chip.id,
-                                  ]);
-                                } else {
-                                  setSelectedChipIds(
-                                    selectedChipIds.filter(
-                                      (id) => id !== chip.id
-                                    )
-                                  );
-                                }
-                              }}
-                              className="h-4 w-4 rounded border-gray-300"
-                            />
-                            <label
-                              htmlFor={`chip-${chip.id}`}
-                              className="flex-grow cursor-pointer"
-                            >
-                              {chip.chip_id}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Select one or more chips to link to this batch listing.
-                      </p>
-                      {selectedChipIds.length > 0 && (
-                        <p className="text-sm text-primary">
-                          {selectedChipIds.length} chip
-                          {selectedChipIds.length > 1 ? "s" : ""} selected
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="rounded-md bg-amber-50 p-4">
-                      <div className="flex">
-                        <div className="flex-shrink-0">
-                          <svg
-                            className="h-5 w-5 text-amber-400"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </div>
-                        <div className="ml-3">
-                          <h3 className="text-sm font-medium text-amber-800">
-                            No chips available
-                          </h3>
-                          <div className="mt-2 text-sm text-amber-700">
-                            <p>
-                              You don&apos;t have any available chips to assign
-                              to this batch listing. Please contact an admin to
-                              have NFC chips assigned to your account.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 <div className="space-y-2">
