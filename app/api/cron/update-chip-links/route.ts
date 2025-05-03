@@ -29,17 +29,17 @@ export async function GET(request: NextRequest) {
     // Process each batch listing
     for (const listing of batchListings) {
       const now = new Date();
-      const currentUTCHour = now.getUTCHours();
 
-      if (listing.batch_end_date && parseInt(listing.batch_end_date, 10) === currentUTCHour && listing.chip_link_id) {
+      if (listing.batch_end_date && new Date(listing.batch_end_date) <= now && listing.chip_link_id) {
         const { error: chipError } = await supabaseAdmin
           .from('chip_links')
           .delete()
-          .eq('batch_listing_id', listing.chip_link_id)
-          .select();
+          .eq('id', listing.chip_link_id);
 
         if (chipError) {
-          console.error('Error updating chip links:', chipError);
+          console.error('Error deleting chip link for listing', listing.id, ':', chipError);
+        } else {
+          console.log('Deleted chip link for listing', listing.id);
         }
       }
     }
