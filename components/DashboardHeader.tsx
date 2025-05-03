@@ -1,12 +1,12 @@
 "use client";
-import React from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { useUserProfile } from "@/app/providers/UserProfileProvider";
 import ConnectedWalletWidget from "@/components/connectedWalletWidget";
 import { Button } from "@/components/ui/button";
-import { PaletteIcon, UserIcon, Bolt, Award } from "lucide-react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { Award, Bolt, Layers, PaletteIcon, UserIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import React from "react";
 
 const DashboardHeader: React.FC = () => {
   const { publicKey } = useWallet();
@@ -33,6 +33,12 @@ const DashboardHeader: React.FC = () => {
             <div className="flex items-center space-x-4">
               {publicKey && (
                 <>
+                  <Link href="/dashboard/batch-listings">
+                    <Button variant="ghost">
+                      <Layers className="h-5 w-5 mr-2" />
+                      Batch Listing
+                    </Button>
+                  </Link>
                   <Link href="/dashboard/collection">
                     <Button variant="ghost">
                       <PaletteIcon className="h-5 w-5 mr-2" />
