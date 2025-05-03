@@ -1069,3 +1069,46 @@ export const getBatchListingById = async (id: number): Promise<BatchListing | nu
 
     return data as BatchListing;
 }
+
+export const getCollectiblesAndOrdersByBatchListingId = async (
+    batchListingId: number
+) => {
+    const { data: collectibles, error: collectiblesError } = await supabase
+        .from("collectibles")
+        .select("*")
+        .eq("batch_listing_id", batchListingId);
+
+    if (collectiblesError) {
+        console.error("Error fetching collectibles:", collectiblesError);
+        return null;
+    }
+
+    const lightCollectibles = collectibles.filter(c => c.is_light_version);
+    const normalCollectibles = collectibles.filter(c => !c.is_light_version);
+
+    const lightIds = lightCollectibles.map(c => c.id);
+    const normalIds = normalCollectibles.map(c => c.id);
+
+    const [lightOrdersRes, normalOrdersRes] = await Promise.all([
+        lightIds.length
+            ? supabase.from("light_orders").select("*").in("collectible_id", lightIds)
+            : Promise.resolve({ data: [], error: null }),
+        normalIds.length
+            ? supabase.from("orders").select("*").in("collectible_id", normalIds)
+            : Promise.resolve({ data: [], error: null }),
+    ]);
+
+
+
+    if (lightOrdersRes.error || normalOrdersRes.error) {
+        console.error("Error fetching orders:", lightOrdersRes.error || normalOrdersRes.error);
+        return null;
+    }
+
+    const allOrders = [...(lightOrdersRes.data || []), ...(normalOrdersRes.data || [])];
+
+    return {
+        collectibles: collectibles as Collectible[],
+        orders: allOrders,
+    };
+};
