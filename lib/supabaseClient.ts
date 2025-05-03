@@ -1027,24 +1027,34 @@ export const getBatchListingByArtistId = async (artistId: number): Promise<Batch
         return null
     }
 
-    const { data: collection, error: collectionError } = await supabase
+    console.log("artistId", artistId);
+
+    const { data: collections, error: collectionError } = await supabase
         .from("collections")
         .select("*")
-        .eq("artist", artistId)
-        .single();
+        .eq("artist", artistId);
+
+    console.log("collections", collections);
 
     if (collectionError) {
-        console.error("Error fetching collection:", collectionError);
+        console.error("Error fetching collections:", collectionError);
         return null;
     }
+
+    if (!collections || collections.length === 0) {
+        console.log("No collections found for artist");
+        return [];
+    }
+
+    const collectionIds = collections.map(collection => collection.id);
 
     const { data, error } = await supabase
         .from("batch_listings")
         .select("*")
-        .eq("collection_id", collection.id)
+        .in("collection_id", collectionIds);
 
     if (error) {
-        console.error("Error fetching artist:", error);
+        console.error("Error fetching batch listings:", error);
         return null;
     }
 
