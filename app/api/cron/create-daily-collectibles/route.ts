@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
           custom_email_body: listing.custom_email_body || null,
           gallery_name: listing.gallery_name,
           batch_listing_id: listing.id,
-          day_number: listing.total_collectibles ? listing.total_collectibles + 1 : 1
+          day_number: listing.total_collectibles ? listing.total_collectibles + 1 : 1,
         };
 
         const collectibleToInsert: Collectible & { collection_id: number } = {
@@ -95,13 +95,23 @@ export async function GET(request: NextRequest) {
           collection_id: listing.collection_id
         };
 
-        const { error: nftError } = await supabaseAdmin
+        const { data: newCollectible, error: nftError } = await supabaseAdmin
           .from('collectibles')
           .insert(collectibleToInsert)
-          .select();
+          .select()
+          .single();
 
         if (nftError) {
           console.error('Error creating collectible:', nftError);
+        }
+
+        const { error: chipError } = await supabaseAdmin
+          .from('chip_links')
+          .update({ collectible_id: newCollectible?.id })
+          .select();
+
+        if (chipError) {
+          console.error('Error updating chip links:', chipError);
         }
       }
     }

@@ -13,6 +13,10 @@
     {
       "path": "/api/cron/create-daily-collectibles",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/update-chip-links",
+      "schedule": "0 * * * *"
     }
   ]
 }
