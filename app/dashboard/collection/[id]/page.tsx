@@ -48,6 +48,8 @@ function Component() {
       const collectiblesData = await fetchCollectiblesByCollectionId(
         Number(id)
       );
+      console.log("collectiblesData", collectiblesData);
+
 
       if (!collectiblesData) {
         console.error("Error fetching collectibles: No data returned");
@@ -87,28 +89,32 @@ function Component() {
             Back to Collections
           </Link>
           <div className="flex space-x-2">
-            <Button
-              className="inline-flex items-center"
-              onClick={() => {
-                router.push(
-                  `/dashboard/collection/${collection.id}/new-batch-listing`
-                );
-              }}
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add New Batch Listing
-            </Button>
-            <Button
-              className="inline-flex items-center"
-              onClick={() => {
-                router.push(
-                  `/dashboard/collection/${collection.id}/new-collectible`
-                );
-              }}
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add New Collectible
-            </Button>
+            {collectibles.length === 0 && (
+              <Button
+                className="inline-flex items-center"
+                onClick={() => {
+                  router.push(
+                    `/dashboard/collection/${collection.id}/new-batch-listing`
+                  );
+                }}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add New Batch Listing
+              </Button>
+            )}
+            {collectibles && typeof collectibles[0]?.batch_listing_id !== "number" && (
+              <Button
+                className="inline-flex items-center"
+                onClick={() => {
+                  router.push(
+                    `/dashboard/collection/${collection.id}/new-collectible`
+                  );
+                }}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add New Collectible
+              </Button>
+            )}
           </div>
         </div>
         <Card className="mb-8 bg-white shadow-lg">
