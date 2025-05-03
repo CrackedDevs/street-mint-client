@@ -152,6 +152,7 @@ function CreateBatchListingPage() {
     batch_end_date: "",
     batch_hour: 0,
     collection_id: Number(collectionId),
+    chip_link_id: null,
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -433,6 +434,7 @@ function CreateBatchListingPage() {
         stripe_price_id: stripePriceId || "",
         batch_start_date: formatDate(`${batchListing.batch_start_date}T00:00`),
         batch_end_date: formatDate(`${batchListing.batch_end_date}T00:00`),
+        chip_link_id: selectedChipIds[0],
       };
 
       const createdBatchListing = await createBatchListing(
