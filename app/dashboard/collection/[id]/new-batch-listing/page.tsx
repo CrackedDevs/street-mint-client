@@ -152,7 +152,7 @@ function CreateBatchListingPage() {
     batch_end_date: "",
     batch_hour: 0,
     collection_id: Number(collectionId),
-    chip_link_id: null,
+    chip_link_id: 0,
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);

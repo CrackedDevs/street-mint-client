@@ -17,8 +17,10 @@ import { Badge as BadgeIcon } from "lucide-react";
 import {
   Collection,
   Collectible,
+  BatchListing,
   getCollectionById,
   fetchCollectiblesByCollectionId,
+  supabase,
 } from "@/lib/supabaseClient";
 import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -29,11 +31,27 @@ import { TimeService } from "@/lib/services/timeService";
 
 type CollectionWithIds = Omit<Collection, "collectibles">;
 
+// Function to fetch batch listings by collection ID
+const fetchBatchListingsByCollectionId = async (collectionId: number): Promise<BatchListing[] | null> => {
+  const { data, error } = await supabase
+    .from("batch_listings")
+    .select("*")
+    .eq("collection_id", collectionId);
+
+  if (error) {
+    console.error("Error fetching batch listings:", error);
+    return null;
+  }
+
+  return data as BatchListing[];
+};
+
 function Component() {
   const { id } = useParams();
   const router = useRouter();
   const [collection, setCollection] = useState<CollectionWithIds | null>(null);
   const [collectibles, setCollectibles] = useState<Collectible[]>([]);
+  const [batchListings, setBatchListings] = useState<BatchListing[] | null>(null);
 
   useEffect(() => {
     async function fetchCollectionAndCollectibles() {
@@ -55,6 +73,10 @@ function Component() {
       } else {
         setCollectibles(collectiblesData as Collectible[]);
       }
+
+      // Fetch batch listings for this collection
+      const batchListingsData = await fetchBatchListingsByCollectionId(Number(id));
+      setBatchListings(batchListingsData);
     }
     fetchCollectionAndCollectibles();
   }, [id]);
@@ -75,6 +97,8 @@ function Component() {
     );
   }
 
+  const hasBatchListings = batchListings && batchListings.length > 0;
+
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -86,30 +110,32 @@ function Component() {
             <ChevronLeft className="mr-1 h-4 w-4" />
             Back to Collections
           </Link>
-          <div className="flex space-x-2">
-            <Button
-              className="inline-flex items-center"
-              onClick={() => {
-                router.push(
-                  `/dashboard/collection/${collection.id}/new-batch-listing`
-                );
-              }}
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add New Batch Listing
-            </Button>
-            <Button
-              className="inline-flex items-center"
-              onClick={() => {
-                router.push(
-                  `/dashboard/collection/${collection.id}/new-collectible`
-                );
-              }}
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add New Collectible
-            </Button>
-          </div>
+          {!hasBatchListings && (
+            <div className="flex space-x-2">
+              <Button
+                className="inline-flex items-center"
+                onClick={() => {
+                  router.push(
+                    `/dashboard/collection/${collection.id}/new-batch-listing`
+                  );
+                }}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add New Batch Listing
+              </Button>
+              <Button
+                className="inline-flex items-center"
+                onClick={() => {
+                  router.push(
+                    `/dashboard/collection/${collection.id}/new-collectible`
+                  );
+                }}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add New Collectible
+              </Button>
+            </div>
+          )}
         </div>
         <Card className="mb-8 bg-white shadow-lg">
           <CardHeader>
@@ -119,6 +145,149 @@ function Component() {
             <p className="text-lg text-gray-600">{collection.description}</p>
           </CardHeader>
         </Card>
+
+        {hasBatchListings && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Batch Listings</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {batchListings.map((batchListing) => (
+                <Card 
+                  key={batchListing.id}
+                  className="overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col"
+                >
+                  <CardContent className="flex pt-5 w-full h-full justify-center flex-col">
+                    <div className="relative">
+                      {batchListing.primary_media_type === "video" ? (
+                        <video
+                          src={batchListing.primary_image_url}
+                          className="object-contain w-full h-full object-center items-center"
+                          autoPlay
+                          loop
+                          muted
+                        />
+                      ) : batchListing.primary_media_type === "audio" ? (
+                        <audio
+                          src={batchListing.primary_image_url}
+                          controls
+                          loop
+                          controlsList="nodownload"
+                        />
+                      ) : (
+                        <Image
+                          width={300}
+                          height={300}
+                          src={batchListing.primary_image_url}
+                          alt={batchListing.name}
+                          className="object-contain w-full h-full object-center items-center"
+                        />
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="text-xl font-semibold mb-2 text-gray-900">
+                        {batchListing.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        {batchListing.description}
+                      </p>
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="secondary"
+                            className="text-xs font-semibold"
+                          >
+                            {batchListing.quantity_type === "limited"
+                              ? `Limited (${batchListing.quantity})`
+                              : batchListing.quantity_type === "single"
+                                ? "1 of 1"
+                                : "Open Edition"}
+                          </Badge>
+                          <Badge
+                            variant="secondary"
+                            className="text-xs font-semibold"
+                          >
+                            {batchListing.is_light_version === true
+                              ? "Light"
+                              : "Standard"}
+                          </Badge>
+                        </div>
+                        <span className="text-lg font-bold text-gray-900">
+                          {batchListing.price_usd > 0
+                            ? `$${batchListing.price_usd}`
+                            : "Free"}
+                        </span>
+                      </div>
+                      <div className="space-y-2 mt-4">
+                        <div className="flex items-center text-sm text-blue-600">
+                          <MapPin className="mr-2 h-4 w-4" />
+                          <a
+                            href={batchListing.location ?? ""}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {(batchListing.location && "View Location") ||
+                              "Location not specified"}
+                          </a>
+                        </div>
+                        {batchListing.location_note && (
+                          <p className="text-sm text-gray-600 ml-6">
+                            {batchListing.location_note}
+                          </p>
+                        )}
+                        <div className="flex items-center text-sm text-gray-600">
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          <span>
+                            Collectible Name:{" "}
+                            {batchListing.collectible_name}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <BadgeIcon className="mr-2 h-4 w-4" />
+                          <span>Batch Listing ID: {batchListing.id}</span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          <span>
+                            Batch Start:{" "}
+                            {TimeService.formatDate(batchListing.batch_start_date)}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          <span>
+                            Batch End:{" "}
+                            {TimeService.formatDate(batchListing.batch_end_date)}
+                          </span>
+                        </div>
+                        {batchListing.batch_hour !== null && (
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Calendar className="mr-2 h-4 w-4" />
+                            <span>Batch Hour: {batchListing.batch_hour}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                  <div className="p-4 bg-gray-50 border-t border-gray-200">
+                    <Button
+                      onClick={() =>
+                        router.push(
+                          `/dashboard/collection/${collection.id}/edit-batch-listing/${batchListing.id}`
+                        )
+                      }
+                      variant="ghost"
+                      className="w-full text-sm text-gray-600 hover:text-gray-900 flex items-center justify-center"
+                    >
+                      Edit Batch Listing
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Collectibles</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {collectibles.map((collectible) => (
             <Card
