@@ -78,7 +78,10 @@ export default function BatchPage() {
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-start py-10 px-4 bg-gray-200">
+    <div 
+      className="w-full min-h-screen flex flex-col items-center justify-start py-10 px-4"
+      style={{ backgroundColor: batchListing?.bg_color || 'white' }}
+    >
       {isLoading ? (
         <div className="flex flex-col items-center justify-center h-64">
           <div className="w-12 h-12 border-4 border-gray-400 border-t-[#2d3648] rounded-full animate-spin"></div>
@@ -121,7 +124,7 @@ export default function BatchPage() {
 
           {/* Loyalty Card */}
           <div className="w-full mb-16">
-            <div className="w-full bg-[#e9e5dc] p-6 rounded">
+            <div className="w-full bg-[#e9e5dc] p-6 pb-12 rounded-lg">
               <h2 className="text-2xl font-bold mb-12 mt-4 text-center">LOYALTY CARD</h2>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
