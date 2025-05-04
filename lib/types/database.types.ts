@@ -92,6 +92,7 @@ export type Database = {
           batch_end_date: string | null
           batch_hour: number | null
           batch_start_date: string | null
+          bg_color: string | null
           chain: string | null
           chip_link_id: number
           collectible_description: string
@@ -122,6 +123,7 @@ export type Database = {
           is_video: boolean | null
           location: string | null
           location_note: string | null
+          logo_image: string | null
           metadata_uri: string | null
           name: string | null
           nfc_public_key: string | null
@@ -141,6 +143,7 @@ export type Database = {
           batch_end_date?: string | null
           batch_hour?: number | null
           batch_start_date?: string | null
+          bg_color?: string | null
           chain?: string | null
           chip_link_id: number
           collectible_description: string
@@ -171,6 +174,7 @@ export type Database = {
           is_video?: boolean | null
           location?: string | null
           location_note?: string | null
+          logo_image?: string | null
           metadata_uri?: string | null
           name?: string | null
           nfc_public_key?: string | null
@@ -190,6 +194,7 @@ export type Database = {
           batch_end_date?: string | null
           batch_hour?: number | null
           batch_start_date?: string | null
+          bg_color?: string | null
           chain?: string | null
           chip_link_id?: number
           collectible_description?: string
@@ -220,6 +225,7 @@ export type Database = {
           is_video?: boolean | null
           location?: string | null
           location_note?: string | null
+          logo_image?: string | null
           metadata_uri?: string | null
           name?: string | null
           nfc_public_key?: string | null

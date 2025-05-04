@@ -33,7 +33,8 @@ import {
   getBatchListingById,
   QuantityType,
   Sponsor,
-  updateBatchListing
+  updateBatchListing,
+  uploadFileToPinata
 } from "@/lib/supabaseClient";
 import { NumericUUID } from "@/lib/utils";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -70,6 +71,7 @@ function CreateBatchListingPage() {
   const { userProfile } = useUserProfile();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [newCtaLogoImage, setNewCtaLogoImage] = useState<File | null>(null);
+  const [logoImage, setLogoImage] = useState<File | null>(null);
 
   const [batchListing, setBatchListing] = useState<BatchListing>({
     id: NumericUUID(),
@@ -115,6 +117,8 @@ function CreateBatchListingPage() {
     collection_id: Number(collectionId),
     gallery_name: null,
     chip_link_id: 0,
+    logo_image: null,
+    bg_color: null,
   });
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [isFreeMint, setIsFreeMint] = useState(false);
@@ -261,6 +265,21 @@ function CreateBatchListingPage() {
     }
   };
 
+  const handleLogoImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: "Error",
+          description: "File size exceeds 10MB limit.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setLogoImage(file);
+    }
+  };
+
   const handleAddCreator = () => {
     const newCreator: CreatorRoyalty = {
       creator_wallet_address: "",
@@ -364,12 +383,19 @@ function CreateBatchListingPage() {
         );
       }
 
+      // Upload logo image if a new one was selected
+      let logoImageUrl = batchListing.logo_image;
+      if (logoImage) {
+        logoImageUrl = await uploadFileToPinata(logoImage);
+      }
+
       const newBatchListing: BatchListing = {
         ...batchListing,
         primary_image_url: batchListing.primary_image_url,
         gallery_urls: batchListing.gallery_urls,
         price_usd: isFreeMint ? 0 : batchListing.price_usd,
         cta_logo_url: batchListing.cta_logo_url,
+        logo_image: logoImageUrl,
         stripe_price_id: stripePriceId || "",
         batch_start_date: batchStartDate,
         batch_end_date: batchEndDate,
@@ -1338,6 +1364,88 @@ function CreateBatchListingPage() {
                       </div>
                     </CardContent>
                   </Card>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="logo-image"
+                    className="text-lg font-semibold"
+                  >
+                    Logo Image
+                  </Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Upload a logo image (Max size: 10MB)
+                  </p>
+                  {(logoImage || batchListing.logo_image) && (
+                    <div className="mb-2">
+                      <p className="text-sm text-muted-foreground">
+                        {logoImage ? "New logo preview:" : "Current logo:"}
+                      </p>
+                      <div className="relative h-20 w-20 overflow-hidden rounded-md border border-input">
+                        <Image
+                          src={logoImage ? URL.createObjectURL(logoImage) : batchListing.logo_image || ""}
+                          alt="Logo"
+                          width={80}
+                          height={80}
+                          className="object-cover"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <div className="relative">
+                    <Input
+                      id="logo-image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoImageChange}
+                      className="sr-only"
+                    />
+                    <Label
+                      htmlFor="logo-image"
+                      className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/50 transition-colors"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <UploadIcon className="w-6 h-6 text-muted-foreground" />
+                        <span className="text-base font-medium text-muted-foreground">
+                          {logoImage
+                            ? logoImage.name
+                            : "Choose logo file"}
+                        </span>
+                      </div>
+                    </Label>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="bg-color"
+                    className="text-lg font-semibold"
+                  >
+                    Background Color
+                  </Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      id="bg-color"
+                      type="color"
+                      value={batchListing.bg_color || "#ffffff"}
+                      onChange={(e) =>
+                        handleBatchListingChange("bg_color", e.target.value)
+                      }
+                      className="w-16 h-10 p-1 rounded cursor-pointer"
+                    />
+                    <Input
+                      type="text"
+                      value={batchListing.bg_color || "#ffffff"}
+                      onChange={(e) =>
+                        handleBatchListingChange("bg_color", e.target.value)
+                      }
+                      placeholder="#ffffff"
+                      className="flex-grow"
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Choose a background color for your collectible. Remember, the text color is black.
+                  </p>
                 </div>
               </div>
 

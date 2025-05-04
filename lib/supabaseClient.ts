@@ -120,6 +120,8 @@ export type BatchListing = {
     gallery_name: string | null;
     collection_id: number;
     chip_link_id: number;
+    logo_image: string | null;
+    bg_color: string | null;
 };
 
 export interface Order {

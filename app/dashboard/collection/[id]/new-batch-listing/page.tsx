@@ -75,6 +75,7 @@ function CreateBatchListingPage() {
   const { userProfile } = useUserProfile();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [newCtaLogoImage, setNewCtaLogoImage] = useState<File | null>(null);
+  const [logoImage, setLogoImage] = useState<File | null>(null);
   const [availableChips, setAvailableChips] = useState<
     Array<{ id: number; chip_id: string; active: boolean }>
   >([]);
@@ -153,6 +154,8 @@ function CreateBatchListingPage() {
     batch_hour: 0,
     collection_id: Number(collectionId),
     chip_link_id: 0,
+    logo_image: null,
+    bg_color: null,
   });
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -249,6 +252,21 @@ function CreateBatchListingPage() {
       }
       setPrimaryImageLocalFile(file);
       handleBatchListingChange("primary_image_url", URL.createObjectURL(file));
+    }
+  };
+
+  const handleLogoImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: "Error",
+          description: "File size exceeds 10MB limit.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setLogoImage(file);
     }
   };
 
@@ -416,6 +434,10 @@ function CreateBatchListingPage() {
         ? await uploadFileToPinata(newCtaLogoImage)
         : null;
 
+      const uploadedLogoUrl = logoImage
+        ? await uploadFileToPinata(logoImage)
+        : null;
+
       let stripePriceId: string | null = null;
       if (batchListing.enable_card_payments) {
         stripePriceId = await createProduct(
@@ -431,6 +453,7 @@ function CreateBatchListingPage() {
         id: NumericUUID(),
         price_usd: isFreeMint ? 0 : batchListing.price_usd,
         cta_logo_url: uploadedCtaLogoUrl,
+        logo_image: uploadedLogoUrl,
         stripe_price_id: stripePriceId || "",
         batch_start_date: formatDate(`${batchListing.batch_start_date}T00:00`),
         batch_end_date: formatDate(`${batchListing.batch_end_date}T00:00`),
@@ -850,6 +873,72 @@ function CreateBatchListingPage() {
                       </div>
                     </Label>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="logo-image"
+                    className="text-lg font-semibold"
+                  >
+                    Logo Image
+                  </Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Upload a logo image (Max size: 10MB)
+                  </p>
+                  <div className="relative">
+                    <Input
+                      id="logo-image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoImageChange}
+                      className="sr-only"
+                    />
+                    <Label
+                      htmlFor="logo-image"
+                      className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/50 transition-colors"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <UploadIcon className="w-6 h-6 text-muted-foreground" />
+                        <span className="text-base font-medium text-muted-foreground">
+                          {logoImage
+                            ? logoImage.name
+                            : "Choose logo file"}
+                        </span>
+                      </div>
+                    </Label>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="bg-color"
+                    className="text-lg font-semibold"
+                  >
+                    Background Color
+                  </Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      id="bg-color"
+                      type="color"
+                      value={batchListing.bg_color || "#ffffff"}
+                      onChange={(e) =>
+                        handleBatchListingChange("bg_color", e.target.value)
+                      }
+                      className="w-16 h-10 p-1 rounded cursor-pointer"
+                    />
+                    <Input
+                      type="text"
+                      value={batchListing.bg_color || "#ffffff"}
+                      onChange={(e) =>
+                        handleBatchListingChange("bg_color", e.target.value)
+                      }
+                      placeholder="#ffffff"
+                      className="flex-grow"
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Choose a background color for your collectible. Remember, the text color is black.
+                  </p>
                 </div>
 
                 <div className="space-y-2">
