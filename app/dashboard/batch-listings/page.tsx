@@ -24,9 +24,16 @@ import { toast } from '@/hooks/use-toast';
 import { getChipLinksByArtistId } from '@/lib/supabaseAdminClient';
 import { BatchListing, deleteBatchListingById, getBatchListingByArtistId } from '@/lib/supabaseClient';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Copy, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type BatchListingWithMetadata = BatchListing & {
   chip_id: string | null;
@@ -127,6 +134,28 @@ export default function BatchListingPage() {
     }
   }
 
+  const handleCopyStampBookLink = (item: BatchListingWithMetadata) => {
+    try {
+      const baseUrl = item.is_irls ? "https://irls.xyz/batch/" : "https://streetmint.xyz/batch/";
+      const linkToCopy = `${baseUrl}${item.id}`;
+      
+      navigator.clipboard.writeText(linkToCopy);
+      
+      toast({
+        title: "Link Copied",
+        description: "Stamp book link has been copied to clipboard.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error copying link:", error);
+      toast({
+        title: "Error",
+        description: "Failed to copy link. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     fetchCollections();
   }, [connected, publicKey, userProfile]);
@@ -139,7 +168,13 @@ export default function BatchListingPage() {
         </div>
 
         {loading ? (
-          <p>Loading...</p>
+          <div className="w-full space-y-3">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
         ) : error ? (
           <p className="text-red-500">{error}</p>
         ) : (
@@ -185,48 +220,56 @@ export default function BatchListingPage() {
                         {(item.batch_hour !== null && item.batch_hour < 10 ? "0" : "") + item.batch_hour + ":00"}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end items-center space-x-1 sm:space-x-2">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => router.push(`/dashboard/collection/${item.collection_id}/edit-batch-listing/${item.id}`)}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="text-red-500 hover:text-red-600"
-                                onClick={() => setSelectedToDelete(item)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Are you sure?</DialogTitle>
-                              </DialogHeader>
-                              <p>Do you really want to delete batch &quot;{selectedToDelete?.name}&quot;? This action cannot be undone.</p>
-                              <DialogFooter>
-                                <DialogClose asChild>
-                                  <Button variant="ghost">Cancel</Button>
-                                </DialogClose>
-                                <Button
-                                  variant="destructive"
-                                  onClick={() => {
-                                    if (selectedToDelete) {
-                                      handleDeleteBatchListing(selectedToDelete.id);
-                                    }
-                                  }}
-                                >
-                                  Delete
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => router.push(`/dashboard/collection/${item.collection_id}/edit-batch-listing/${item.id}`)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              <span>Edit</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleCopyStampBookLink(item)}>
+                              <Copy className="mr-2 h-4 w-4" />
+                              <span>Copy Stamp Book Link</span>
+                            </DropdownMenuItem>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => {
+                                  e.preventDefault();
+                                  setSelectedToDelete(item);
+                                }}
+                                className="text-red-500 hover:text-red-600 focus:text-red-600">
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  <span>Delete</span>
+                                </DropdownMenuItem>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Are you sure?</DialogTitle>
+                                </DialogHeader>
+                                <p>Do you really want to delete batch &quot;{selectedToDelete?.name}&quot;? This action cannot be undone.</p>
+                                <DialogFooter>
+                                  <DialogClose asChild>
+                                    <Button variant="ghost">Cancel</Button>
+                                  </DialogClose>
+                                  <Button
+                                    variant="destructive"
+                                    onClick={() => {
+                                      if (selectedToDelete) {
+                                        handleDeleteBatchListing(selectedToDelete.id);
+                                      }
+                                    }}
+                                  >
+                                    Delete
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
