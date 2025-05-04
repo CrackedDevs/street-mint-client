@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   BatchListing,
@@ -8,7 +7,7 @@ import {
   getBatchListingById,
   getCollectiblesAndOrdersByBatchListingId,
 } from "@/lib/supabaseClient";
-import { CheckCircle, Circle, Search, XCircle } from "lucide-react";
+import { CheckCircle, Circle, XCircle } from "lucide-react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -22,9 +21,12 @@ export default function BatchPage() {
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [allDays, setAllDays] = useState<Date[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Change logic 
     async function fetchData() {
+      setIsLoading(true);
       const batchListing = await getBatchListingById(Number(batchId));
       setBatchListing(batchListing || null);
 
@@ -50,12 +52,14 @@ export default function BatchPage() {
 
         setAllDays(days);
       }
+      setIsLoading(false);
     }
 
     fetchData();
   }, [batchId, collectibles.length]);
 
   const handleSearch = () => {
+    // Change logic
     const filtered = searchQuery
       ? orders.filter((order) =>
         order.wallet_address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -74,94 +78,110 @@ export default function BatchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4 sm:p-8 w-full">
-      <div className="max-w-7xl mx-auto">
-        <div>
-          <span className="text-xs -mb-4">Batch Listing Name</span>
-          <h1 className="text-3xl font-bold mb-4 flex items-center gap-2">
-            {batchListing?.name}
-          </h1>
+    <div className="w-full min-h-screen flex flex-col items-center justify-start py-10 px-4 bg-gray-200">
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="w-12 h-12 border-4 border-gray-400 border-t-[#2d3648] rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-600">Loading loyalty card...</p>
         </div>
+      ) : (
+        <div className="w-full max-w-4xl flex flex-col items-center text-center">
+          {/* Logo Field */}
+          <div className="mb-8">
+            <Image 
+              src={batchListing?.primary_image_url || "/placeholder.png"}
+              alt="Logo"
+              width={100}
+              height={100}
+              className="mx-auto"
+            />
+          </div>
 
-        <div className="flex gap-2 mb-6">
-          <div className="relative flex-1">
+          {/* Title Field */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold">{batchListing?.name}</h1>
+          </div>
+
+          {/* Description Field */}
+          <div className="mb-10">
+            <p className="text-base">{batchListing?.description}</p>
+          </div>
+
+          {/* Email/Wallet Input */}
+          <div className="w-full mb-12">
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search by wallet address or email"
-              className="pl-10"
+              placeholder="Enter email or wallet"
+              className="w-full border-2 border-black h-12"
+              onBlur={handleSearch}
             />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           </div>
-          <Button onClick={handleSearch}>Search</Button>
-        </div>
 
-        {!hasSearched ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center p-8 rounded-lg">
-            <Search className="h-20 w-20 text-gray-300 mb-4" />
-            <h1 className="text-2xl font-medium text-gray-600 mb-2">No Search Results Yet</h1>
-            <p className="text-gray-500 max-w-md text-lg">
-              Enter a wallet address or email above and click Search to view collected items.
-            </p>
-          </div>
-        ) : (
-          <>
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <CheckCircle className="h-6 w-6" /> Collected Items
-            </h2>
-            <div className="flex justify-center mb-8">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {allDays.map((day, index) => {
-                  // Find collectible for this day
-                  const dayStr = day.toISOString().split('T')[0];
-                  const collectible = collectibles.find(c =>
-                    c.mint_start_date && new Date(c.mint_start_date).toISOString().split('T')[0] === dayStr
-                  );
+          {/* Loyalty Card */}
+          <div className="w-full mb-16">
+            <div className="w-full bg-[#e9e5dc] p-6 rounded">
+              <h2 className="text-2xl font-bold mb-12 mt-4 text-center">LOYALTY CARD</h2>
 
-                  let isCollected = false;
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {allDays.map((day, index) => {
+                    // Find collectible for this day
+                    const dayStr = day.toISOString().split('T')[0];
+                    console.log(dayStr);
+                    const collectible = collectibles.find(c =>
+                      c.mint_start_date && new Date(c.mint_start_date).toISOString().split('T')[0] === dayStr
+                    );
 
-                  if (collectible) {
-                    const order = filteredOrders.find(o => o.collectible_id === collectible.id);
+                    let isCollected = false;
 
-                    if (order && batchListing?.is_light_version) {
-                      isCollected = order.status === "pending" || order.status === "completed";
-                    } else if (order && !batchListing?.is_light_version) {
-                      isCollected = order.status === "completed";
+                    if (collectible) {
+                      const order = filteredOrders.find(o => o.collectible_id === collectible.id);
+
+                      if (order && batchListing?.is_light_version) {
+                        isCollected = order.status === "pending" || order.status === "completed";
+                      } else if (order && !batchListing?.is_light_version) {
+                        isCollected = order.status === "completed";
+                      }
                     }
-                  }
 
-                  const isFutureDate = day > new Date();
+                    const isFutureDate = day > new Date();
 
-                  return (
-                    <div key={index} className="flex flex-col items-center">
-                      <div className="w-32 h-32 rounded-full flex items-center justify-center overflow-hidden border border-gray-300 bg-gray-50">
-                        {isCollected ? (
-                          <Image
-                            src={collectible?.primary_image_url || "/placeholder.png"}
-                            alt={collectible?.name || "Collectible"}
-                            width={128}
-                            height={128}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                            {isFutureDate ? (
-                              <Circle className="h-8 w-8 text-gray-300" />
-                            ) : (
-                              <XCircle className="h-8 w-8 text-gray-300" />
-                            )}
-                          </div>
-                        )}
+                    return (
+                      <div key={index} className="flex flex-col items-center">
+                        <div className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden border border-gray-300 bg-gray-50">
+                          {isCollected ? (
+                            <Image
+                              src={collectible?.primary_image_url || "/placeholder.png"}
+                              alt={collectible?.name || "Collectible"}
+                              width={96}
+                              height={96}
+                              className="object-cover w-full h-full"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                              {isFutureDate ? (
+                                <Circle className="h-8 w-8 text-gray-300" />
+                              ) : (
+                                <XCircle className="h-8 w-8 text-gray-300" />
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-sm text-black font-semibold mt-2">Day {index + 1}</span>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+
+          {/* Congratulations Message */}
+          <div className="text-center mb-8">
+            <p className="text-lg font-medium">Keep collecting to unlock special rewards! Every stamp brings you closer to exclusive benefits.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
