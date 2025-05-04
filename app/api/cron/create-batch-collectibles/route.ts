@@ -7,9 +7,13 @@ export async function GET(request: NextRequest) {
   try {
     const supabaseAdmin = await getSupabaseAdmin();
 
+    const currentDate = new Date();
+
     const { data: batchListings, error: fetchError } = await supabaseAdmin
       .from("batch_listings")
       .select("*")
+      .lte("batch_start_date", currentDate.toISOString())
+      .gte("batch_end_date", currentDate.toISOString());
 
     if (fetchError) {
       console.error("Error fetching batch listings:", fetchError);
@@ -26,16 +30,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Process each batch listing
+
     for (const listing of batchListings) {
       const now = new Date();
       const currentUTCHour = now.getUTCHours();
 
       if (
         listing.batch_hour &&
-        listing.batch_start_date &&
-        new Date(listing.batch_start_date).toISOString() <= now.toISOString() &&
-        new Date(listing.batch_start_date).getUTCHours() === currentUTCHour
+        listing.batch_hour === currentUTCHour
       ) {
         const mintStart = new Date(Date.UTC(
           now.getUTCFullYear(),
@@ -113,6 +115,7 @@ export async function GET(request: NextRequest) {
         const { error: chipError } = await supabaseAdmin
           .from('chip_links')
           .update({ collectible_id: newCollectible?.id })
+          .eq('id', listing.chip_link_id)
           .select();
 
         if (chipError) {

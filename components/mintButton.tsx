@@ -435,7 +435,7 @@ export default function MintButton({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           collectibleId: collectible.id,
-          walletAddress: addressToUse,
+          walletAddress: addressToUse.trim(),
           deviceId: deviceId,
           collectionId: collection.id,
         }),

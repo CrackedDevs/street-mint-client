@@ -93,7 +93,7 @@ export type Database = {
           batch_hour: number | null
           batch_start_date: string | null
           chain: string | null
-          chip_link_id: number | null
+          chip_link_id: number
           collectible_description: string
           collectible_name: string
           collection_id: number
@@ -142,7 +142,7 @@ export type Database = {
           batch_hour?: number | null
           batch_start_date?: string | null
           chain?: string | null
-          chip_link_id?: number | null
+          chip_link_id: number
           collectible_description: string
           collectible_name: string
           collection_id: number
@@ -191,7 +191,7 @@ export type Database = {
           batch_hour?: number | null
           batch_start_date?: string | null
           chain?: string | null
-          chip_link_id?: number | null
+          chip_link_id?: number
           collectible_description?: string
           collectible_name?: string
           collection_id?: number

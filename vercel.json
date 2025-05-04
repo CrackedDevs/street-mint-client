@@ -11,11 +11,7 @@
       "schedule": "* * * * *"
     },
     {
-      "path": "/api/cron/create-daily-collectibles",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/update-chip-links",
+      "path": "/api/cron/create-batch-collectibles",
       "schedule": "0 * * * *"
     }
   ]
