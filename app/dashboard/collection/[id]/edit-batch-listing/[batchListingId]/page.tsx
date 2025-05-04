@@ -114,7 +114,7 @@ function CreateBatchListingPage() {
     batch_hour: 0,
     collection_id: Number(collectionId),
     gallery_name: null,
-    chip_link_id: null,
+    chip_link_id: 0,
   });
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [isFreeMint, setIsFreeMint] = useState(false);
@@ -160,7 +160,8 @@ function CreateBatchListingPage() {
             setBatchListing({
               ...batchListing,
               batch_start_date: startDate,
-              batch_end_date: endDate
+              batch_end_date: endDate,
+              chip_link_id: batchListing.chip_link_id
             });
 
             setIsFreeMint(batchListing.price_usd === 0);
