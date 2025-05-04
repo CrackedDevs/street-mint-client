@@ -740,7 +740,7 @@ function CreateBatchListingPage() {
                     htmlFor="chip-selection"
                     className="text-lg font-semibold"
                   >
-                    Assign NFC Chips
+                    Assign NFC Chips <span className="text-destructive">*</span>
                   </Label>
                   {isLoadingChips ? (
                     <div className="flex items-center space-x-2">
@@ -755,25 +755,14 @@ function CreateBatchListingPage() {
                             key={chip.id}
                             className="flex items-center space-x-2 p-2 hover:bg-primary/5 rounded-md"
                           >
-                            <input
-                              type="checkbox"
+                            <Input
+                              type="radio"
+                              name="nfc-chip"
                               id={`chip-${chip.id}`}
                               checked={selectedChipIds.includes(chip.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedChipIds([
-                                    ...selectedChipIds,
-                                    chip.id,
-                                  ]);
-                                } else {
-                                  setSelectedChipIds(
-                                    selectedChipIds.filter(
-                                      (id) => id !== chip.id
-                                    )
-                                  );
-                                }
-                              }}
+                              onChange={() => setSelectedChipIds([chip.id])}
                               className="h-4 w-4 rounded border-gray-300"
+                              required
                             />
                             <label
                               htmlFor={`chip-${chip.id}`}
@@ -785,12 +774,11 @@ function CreateBatchListingPage() {
                         ))}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Select one or more chips to link to this collectible.
+                        Select one chip to link to this collectible.
                       </p>
                       {selectedChipIds.length > 0 && (
                         <p className="text-sm text-primary">
-                          {selectedChipIds.length} chip
-                          {selectedChipIds.length > 1 ? "s" : ""} selected
+                          1 chip selected
                         </p>
                       )}
                     </div>

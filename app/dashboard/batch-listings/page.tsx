@@ -21,14 +21,19 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
+import { getChipLinksByArtistId } from '@/lib/supabaseAdminClient';
 import { BatchListing, deleteBatchListingById, getBatchListingByArtistId } from '@/lib/supabaseClient';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Pencil, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+type BatchListingWithMetadata = BatchListing & {
+  chip_id: string | null;
+};
+
 export default function BatchListingPage() {
-  const [batchListings, setBatchListings] = useState<BatchListing[]>([]);
+  const [batchListings, setBatchListings] = useState<BatchListingWithMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedToDelete, setSelectedToDelete] = useState<BatchListing | null>(null);
@@ -49,8 +54,20 @@ export default function BatchListingPage() {
 
       if (userProfile && publicKey) {
         const batchListings = await getBatchListingByArtistId(userProfile.id);
-        if (!batchListings) throw new Error("Failed to fetch batch listing data");
-        setBatchListings(batchListings);
+        const chipLinks = await getChipLinksByArtistId(userProfile.id);
+
+        if (!batchListings || !chipLinks) throw new Error("Failed to fetch batch listing data");
+
+
+        const updatedBatchListing = batchListings.map((batchListing) => {
+          const matchingChipLink = chipLinks.find((chipLink) => chipLink.id === batchListing.chip_link_id);
+          return {
+            ...batchListing,
+            chip_id: matchingChipLink ? matchingChipLink.chip_id : null,
+          };
+        });
+
+        setBatchListings(updatedBatchListing);
       }
     } catch (error) {
       console.error("Error in fetchCollections:", error);
@@ -143,6 +160,7 @@ export default function BatchListingPage() {
                     <TableHead>Batch Name</TableHead>
                     <TableHead className="hidden md:table-cell">Description</TableHead>
                     <TableHead className="hidden sm:table-cell">Collectible Name</TableHead>
+                    <TableHead className="hidden sm:table-cell">Chip Id</TableHead>
                     <TableHead className="hidden sm:table-cell">Start Date</TableHead>
                     <TableHead className="hidden sm:table-cell">End Date</TableHead>
                     <TableHead className="hidden md:table-cell">Hour</TableHead>
@@ -156,6 +174,7 @@ export default function BatchListingPage() {
                       <TableCell>{item.name}</TableCell>
                       <TableCell className="hidden md:table-cell max-w-[200px] truncate">{item.description}</TableCell>
                       <TableCell className="hidden sm:table-cell">{item.collectible_name}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{item.chip_id}</TableCell>
                       <TableCell className="hidden sm:table-cell">
                         {item.batch_start_date ? new Date(item.batch_start_date).toLocaleDateString("en-GB") : "N/A"}
                       </TableCell>
@@ -180,7 +199,7 @@ export default function BatchListingPage() {
                                 size="icon"
                                 variant="ghost"
                                 className="text-red-500 hover:text-red-600"
-                                onClick={() => setSelectedToDelete(item)} // Set the selected batch to delete
+                                onClick={() => setSelectedToDelete(item)}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
