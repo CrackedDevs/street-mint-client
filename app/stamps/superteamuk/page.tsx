@@ -66,10 +66,8 @@ export default function BatchPage() {
     const filtered = searchQuery
       ? orders.filter(
           (order) =>
-            order.wallet_address
-              ?.toLowerCase()
-              .includes(searchQuery.toLowerCase()) ||
-            order.email?.toLowerCase().includes(searchQuery.toLowerCase())
+            order.wallet_address?.toLowerCase() === searchQuery.toLowerCase() ||
+            order.email?.toLowerCase() === searchQuery.toLowerCase()
         )
       : [];
 
