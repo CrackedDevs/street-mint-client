@@ -10,7 +10,7 @@ import {
 import { CheckCircle, Circle, XCircle } from "lucide-react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export default function BatchPage() {
   const { id: batchId } = useParams();
@@ -24,13 +24,15 @@ export default function BatchPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Change logic 
+    // Change logic
     async function fetchData() {
       setIsLoading(true);
       const batchListing = await getBatchListingById(Number(batchId));
       setBatchListing(batchListing || null);
 
-      const result = await getCollectiblesAndOrdersByBatchListingId(Number(batchId));
+      const result = await getCollectiblesAndOrdersByBatchListingId(
+        Number(batchId)
+      );
       if (result) {
         setCollectibles(result.collectibles || []);
         setOrders(result.orders || []);
@@ -58,29 +60,48 @@ export default function BatchPage() {
     fetchData();
   }, [batchId, collectibles.length]);
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     // Change logic
     const filtered = searchQuery
-      ? orders.filter((order) =>
-        order.wallet_address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.email?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      ? orders.filter(
+          (order) =>
+            order.wallet_address
+              ?.toLowerCase()
+              .includes(searchQuery.toLowerCase()) ||
+            order.email?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
       : [];
 
     setFilteredOrders(filtered);
     setHasSearched(true);
-  };
+  }, [searchQuery, orders]);
+
+  // Debounced search effect
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (searchQuery) {
+        handleSearch();
+      } else {
+        setFilteredOrders([]);
+        setHasSearched(false);
+      }
+    }, 2000);
+
+    return () => {
+      clearTimeout(debounceTimer);
+    };
+  }, [searchQuery, handleSearch]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSearch();
     }
   };
 
   return (
-    <div 
+    <div
       className="w-full min-h-screen flex flex-col items-center justify-start py-10 px-4"
-      style={{ backgroundColor: batchListing?.bg_color || 'white' }}
+      style={{ backgroundColor: batchListing?.bg_color || "white" }}
     >
       {isLoading ? (
         <div className="flex flex-col items-center justify-center h-64">
@@ -91,7 +112,7 @@ export default function BatchPage() {
         <div className="w-full max-w-4xl flex flex-col items-center text-center">
           {/* Logo Field */}
           <div className="mb-8">
-            <Image 
+            <Image
               src={batchListing?.primary_image_url || "/placeholder.png"}
               alt="Logo"
               width={100}
@@ -118,70 +139,87 @@ export default function BatchPage() {
               onKeyDown={handleKeyDown}
               placeholder="Enter email or wallet"
               className="w-full border-2 border-black h-12"
-              onBlur={handleSearch}
             />
           </div>
 
           {/* Loyalty Card */}
           <div className="w-full mb-16">
             <div className="w-full bg-[#e9e5dc] p-6 pb-12 rounded-lg">
-              <h2 className="text-2xl font-bold mb-12 mt-4 text-center">LOYALTY CARD</h2>
+              <h2 className="text-2xl font-bold mb-12 mt-4 text-center">
+                LOYALTY CARD
+              </h2>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {allDays.map((day, index) => {
-                    // Find collectible for this day
-                    const dayStr = day.toISOString().split('T')[0];
-                    console.log(dayStr);
-                    const collectible = collectibles.find(c =>
-                      c.mint_start_date && new Date(c.mint_start_date).toISOString().split('T')[0] === dayStr
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {allDays.map((day, index) => {
+                  // Find collectible for this day
+                  const dayStr = day.toISOString().split("T")[0];
+                  console.log(dayStr);
+                  const collectible = collectibles.find(
+                    (c) =>
+                      c.mint_start_date &&
+                      new Date(c.mint_start_date)
+                        .toISOString()
+                        .split("T")[0] === dayStr
+                  );
+
+                  let isCollected = false;
+
+                  if (collectible) {
+                    const order = filteredOrders.find(
+                      (o) => o.collectible_id === collectible.id
                     );
 
-                    let isCollected = false;
-
-                    if (collectible) {
-                      const order = filteredOrders.find(o => o.collectible_id === collectible.id);
-
-                      if (order && batchListing?.is_light_version) {
-                        isCollected = order.status === "pending" || order.status === "completed";
-                      } else if (order && !batchListing?.is_light_version) {
-                        isCollected = order.status === "completed";
-                      }
+                    if (order && batchListing?.is_light_version) {
+                      isCollected =
+                        order.status === "pending" ||
+                        order.status === "completed";
+                    } else if (order && !batchListing?.is_light_version) {
+                      isCollected = order.status === "completed";
                     }
+                  }
 
-                    const isFutureDate = day > new Date();
+                  const isFutureDate = day > new Date();
 
-                    return (
-                      <div key={index} className="flex flex-col items-center">
-                        <div className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden border border-gray-300 bg-gray-50">
-                          {isCollected ? (
-                            <Image
-                              src={collectible?.primary_image_url || "/placeholder.png"}
-                              alt={collectible?.name || "Collectible"}
-                              width={96}
-                              height={96}
-                              className="object-cover w-full h-full"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                              {isFutureDate ? (
-                                <Circle className="h-8 w-8 text-gray-300" />
-                              ) : (
-                                <XCircle className="h-8 w-8 text-gray-300" />
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        <span className="text-sm text-black font-semibold mt-2">Day {index + 1}</span>
+                  return (
+                    <div key={index} className="flex flex-col items-center">
+                      <div className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden border border-gray-300 bg-gray-50">
+                        {isCollected ? (
+                          <Image
+                            src={
+                              collectible?.primary_image_url ||
+                              "/placeholder.png"
+                            }
+                            alt={collectible?.name || "Collectible"}
+                            width={96}
+                            height={96}
+                            className="object-cover w-full h-full"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                            {isFutureDate ? (
+                              <Circle className="h-8 w-8 text-gray-300" />
+                            ) : (
+                              <XCircle className="h-8 w-8 text-gray-300" />
+                            )}
+                          </div>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
+                      <span className="text-sm text-black font-semibold mt-2">
+                        Day {index + 1}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* Congratulations Message */}
           <div className="text-center mb-8">
-            <p className="text-lg font-medium">Keep collecting to unlock special rewards! Every stamp brings you closer to exclusive benefits.</p>
+            <p className="text-lg font-medium">
+              Keep collecting to unlock special rewards! Every stamp brings you
+              closer to exclusive benefits.
+            </p>
           </div>
         </div>
       )}
