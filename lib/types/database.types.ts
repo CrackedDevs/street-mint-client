@@ -126,6 +126,7 @@ export type Database = {
           location: string | null
           location_note: string | null
           logo_image: string | null
+          loyalty_bg_color: string | null
           metadata_uri: string | null
           name: string | null
           nfc_public_key: string | null
@@ -179,6 +180,7 @@ export type Database = {
           location?: string | null
           location_note?: string | null
           logo_image?: string | null
+          loyalty_bg_color?: string | null
           metadata_uri?: string | null
           name?: string | null
           nfc_public_key?: string | null
@@ -232,6 +234,7 @@ export type Database = {
           location?: string | null
           location_note?: string | null
           logo_image?: string | null
+          loyalty_bg_color?: string | null
           metadata_uri?: string | null
           name?: string | null
           nfc_public_key?: string | null
@@ -726,6 +729,7 @@ export type Database = {
           price_sol: number | null
           price_usd: number | null
           quantity: number | null
+          sol_address: string | null
           status: string | null
           tiplink_url: string | null
           transaction_signature: string | null
@@ -748,6 +752,7 @@ export type Database = {
           price_sol?: number | null
           price_usd?: number | null
           quantity?: number | null
+          sol_address?: string | null
           status?: string | null
           tiplink_url?: string | null
           transaction_signature?: string | null
@@ -770,6 +775,7 @@ export type Database = {
           price_sol?: number | null
           price_usd?: number | null
           quantity?: number | null
+          sol_address?: string | null
           status?: string | null
           tiplink_url?: string | null
           transaction_signature?: string | null

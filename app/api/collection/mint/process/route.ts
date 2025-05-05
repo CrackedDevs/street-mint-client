@@ -355,8 +355,7 @@ export async function POST(req: Request, res: NextApiResponse) {
       .from("orders")
       .update({
         status: "completed",
-        mint_signature: mintResult.signature,
-        wallet_address: resolvedWalletAddress,
+        mint_signature: mintResult.signature
       })
       .eq("id", orderId);
 
