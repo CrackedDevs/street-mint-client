@@ -97,6 +97,8 @@ export type Database = {
           chip_link_id: number
           collectible_description: string
           collectible_name: string
+          collectible_sample_media: string | null
+          collectible_template_media: string | null
           collection_id: number
           created_at: string
           creator_royalty_array: Json | null
@@ -148,6 +150,8 @@ export type Database = {
           chip_link_id: number
           collectible_description: string
           collectible_name: string
+          collectible_sample_media?: string | null
+          collectible_template_media?: string | null
           collection_id: number
           created_at?: string
           creator_royalty_array?: Json | null
@@ -199,6 +203,8 @@ export type Database = {
           chip_link_id?: number
           collectible_description?: string
           collectible_name?: string
+          collectible_sample_media?: string | null
+          collectible_template_media?: string | null
           collection_id?: number
           created_at?: string
           creator_royalty_array?: Json | null
