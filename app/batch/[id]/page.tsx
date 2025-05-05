@@ -9,11 +9,14 @@ import {
 } from "@/lib/supabaseClient";
 import { CheckCircle, Circle, Search, XCircle } from "lucide-react";
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 
 export default function BatchPage() {
   const { id: batchId } = useParams();
+  // const batchId = 7030604016;
+  
+  const searchParams = useSearchParams();
   const [batchListing, setBatchListing] = useState<BatchListing | null>(null);
   const [collectibles, setCollectibles] = useState<Collectible[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -22,6 +25,13 @@ export default function BatchPage() {
   const [hasSearched, setHasSearched] = useState(false);
   const [allDays, setAllDays] = useState<Date[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const query = searchParams.get('search');
+    if (query) {
+      setSearchQuery(query);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     // Change logic
@@ -59,6 +69,13 @@ export default function BatchPage() {
 
     fetchData();
   }, [batchId, collectibles.length]);
+
+  // Auto search if query is provided in URL
+  useEffect(() => {
+    if (searchQuery && orders.length > 0 && !hasSearched) {
+      handleSearch();
+    }
+  }, [searchQuery, orders]);
 
   const handleSearch = useCallback(() => {
     // Change logic

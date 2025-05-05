@@ -1028,6 +1028,21 @@ export default function MintButton({
           VIEW TRANSACTION
         </WhiteBgShimmerButton>
       </Link>
+      
+      {collectible.batch_listing_id && (
+        <Link
+          href={`/batch/${collectible.batch_listing_id}?search=${walletAddress}`}
+          className="w-full"
+          target="_blank"
+        >
+          <WhiteBgShimmerButton
+            borderRadius="6px"
+            className="w-full mb-4 hover:bg-gray-800 h-[44px] text-black rounded font-bold"
+          >
+            VIEW LOYALTY CARD
+          </WhiteBgShimmerButton>
+        </Link>
+      )}
     </div>
   );
 
@@ -1039,6 +1054,20 @@ export default function MintButton({
       >
         ALREADY CLAIMED
       </WhiteBgShimmerButton>
+      
+      {collectible.batch_listing_id && (
+        <Link
+          href={`/batch/${collectible.batch_listing_id}`}
+          className="w-full"
+        >
+          <WhiteBgShimmerButton
+            borderRadius="6px"
+            className="w-full mb-4 hover:bg-gray-800 h-[44px] text-black rounded font-bold"
+          >
+            VIEW LOYALTY CARD
+          </WhiteBgShimmerButton>
+        </Link>
+      )}
     </div>
   );
 

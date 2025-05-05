@@ -5,12 +5,15 @@ interface TipLinkEmailTemplateProps {
   tiplinkUrl: string;
   nftImageUrl: string;
   platform: string;
+  batchUrl?: string;
+  batchName?: string;
 }
 
 export default function TipLinkEmailTemplate({
   tiplinkUrl,
   nftImageUrl,
   platform,
+  batchUrl,
 }: TipLinkEmailTemplateProps) {
   console.log("Platform:", platform);
   if (!platform) {
@@ -108,6 +111,8 @@ export function getEmailTemplateHTML({
   tiplinkUrl,
   nftImageUrl,
   platform,
+  batchUrl,
+  batchName,
 }: TipLinkEmailTemplateProps): string {
   if (!platform) {
     platform = "STREETMINT";
@@ -186,6 +191,15 @@ export function getEmailTemplateHTML({
         >
           ✨ Claim  ✨
         </a>
+        ${batchUrl ? `
+        <a
+          href="${batchUrl}"
+          style="color: #3498db; text-decoration: underline; font-size: 16px; font-style: italic; font-weight: bold;"
+          target="_blank"
+        >
+          Click here to check how many ${batchName} stamps you've collected
+        </a>
+        ` : ''}
         <p>${
           platform === "STREETMINT"
             ? `P.S. Want to learn more about Street Mint and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://streetmint.xyz/faq">https://streetmint.xyz/faq</a>`
