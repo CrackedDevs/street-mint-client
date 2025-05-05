@@ -7,14 +7,14 @@ import {
   getBatchListingById,
   getCollectiblesAndOrdersByBatchListingId,
 } from "@/lib/supabaseClient";
-import { CheckCircle, Circle, XCircle } from "lucide-react";
+import { CheckCircle, Circle, Search, XCircle } from "lucide-react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 
 export default function BatchPage() {
-  //   const { id: batchId } = useParams();
-  const batchId = 7030604016;
+  
+    const batchId = 7030604016;
   const [batchListing, setBatchListing] = useState<BatchListing | null>(null);
   const [collectibles, setCollectibles] = useState<Collectible[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -98,7 +98,10 @@ export default function BatchPage() {
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-start py-10 px-4 bg-[#d9d9d9]">
+    <div
+      className="w-full min-h-screen flex flex-col items-center justify-start py-10 px-4"
+      style={{ backgroundColor: batchListing?.bg_color || "white" }}
+    >
       {isLoading ? (
         <div className="flex flex-col items-center justify-center h-64">
           <div className="w-12 h-12 border-4 border-gray-400 border-t-[#2d3648] rounded-full animate-spin"></div>
@@ -129,21 +132,26 @@ export default function BatchPage() {
 
           {/* Email/Wallet Input */}
           <div className="w-full mb-12">
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Enter email or wallet"
-              className="w-full border-2 border-black h-12"
-            />
+            <div className="relative w-full">
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Enter email or wallet"
+                className="w-full border-2 border-black h-12 pr-12"
+              />
+              <button 
+                onClick={handleSearch}
+                className="absolute right-0 top-0 h-12 px-6 flex items-center justify-center bg-[#2d3648] text-white rounded-r-md"
+              >
+                <Search className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           {/* Loyalty Card */}
           <div className="w-full mb-16">
-            <div
-              className="w-full p-6 pb-12 rounded-lg"
-              style={{ backgroundColor: batchListing?.bg_color || "white" }}
-            >
+            <div className="w-full bg-[#e9e5dc] p-6 pb-12 rounded-lg">
               <h2 className="text-2xl font-bold mb-12 mt-4 text-center">
                 LOYALTY CARD
               </h2>

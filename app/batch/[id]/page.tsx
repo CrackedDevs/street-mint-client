@@ -7,7 +7,7 @@ import {
   getBatchListingById,
   getCollectiblesAndOrdersByBatchListingId,
 } from "@/lib/supabaseClient";
-import { CheckCircle, Circle, XCircle } from "lucide-react";
+import { CheckCircle, Circle, Search, XCircle } from "lucide-react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
@@ -131,13 +131,21 @@ export default function BatchPage() {
 
           {/* Email/Wallet Input */}
           <div className="w-full mb-12">
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Enter email or wallet"
-              className="w-full border-2 border-black h-12"
-            />
+            <div className="relative w-full">
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Enter email or wallet"
+                className="w-full border-2 border-black h-12 pr-12"
+              />
+              <button 
+                onClick={handleSearch}
+                className="absolute right-0 top-0 h-12 px-6 flex items-center justify-center bg-[#2d3648] text-white rounded-r-md"
+              >
+                <Search className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           {/* Loyalty Card */}
