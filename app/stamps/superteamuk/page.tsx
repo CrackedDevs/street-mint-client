@@ -14,7 +14,7 @@ import { useEffect, useState, useCallback } from "react";
 
 export default function BatchPage() {
   //   const { id: batchId } = useParams();
-  const batchId = 3856677461;
+  const batchId = 7030604016;
   const [batchListing, setBatchListing] = useState<BatchListing | null>(null);
   const [collectibles, setCollectibles] = useState<Collectible[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
