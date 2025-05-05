@@ -416,6 +416,14 @@ function CreateBatchListingPage() {
       });
       return;
     }
+    if (selectedChipIds.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select an NFC chip to assign to this collectible.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsSubmitting(true);
     try {
       let primaryImageUrl = "";
@@ -464,42 +472,6 @@ function CreateBatchListingPage() {
         newBatchListing,
         Number(collectionId)
       );
-
-      if (createdBatchListing) {
-        // Update multiple chip links
-        if (selectedChipIds.length > 0) {
-          try {
-            await Promise.all(
-              selectedChipIds.map(async (chipId) => {
-                await updateChipLink(chipId, {
-                  id: chipId,
-                  chip_id:
-                    availableChips.find((chip) => chip.id === chipId)
-                      ?.chip_id || "",
-                  collectible_id: createdBatchListing.id,
-                  active: true,
-                  created_at: new Date().toISOString(),
-                  artists_id: userProfile.id,
-                });
-              })
-            );
-          } catch (error) {
-            console.error("Error updating chip links:", error);
-            toast({
-              title: "Warning",
-              description:
-                "Batch Listing created but some chip links failed. Please try linking them manually.",
-              variant: "destructive",
-            });
-          }
-        }
-
-        setShowSuccessModal(true);
-      } else {
-        throw new Error("Failed to create batch listing");
-      }
-    } catch (error) {
-      console.log(error);
 
       toast({
         title: "Error",
@@ -763,7 +735,7 @@ function CreateBatchListingPage() {
                     htmlFor="chip-selection"
                     className="text-lg font-semibold"
                   >
-                    Assign NFC Chips <span className="text-destructive">*</span>
+                    Assign Chip <span className="text-destructive">*</span>
                   </Label>
                   {isLoadingChips ? (
                     <div className="flex items-center space-x-2">
@@ -797,7 +769,7 @@ function CreateBatchListingPage() {
                         ))}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Select one chip to link to this collectible.
+                        Select one chip to link to this collectible. <span className="text-destructive font-medium">Required</span>
                       </p>
                       {selectedChipIds.length > 0 && (
                         <p className="text-sm text-primary">
@@ -830,6 +802,9 @@ function CreateBatchListingPage() {
                               You don&apos;t have any available chips to assign
                               to this collectible. Please contact an admin to
                               have NFC chips assigned to your account.
+                            </p>
+                            <p className="mt-2 font-medium">
+                              NFC chip assignment is required to create a collectible.
                             </p>
                           </div>
                         </div>
@@ -1694,7 +1669,7 @@ function CreateBatchListingPage() {
               <Button
                 type="submit"
                 className="w-full text-lg h-14 mt-8"
-                disabled={isSubmitting}
+                disabled={isSubmitting || selectedChipIds.length === 0 || availableChips.length === 0}
               >
                 {isSubmitting ? (
                   <div className="flex items-center gap-6 justify-center">
