@@ -112,7 +112,7 @@ export default function BatchPage() {
           {/* Logo Field */}
           <div className="mb-8">
             <Image
-              src={batchListing?.primary_image_url || "/placeholder.png"}
+              src={batchListing?.logo_image || "/placeholder.png"}
               alt="Logo"
               width={100}
               height={100}
