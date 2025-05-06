@@ -121,6 +121,15 @@ export async function POST(req: Request, res: NextApiResponse) {
         app_password = process.env.IRLS_NODEMAILER_APP_PASSWORD!;
       }
 
+      // Get batch URL if the collectible has a batch_id
+      let batchUrl: string | undefined = undefined;
+      let batchName: string | undefined = undefined;
+      if (order.collectibles && order.collectibles.batch_listing_id) {
+        const baseUrl = platform === "STREETMINT" ? "https://streetmint.xyz" : "https://irls.xyz";
+        batchUrl = `${baseUrl}/batch/${order.collectibles.batch_listing_id}?search=${emailAddress}`;
+        batchName = order.collectibles.name;
+      }
+
       const mailOptions = {
         from: `${fromName} <${fromEmail}>`,
         to: emailAddress,
@@ -129,6 +138,8 @@ export async function POST(req: Request, res: NextApiResponse) {
           platform,
           nftImageUrl: collectible.primary_image_url,
           signatureCode,
+          batchUrl,
+          batchName,
         }),
       };
 
