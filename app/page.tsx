@@ -14,6 +14,7 @@ export default function LandingPage() {
   const [collectibles, setCollectibles] = useState<CollectibleDetailed[]>([]);
   const [isIrlsDomain, setIsIrlsDomain] = useState(false);
   const [brandName, setBrandName] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setIsIrlsDomain(window.location.hostname === "www.irls.xyz");
@@ -26,6 +27,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     async function fetchCollectibles() {
+      setIsLoading(true);
       try {
         const response = await fetchAllCollectibles(0, 10);
         if (!response) {
@@ -38,11 +40,20 @@ export default function LandingPage() {
         setCollectibles(newCollectibles);
       } catch (error) {
         console.error("Error in fetchCollections:", error);
+      } finally {
+        setIsLoading(false);
       }
     }
 
     fetchCollectibles();
   }, []);
+
+  // Helper function to render loading state
+  const renderLoading = () => (
+    <div className="flex justify-center items-center py-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+    </div>
+  );
 
   return (
     <div className="bg-white">
@@ -141,99 +152,190 @@ export default function LandingPage() {
             <div className="w-full max-w-[90vw] mx-auto space-y-16 py-8 relative">
               <div className="flex flex-col gap-4">
                 <h1 className="text-2xl font-bold">Live</h1>
-                {collectibles
-                  .filter((collectible) => {
-                    const now = new Date().getTime();
+                {isLoading ? (
+                  renderLoading()
+                ) : (
+                  <>
+                    {collectibles
+                      .filter((collectible) => {
+                        const now = new Date().getTime();
 
-                    if (
-                      !collectible.mint_start_date &&
-                      !collectible.mint_end_date
-                    ) {
-                      return true;
-                    }
+                        if (
+                          !collectible.mint_start_date &&
+                          !collectible.mint_end_date
+                        ) {
+                          return true;
+                        }
 
-                    if (
-                      collectible.mint_start_date &&
-                      !collectible.mint_end_date
-                    ) {
-                      const startDateUTC = new Date(
-                        collectible.mint_start_date
-                      ).getTime();
-                      if (now < startDateUTC) {
-                        return false;
-                      } else {
+                        if (
+                          collectible.mint_start_date &&
+                          !collectible.mint_end_date
+                        ) {
+                          const startDateUTC = new Date(
+                            collectible.mint_start_date
+                          ).getTime();
+                          if (now < startDateUTC) {
+                            return false;
+                          } else {
+                            return true;
+                          }
+                        } else if (
+                          collectible.mint_end_date &&
+                          !collectible.mint_start_date
+                        ) {
+                          const endDateUTC = new Date(
+                            collectible.mint_end_date
+                          ).getTime();
+                          if (now > endDateUTC) {
+                            return false;
+                          } else {
+                            return true;
+                          }
+                        }
+
+                        const startDate = new Date(
+                          collectible.mint_start_date!
+                        ).getTime();
+                        const endDate = new Date(
+                          collectible.mint_end_date!
+                        ).getTime();
+                        return startDate <= now && endDate >= now;
+                      })
+                      .map((collectible, index) => (
+                        <CollectibleMegaCard
+                          key={collectible.id}
+                          collectible={collectible}
+                          index={index}
+                        />
+                      ))}
+                    {collectibles.filter((collectible) => {
+                      const now = new Date().getTime();
+
+                      if (
+                        !collectible.mint_start_date &&
+                        !collectible.mint_end_date
+                      ) {
                         return true;
                       }
-                    } else if (
-                      collectible.mint_end_date &&
-                      !collectible.mint_start_date
-                    ) {
-                      const endDateUTC = new Date(
-                        collectible.mint_end_date
-                      ).getTime();
-                      if (now > endDateUTC) {
-                        return false;
-                      } else {
-                        return true;
-                      }
-                    }
 
-                    const startDate = new Date(
-                      collectible.mint_start_date!
-                    ).getTime();
-                    const endDate = new Date(
-                      collectible.mint_end_date!
-                    ).getTime();
-                    return startDate <= now && endDate >= now;
-                  })
-                  .map((collectible, index) => (
-                    <CollectibleMegaCard
-                      key={collectible.id}
-                      collectible={collectible}
-                      index={index}
-                    />
-                  ))}
+                      if (
+                        collectible.mint_start_date &&
+                        !collectible.mint_end_date
+                      ) {
+                        const startDateUTC = new Date(
+                          collectible.mint_start_date
+                        ).getTime();
+                        if (now < startDateUTC) {
+                          return false;
+                        } else {
+                          return true;
+                        }
+                      } else if (
+                        collectible.mint_end_date &&
+                        !collectible.mint_start_date
+                      ) {
+                        const endDateUTC = new Date(
+                          collectible.mint_end_date
+                        ).getTime();
+                        if (now > endDateUTC) {
+                          return false;
+                        } else {
+                          return true;
+                        }
+                      }
+
+                      const startDate = new Date(
+                        collectible.mint_start_date!
+                      ).getTime();
+                      const endDate = new Date(
+                        collectible.mint_end_date!
+                      ).getTime();
+                      return startDate <= now && endDate >= now;
+                    }).length === 0 && (
+                      <p className="text-gray-600">
+                        No live collectibles, Check back soon!
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
 
               <div className="flex flex-col gap-4">
                 <h1 className="text-2xl font-bold">Upcoming</h1>
-                {collectibles
-                  .filter((collectible) => {
-                    const now = new Date().getTime();
-                    if (!collectible.mint_start_date) {
-                      return false;
-                    }
-                    const startDate = new Date(
-                      collectible.mint_start_date!
-                    ).getTime();
-                    return startDate > now;
-                  })
-                  .map((collectible, index) => (
-                    <CollectibleMegaCard
-                      key={collectible.id}
-                      collectible={collectible}
-                      index={index}
-                    />
-                  ))}
+                {isLoading ? (
+                  renderLoading()
+                ) : (
+                  <>
+                    {collectibles
+                      .filter((collectible) => {
+                        const now = new Date().getTime();
+                        if (!collectible.mint_start_date) {
+                          return false;
+                        }
+                        const startDate = new Date(
+                          collectible.mint_start_date!
+                        ).getTime();
+                        return startDate > now;
+                      })
+                      .map((collectible, index) => (
+                        <CollectibleMegaCard
+                          key={collectible.id}
+                          collectible={collectible}
+                          index={index}
+                        />
+                      ))}
+                    {collectibles
+                      .filter((collectible) => {
+                        const now = new Date().getTime();
+                        if (!collectible.mint_start_date) {
+                          return false;
+                        }
+                        const startDate = new Date(
+                          collectible.mint_start_date!
+                        ).getTime();
+                        return startDate > now;
+                      }).length === 0 && (
+                      <p className="text-gray-600">
+                        No upcoming collectibles, Check back soon!
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
 
               <div className="flex flex-col gap-4">
                 <h1 className="text-2xl font-bold">Ended</h1>
-                {collectibles
-                  .filter((collectible) => {
-                    const now = new Date().getTime();
-                    const endDate = new Date(
-                      collectible.mint_end_date!
-                    ).getTime();
-                    return now > endDate;
-                  })
-                  .map((collectible, index) => (
-                    <CollectibleMegaCard
-                      key={collectible.id}
-                      collectible={collectible}
-                      index={index}
-                    />
-                  ))}
+                {isLoading ? (
+                  renderLoading()
+                ) : (
+                  <>
+                    {collectibles
+                      .filter((collectible) => {
+                        const now = new Date().getTime();
+                        const endDate = new Date(
+                          collectible.mint_end_date!
+                        ).getTime();
+                        return now > endDate;
+                      })
+                      .map((collectible, index) => (
+                        <CollectibleMegaCard
+                          key={collectible.id}
+                          collectible={collectible}
+                          index={index}
+                        />
+                      ))}
+                    {collectibles
+                      .filter((collectible) => {
+                        const now = new Date().getTime();
+                        const endDate = new Date(
+                          collectible.mint_end_date!
+                        ).getTime();
+                        return now > endDate;
+                      }).length === 0 && (
+                      <p className="text-gray-600">No ended collectibles</p>
+                    )}
+                  </>
+                )}
               </div>
 
               <div className="flex justify-center">
