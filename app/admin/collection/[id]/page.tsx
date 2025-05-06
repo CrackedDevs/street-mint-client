@@ -97,22 +97,6 @@ export default async function CollectionDetails({
                       <Badge className="mr-2 h-4 w-4" />
                       <span>Collectible ID: {collectible.id}</span>
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <CpuIcon className="mr-2 h-4 w-4 flex-shrink-0" />
-                      <p className="flex items-center gap-x-1">
-                        Chip Public Key:{" "}
-                        {collectible.nfc_public_key ? (
-                          <CopyableText
-                            displayText={StringService.formatNfcPublicKey(
-                              collectible.nfc_public_key ?? "None Connected 🛑"
-                            )}
-                            copyText={collectible.nfc_public_key ?? "None"}
-                          />
-                        ) : (
-                          "⛔️ None Connected"
-                        )}
-                      </p>
-                    </div>
                     <div className="flex items-center text-sm text-blue-600">
                       <MapPinned className="h-4 w-4 mr-2 flex-shrink-0" />
                       <a
