@@ -107,7 +107,10 @@ export default function CollectionOrders() {
   const [collectible, setCollectible] = useState<Collectible | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+    transaction_signature: false,
+    mint_signature: false,
+  });
   const [rowSelection, setRowSelection] = useState({});
 
   const columns: ColumnDef<Order>[] = [
@@ -462,87 +465,90 @@ export default function CollectionOrders() {
   const animatedFailed = useCountAnimation(failedOrders);
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <Toaster />
 
       {/* Statistics Section */}
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        <div className="p-6 bg-white rounded-xl shadow-lg border border-gray-100 transition-all hover:shadow-xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+        <div className="p-4 md:p-6 bg-white rounded-xl shadow-lg border border-gray-100 transition-all hover:shadow-xl">
           <div className="flex flex-col items-center">
-            <h2 className="text-gray-600 text-lg font-semibold mb-2">
+            <h2 className="text-gray-600 text-base md:text-lg font-semibold mb-2">
               Total Orders
             </h2>
-            <div className="text-4xl font-bold text-gray-800 mb-1">
+            <div className="text-3xl md:text-4xl font-bold text-gray-800 mb-1">
               {animatedTotal}
             </div>
-            <div className="text-sm text-gray-500">All time orders</div>
+            <div className="text-xs md:text-sm text-gray-500">All time orders</div>
           </div>
         </div>
 
-        <div className="p-6 bg-white rounded-xl shadow-lg border border-green-100 transition-all hover:shadow-xl">
+        <div className="p-4 md:p-6 bg-white rounded-xl shadow-lg border border-green-100 transition-all hover:shadow-xl">
           <div className="flex flex-col items-center">
-            <h2 className="text-gray-600 text-lg font-semibold mb-2">
+            <h2 className="text-gray-600 text-base md:text-lg font-semibold mb-2">
               Successful Orders
             </h2>
-            <div className="text-4xl font-bold text-green-600 mb-1">
+            <div className="text-3xl md:text-4xl font-bold text-green-600 mb-1">
               {animatedSuccessful}
             </div>
             <div className="flex items-center space-x-1">
-              <div className="text-sm font-medium text-green-600">
+              <div className="text-xs md:text-sm font-medium text-green-600">
                 {successfulPercentage}%
               </div>
-              <div className="text-sm text-gray-500">success rate</div>
+              <div className="text-xs md:text-sm text-gray-500">success rate</div>
             </div>
           </div>
         </div>
 
-        <div className="p-6 bg-white rounded-xl shadow-lg border border-red-100 transition-all hover:shadow-xl">
+        <div className="p-4 md:p-6 bg-white rounded-xl shadow-lg border border-red-100 transition-all hover:shadow-xl sm:col-span-2 lg:col-span-1">
           <div className="flex flex-col items-center">
-            <h2 className="text-gray-600 text-lg font-semibold mb-2">
+            <h2 className="text-gray-600 text-base md:text-lg font-semibold mb-2">
               Failed Orders
             </h2>
-            <div className="text-4xl font-bold text-red-600 mb-1">
+            <div className="text-3xl md:text-4xl font-bold text-red-600 mb-1">
               {animatedFailed}
             </div>
             <div className="flex items-center space-x-1">
-              <div className="text-sm font-medium text-red-600">
+              <div className="text-xs md:text-sm font-medium text-red-600">
                 {failedPercentage}%
               </div>
-              <div className="text-sm text-gray-500">failure rate</div>
+              <div className="text-xs md:text-sm text-gray-500">failure rate</div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6 gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             onClick={() => router.back()}
             className="flex items-center gap-2"
+            size="sm"
           >
             <ArrowLeft size={16} />
             Back
           </Button>
           <Button
             onClick={() => createAdminLink()}
-            className="flex items-center text-md text-black gap-2 font-semibold bg-gray-100 hover:bg-gray-200"
+            className="flex items-center text-sm md:text-md text-black gap-2 font-semibold bg-gray-100 hover:bg-gray-200"
+            size="sm"
           >
             Create Admin Link
           </Button>
         </div>
 
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-xl md:text-3xl font-bold text-center md:text-right my-2 md:my-0">
           {isLightVersion ? "Light" : ""} Orders for Collectible {collectibleId}
         </h1>
       </div>
-      <div className="flex items-center py-4">
+      
+      <div className="flex flex-col sm:flex-row items-start sm:items-center py-2 md:py-4 gap-2 sm:gap-0">
         <Input
           placeholder="Filter by Order ID..."
           value={(table.getColumn("id")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("id")?.setFilterValue(event.target.value)
           }
-          className="max-w-sm mr-4"
+          className="w-full sm:max-w-sm mb-2 sm:mb-0 sm:mr-4"
         />
         <Input
           placeholder="Filter by Wallet Address..."
@@ -555,11 +561,11 @@ export default function CollectionOrders() {
               .getColumn("wallet_address")
               ?.setFilterValue(event.target.value)
           }
-          className="max-w-sm"
+          className="w-full sm:max-w-sm mb-2 sm:mb-0"
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
+            <Button variant="outline" className="w-full sm:w-auto sm:ml-auto mt-2 sm:mt-0">
               Columns
             </Button>
           </DropdownMenuTrigger>
@@ -584,14 +590,15 @@ export default function CollectionOrders() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md border">
+
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className="whitespace-nowrap">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -612,7 +619,7 @@ export default function CollectionOrders() {
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="whitespace-nowrap">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -634,18 +641,20 @@ export default function CollectionOrders() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
+      <div className="flex flex-col sm:flex-row items-center justify-end space-y-2 sm:space-y-0 sm:space-x-2 py-4">
+        <div className="w-full sm:flex-1 text-xs sm:text-sm text-muted-foreground text-center sm:text-left mb-2 sm:mb-0">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
-        <Button variant="outline" onClick={() => exportToCSV()}>
-          Export to CSV
-        </Button>
-        {/* <Button variant="outline" onClick={exportCtaData}>
-          Export CTA Data
-        </Button> */}
-        <div className="space-x-2 flex items-center">
+        <div className="w-full sm:w-auto flex flex-wrap justify-center sm:justify-end gap-2 mb-2 sm:mb-0">
+          <Button variant="outline" size="sm" onClick={() => exportToCSV()} className="w-full sm:w-auto">
+            Export to CSV
+          </Button>
+          {/* <Button variant="outline" onClick={exportCtaData}>
+            Export CTA Data
+          </Button> */}
+        </div>
+        <div className="w-full sm:w-auto flex items-center justify-center sm:justify-end gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -654,7 +663,7 @@ export default function CollectionOrders() {
           >
             Previous
           </Button>
-          <span className="text-sm">
+          <span className="text-xs sm:text-sm whitespace-nowrap">
             Page {table.getState().pagination.pageIndex + 1} of{" "}
             {table.getPageCount()}
           </span>
