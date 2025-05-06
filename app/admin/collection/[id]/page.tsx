@@ -128,25 +128,6 @@ export default async function CollectionDetails({
                 </div>
               </CardContent>
               <div className="p-4 bg-gray-50 border-t border-gray-200">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full text-sm text-gray-600 hover:text-gray-900 flex items-center justify-center"
-                    >
-                      Update Chip Public Key
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <UpdateNfcModal
-                      collectibleId={String(collectible.id)}
-                      oldNFCPublicKey={collectible.nfc_public_key ?? ""}
-                    />
-                  </DialogContent>
-                </Dialog>
-              </div>
-              <div className="p-4 bg-gray-50 border-t border-gray-200">
                 <Link href={`/admin/collection/${id}/orders/${collectible.id}`}>
                   <Button
                     variant="ghost"
