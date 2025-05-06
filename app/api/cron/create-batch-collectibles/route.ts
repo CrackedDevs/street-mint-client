@@ -36,7 +36,6 @@ export async function GET(request: NextRequest) {
       const currentUTCHour = now.getUTCHours();
 
       if (
-        listing.batch_hour &&
         listing.batch_hour === currentUTCHour
       ) {
         const mintStart = new Date(Date.UTC(

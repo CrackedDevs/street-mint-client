@@ -1064,11 +1064,6 @@ export const getBatchListingByArtistId = async (artistId: number): Promise<Batch
 }
 
 export const getBatchListingById = async (id: number): Promise<BatchListing | null> => {
-    const { user, error: authError } = await getAuthenticatedUser();
-    if (!user || authError) {
-        return null
-    }
-
     const { data, error } = await supabase
         .from("batch_listings")
         .select("*")

@@ -184,7 +184,7 @@ export async function POST(req: Request, res: NextApiResponse) {
 
     const { data: order, error: fetchError } = await supabase
       .from("orders")
-      .select("*, collectibles(name, metadata_uri, creator_royalty_array)")
+      .select("*, collectibles(name, metadata_uri, creator_royalty_array, batch_listing_id)")
       .eq("id", orderId)
       .eq("collectible_id", collectibleId)
       .single();
@@ -355,8 +355,7 @@ export async function POST(req: Request, res: NextApiResponse) {
       .from("orders")
       .update({
         status: "completed",
-        mint_signature: mintResult.signature,
-        wallet_address: resolvedWalletAddress,
+        mint_signature: mintResult.signature
       })
       .eq("id", orderId);
 
@@ -402,6 +401,15 @@ export async function POST(req: Request, res: NextApiResponse) {
           emailSubject = "Congrats! You now own an IRLS Collectible";
         }
 
+        // Get batch URL if the collectible has a batch_id
+        let batchUrl: string | undefined = undefined;
+        let batchName: string | undefined = undefined;
+        if (order.collectibles && order.collectibles.batch_listing_id) {
+          const baseUrl = platform === "STREETMINT" ? "https://streetmint.xyz" : "https://irls.xyz";
+          batchUrl = `${baseUrl}/batch/${order.collectibles.batch_listing_id}?search=${wallet_address}`;
+          batchName = order.collectibles.name;
+        }
+
         var mailOptions = {
           from: `${fromName} <${fromEmail}>`,
           to: wallet_address,
@@ -410,6 +418,8 @@ export async function POST(req: Request, res: NextApiResponse) {
             tiplinkUrl: tiplink_url,
             nftImageUrl,
             platform,
+            batchUrl,
+            batchName,
           }),
         };
 

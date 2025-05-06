@@ -97,6 +97,8 @@ export type Database = {
           chip_link_id: number
           collectible_description: string
           collectible_name: string
+          collectible_sample_media: string | null
+          collectible_template_media: string | null
           collection_id: number
           created_at: string
           creator_royalty_array: Json | null
@@ -124,6 +126,7 @@ export type Database = {
           location: string | null
           location_note: string | null
           logo_image: string | null
+          loyalty_bg_color: string | null
           metadata_uri: string | null
           name: string | null
           nfc_public_key: string | null
@@ -148,6 +151,8 @@ export type Database = {
           chip_link_id: number
           collectible_description: string
           collectible_name: string
+          collectible_sample_media?: string | null
+          collectible_template_media?: string | null
           collection_id: number
           created_at?: string
           creator_royalty_array?: Json | null
@@ -175,6 +180,7 @@ export type Database = {
           location?: string | null
           location_note?: string | null
           logo_image?: string | null
+          loyalty_bg_color?: string | null
           metadata_uri?: string | null
           name?: string | null
           nfc_public_key?: string | null
@@ -199,6 +205,8 @@ export type Database = {
           chip_link_id?: number
           collectible_description?: string
           collectible_name?: string
+          collectible_sample_media?: string | null
+          collectible_template_media?: string | null
           collection_id?: number
           created_at?: string
           creator_royalty_array?: Json | null
@@ -226,6 +234,7 @@ export type Database = {
           location?: string | null
           location_note?: string | null
           logo_image?: string | null
+          loyalty_bg_color?: string | null
           metadata_uri?: string | null
           name?: string | null
           nfc_public_key?: string | null
@@ -720,6 +729,7 @@ export type Database = {
           price_sol: number | null
           price_usd: number | null
           quantity: number | null
+          sol_address: string | null
           status: string | null
           tiplink_url: string | null
           transaction_signature: string | null
@@ -742,6 +752,7 @@ export type Database = {
           price_sol?: number | null
           price_usd?: number | null
           quantity?: number | null
+          sol_address?: string | null
           status?: string | null
           tiplink_url?: string | null
           transaction_signature?: string | null
@@ -764,6 +775,7 @@ export type Database = {
           price_sol?: number | null
           price_usd?: number | null
           quantity?: number | null
+          sol_address?: string | null
           status?: string | null
           tiplink_url?: string | null
           transaction_signature?: string | null

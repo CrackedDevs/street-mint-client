@@ -10,12 +10,11 @@ import {
 import { CheckCircle, Circle, Search, XCircle } from "lucide-react";
 import Image from "next/image";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 
-export default function BatchPage() {
-  const { id: batchId } = useParams();
-  // const batchId = 7030604016;
-  
+function BatchContent() {
+  // const { id: batchId } = useParams();
+  const batchId = 7030604016;
   const searchParams = useSearchParams();
   const [batchListing, setBatchListing] = useState<BatchListing | null>(null);
   const [collectibles, setCollectibles] = useState<Collectible[]>([]);
@@ -247,5 +246,16 @@ export default function BatchPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function BatchPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">
+      <div className="w-12 h-12 border-4 border-gray-400 border-t-[#2d3648] rounded-full animate-spin"></div>
+      <p className="ml-4 text-gray-600">Loading...</p>
+    </div>}>
+      <BatchContent />
+    </Suspense>
   );
 }
