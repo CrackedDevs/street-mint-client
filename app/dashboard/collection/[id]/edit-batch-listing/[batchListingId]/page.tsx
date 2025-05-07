@@ -857,9 +857,9 @@ function CreateBatchListingPage() {
                       htmlFor="batchListing-hour-of-day"
                       className="text-lg font-semibold"
                     >
-                      Batch Start Time <span className="text-destructive">*</span>
+                      Batch Start Hour <span className="text-destructive">*</span>
                     </Label>
-                    <div className="text-sm text-muted-foreground">Mention the timings in UTC format</div>
+                    <div className="text-sm text-muted-foreground">Mention the hour in UTC format</div>
                     <select
                       id="batchListing-hour-of-day"
                       value={batchListing.batch_hour ?? ""}
