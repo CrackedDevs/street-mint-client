@@ -69,7 +69,7 @@ export default function CollectionCard({
                 : `/dashboard/collection/${collection.id}`
             }
           >
-            <Button variant="secondary" size="sm" className="w-full">
+            <Button variant="secondary" size="sm" className="w-full h-10 text-sm">
               View Collection
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
