@@ -97,22 +97,6 @@ export default async function CollectionDetails({
                       <Badge className="mr-2 h-4 w-4" />
                       <span>Collectible ID: {collectible.id}</span>
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <CpuIcon className="mr-2 h-4 w-4 flex-shrink-0" />
-                      <p className="flex items-center gap-x-1">
-                        Chip Public Key:{" "}
-                        {collectible.nfc_public_key ? (
-                          <CopyableText
-                            displayText={StringService.formatNfcPublicKey(
-                              collectible.nfc_public_key ?? "None Connected 🛑"
-                            )}
-                            copyText={collectible.nfc_public_key ?? "None"}
-                          />
-                        ) : (
-                          "⛔️ None Connected"
-                        )}
-                      </p>
-                    </div>
                     <div className="flex items-center text-sm text-blue-600">
                       <MapPinned className="h-4 w-4 mr-2 flex-shrink-0" />
                       <a
@@ -127,25 +111,6 @@ export default async function CollectionDetails({
                   </div>
                 </div>
               </CardContent>
-              <div className="p-4 bg-gray-50 border-t border-gray-200">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full text-sm text-gray-600 hover:text-gray-900 flex items-center justify-center"
-                    >
-                      Update Chip Public Key
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <UpdateNfcModal
-                      collectibleId={String(collectible.id)}
-                      oldNFCPublicKey={collectible.nfc_public_key ?? ""}
-                    />
-                  </DialogContent>
-                </Dialog>
-              </div>
               <div className="p-4 bg-gray-50 border-t border-gray-200">
                 <Link href={`/admin/collection/${id}/orders/${collectible.id}`}>
                   <Button

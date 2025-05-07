@@ -119,7 +119,6 @@ export type BatchListing = {
     batch_hour: number | null;
     gallery_name: string | null;
     collection_id: number;
-    chip_link_id: number;
     logo_image: string | null;
     bg_color: string | null;
 };
@@ -323,10 +322,6 @@ export const createCollectible = async (collectible: Omit<Collectible, 'id'>, co
 
 export const uploadFileToPinata = async (file: File) => {
     try {
-        const { user, error: authError } = await getAuthenticatedUser();
-        if (!user || authError) {
-            return null;
-        }
         const fileName = `${Date.now()}-${file.name}`;
         const uploadData = await pinata.upload.file(file, { metadata: { name: fileName } }).key(process.env.NEXT_PUBLIC_PINATA_JWT!)
         const url = await pinata.gateways.convert(uploadData.IpfsHash)
@@ -931,63 +926,6 @@ export type Sponsor = {
     created_at: string;
 };
 
-export const createBatchListing = async (batchListing: Omit<BatchListing, 'id'>, collectionId: number): Promise<BatchListing | null> => {
-    const nftMetadata = {
-        name: batchListing.name,
-        description: batchListing.description,
-        image: batchListing.primary_image_url,
-        external_url: "https://streetmint.xyz/",
-        properties: {
-            files: [
-                {
-                    uri: batchListing.primary_image_url,
-                    type: "image/jpg"
-                },
-                ...batchListing.gallery_urls.map(url => ({
-                    uri: url,
-                    type: "image/jpg"
-                }))
-            ],
-            category: "image"
-        }
-    };
-
-    const nftMetadataFileName = `${Date.now()}-${batchListing.name}-metadata.json`;
-
-    const nftMetadataFile = new File([JSON.stringify(nftMetadata)], nftMetadataFileName, {
-        type: "application/json",
-    });
-
-    const metadataUrl = await uploadFileToPinata(nftMetadataFile);
-
-    if (!metadataUrl) {
-        console.error('Error uploading NFT metadata to Pinata');
-        return null;
-    }
-
-    const batchListingToInsert = {
-        ...batchListing,
-        collection_id: collectionId,
-        metadata_uri: metadataUrl
-    };
-
-    const { data: insertedBatchListing, error: nftError } = await supabase
-        .from('batch_listings')
-        .insert(batchListingToInsert)
-        .select();
-
-    if (nftError) {
-        console.error('Error creating collectible:', nftError);
-        return null;
-    }
-
-
-    if (insertedBatchListing && insertedBatchListing[0]) {
-        return insertedBatchListing[0] as BatchListing;
-    }
-    return null;
-};
-
 export const updateBatchListing = async (batchListing: BatchListing): Promise<{ success: boolean; error: Error | null }> => {
     const { user, error: authError } = await getAuthenticatedUser();
     if (!user || authError) {
@@ -1078,6 +1016,21 @@ export const getBatchListingById = async (id: number): Promise<BatchListing | nu
     return data as BatchListing;
 }
 
+export const getCollectibleById = async (id: number): Promise<Collectible | null> => {
+    const { data, error } = await supabase
+        .from("collectibles")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    if (error) {
+        console.error("Error fetching collectible:", error);
+        return null;
+    }
+
+    return data as Collectible;
+}
+
 export const getCollectiblesAndOrdersByBatchListingId = async (
     batchListingId: number
 ) => {
@@ -1144,3 +1097,26 @@ export const getChipsByArtistId = async (artistId: number) => {
 
     return chipLinks;
 }
+
+export const getLatestCollectibleByBatchListingId = async (
+  batchListingId: number
+): Promise<Collectible | null> => {
+  try {
+    const { data, error } = await supabase
+      .from("collectibles")
+      .select("*")
+      .eq("batch_listing_id", batchListingId)
+      .order("day_number", { ascending: false })
+      .limit(1);
+
+    if (error) {
+      console.error("Error fetching latest collectible:", error);
+      return null;
+    }
+
+    return data && data.length > 0 ? data[0] as Collectible : null;
+  } catch (error) {
+    console.error("Error in getLatestCollectibleByBatchListingId:", error);
+    return null;
+  }
+};

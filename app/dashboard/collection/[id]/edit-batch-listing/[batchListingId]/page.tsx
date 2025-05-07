@@ -25,12 +25,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { createProduct } from "@/helpers/stripe";
 import { useToast } from "@/hooks/use-toast";
 import {
-  getSponsorsByArtistId
+  getChipLinksByArtistId,
+  getSponsorsByArtistId,
+  updateChipLink
 } from "@/lib/supabaseAdminClient";
 import {
   BatchListing,
   Brand,
   getBatchListingById,
+  getLatestCollectibleByBatchListingId,
   QuantityType,
   Sponsor,
   updateBatchListing,
@@ -72,6 +75,19 @@ function CreateBatchListingPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [newCtaLogoImage, setNewCtaLogoImage] = useState<File | null>(null);
   const [logoImage, setLogoImage] = useState<File | null>(null);
+  const [availableChips, setAvailableChips] = useState<
+    Array<{
+      id: number;
+      chip_id: string;
+      active: boolean;
+      collectible_id: number | null;
+      batch_listing_id: number | null;
+      created_at: string;
+      artists_id: number | null;
+    }>
+  >([]);
+  const [selectedChipIds, setSelectedChipIds] = useState<number[]>([]);
+  const [isLoadingChips, setIsLoadingChips] = useState(false);
 
   const [batchListing, setBatchListing] = useState<BatchListing>({
     id: NumericUUID(),
@@ -116,7 +132,6 @@ function CreateBatchListingPage() {
     batch_hour: 0,
     collection_id: Number(collectionId),
     gallery_name: null,
-    chip_link_id: 0,
     logo_image: null,
     bg_color: null,
   });
@@ -164,8 +179,7 @@ function CreateBatchListingPage() {
             setBatchListing({
               ...batchListing,
               batch_start_date: startDate,
-              batch_end_date: endDate,
-              chip_link_id: batchListing.chip_link_id
+              batch_end_date: endDate
             });
 
             setIsFreeMint(batchListing.price_usd === 0);
@@ -199,6 +213,51 @@ function CreateBatchListingPage() {
 
     fetchBatchListing();
   }, [userProfile?.id]);
+
+  // Fetch chips for the artist
+  useEffect(() => {
+    const fetchArtistChips = async () => {
+      if (userProfile?.id) {
+        setIsLoadingChips(true);
+        try {
+          const chips = await getChipLinksByArtistId(userProfile.id);
+          if (chips) {
+            const batchListingIdNum = parseInt(batchListingId as string);
+            
+            // Filter chips that are either:
+            // 1. Not assigned to any collectible or batch listing
+            // 2. Assigned to this specific batch listing
+            const availableOrAssignedChips = chips.filter(
+              (chip) => 
+                (!chip.collectible_id && !chip.batch_listing_id) || // Unassigned
+                chip.batch_listing_id === batchListingIdNum // Assigned to this batch
+            );
+            
+            setAvailableChips(availableOrAssignedChips);
+
+            // Set selected chips (only those assigned to this batch listing)
+            const chipsForThisBatch = chips
+              .filter((chip) => chip.batch_listing_id === batchListingIdNum)
+              .map((chip) => chip.id);
+            
+            setSelectedChipIds(chipsForThisBatch);
+          }
+        } catch (error) {
+          console.error("Error fetching artist chips:", error);
+          toast({
+            title: "Error",
+            description:
+              "Failed to load your assigned chips. Please try again.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoadingChips(false);
+        }
+      }
+    };
+
+    fetchArtistChips();
+  }, [userProfile?.id, batchListingId, toast]);
 
   const handleBatchListingChange = (field: keyof BatchListing, value: any) => {
     if (field === "name" && value.length > 32 || field === "collectible_name" && value.length > 32) {
@@ -325,6 +384,16 @@ function CreateBatchListingPage() {
     });
   };
 
+  const toggleChipSelection = (chipId: number) => {
+    setSelectedChipIds((prev) => {
+      if (prev.includes(chipId)) {
+        return prev.filter((id) => id !== chipId);
+      } else {
+        return [...prev, chipId];
+      }
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!publicKey) {
@@ -404,6 +473,69 @@ function CreateBatchListingPage() {
       const updatedBatchListing = await updateBatchListing(newBatchListing);
 
       if (updatedBatchListing) {
+        // Handle chip assignments
+        if (userProfile?.id && batchListingId) {
+          try {
+            // Get the batch listing ID as a number
+            const batchListingIdNum = parseInt(batchListingId as string);
+            
+            // Fetch the latest collectible for this batch listing
+            const latestCollectible = await getLatestCollectibleByBatchListingId(batchListingIdNum);
+            
+            // Get current chip assignments for this batch listing
+            const currentAssignments = availableChips
+              .filter((chip) => chip.batch_listing_id === batchListingIdNum)
+              .map((chip) => chip.id);
+
+            // Find chips to add and remove
+            const chipsToAdd = selectedChipIds.filter(
+              (id) => !currentAssignments.includes(id)
+            );
+            const chipsToRemove = currentAssignments.filter(
+              (id) => !selectedChipIds.includes(id)
+            );
+
+            // Update chip assignments
+            await Promise.all([
+              // Add new assignments
+              ...chipsToAdd.map((chipId) =>
+                updateChipLink(chipId, {
+                  id: chipId,
+                  chip_id:
+                    availableChips.find((chip) => chip.id === chipId)
+                      ?.chip_id || "",
+                  collectible_id: latestCollectible?.id || null,
+                  batch_listing_id: batchListingIdNum,
+                  active: true,
+                  created_at: new Date().toISOString(),
+                  artists_id: userProfile.id,
+                })
+              ),
+              // Remove unselected assignments
+              ...chipsToRemove.map((chipId) =>
+                updateChipLink(chipId, {
+                  id: chipId,
+                  chip_id:
+                    availableChips.find((chip) => chip.id === chipId)
+                      ?.chip_id || "",
+                  collectible_id: null,
+                  batch_listing_id: null,
+                  active: true,
+                  created_at: new Date().toISOString(),
+                  artists_id: userProfile.id,
+                })
+              ),
+            ]);
+          } catch (error) {
+            console.error("Error updating chip assignments:", error);
+            toast({
+              title: "Warning",
+              description:
+                "Batch listing updated but chip assignments may not be complete. Please check them manually.",
+              variant: "destructive",
+            });
+          }
+        }
         setShowSuccessModal(true);
       } else {
         throw new Error("Failed to create batch listing");
@@ -1447,6 +1579,60 @@ function CreateBatchListingPage() {
                     Choose a background color for your collectible. Remember, the text color is black.
                   </p>
                 </div>
+              </div>
+
+              {/* Chip Links Section */}
+              <div className="space-y-6 bg-primary/5 p-6 border-2 border-black rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-lg font-semibold">
+                      Chip Links
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Assign chip links to this batch listing
+                    </p>
+                  </div>
+                </div>
+
+                {isLoadingChips ? (
+                  <div className="flex justify-center py-6">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : availableChips.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground">
+                    No available chips found. You need to create chips first in the Chip Management section.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                    {availableChips.map((chip) => (
+                      <div
+                        key={chip.id}
+                        onClick={() => toggleChipSelection(chip.id)}
+                        className={`cursor-pointer p-3 rounded-md border-2 flex items-center justify-between transition-colors ${
+                          selectedChipIds.includes(chip.id)
+                            ? "border-primary bg-primary/10"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="flex items-center">
+                          <div
+                            className={`w-4 h-4 rounded-full ${
+                              selectedChipIds.includes(chip.id)
+                                ? "bg-primary"
+                                : "border border-gray-400"
+                            }`}
+                          />
+                          <span className="ml-2 font-medium">
+                            {chip.chip_id}
+                          </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(chip.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <Button

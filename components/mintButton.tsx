@@ -1014,21 +1014,6 @@ export default function MintButton({
 
   const renderCompletedMint = () => (
     <div className="flex flex-col items-center my-3 w-full">
-      <Link
-        href={SolanaFMService.getTransaction(
-          transactionSignature || existingOrder.mint_address
-        )}
-        target="_blank"
-        className="w-full"
-      >
-        <WhiteBgShimmerButton
-          borderRadius="6px"
-          className="w-full mb-4 hover:bg-gray-800 h-[44px] text-black rounded font-bold"
-        >
-          VIEW TRANSACTION
-        </WhiteBgShimmerButton>
-      </Link>
-      
       {collectible.batch_listing_id && (
         <Link
           href={`/batch/${collectible.batch_listing_id}?search=${walletAddress}`}
@@ -1043,6 +1028,21 @@ export default function MintButton({
           </WhiteBgShimmerButton>
         </Link>
       )}
+
+      <Link
+        href={SolanaFMService.getTransaction(
+          transactionSignature || existingOrder.mint_address
+        )}
+        target="_blank"
+        className="w-full"
+      >
+        <WhiteBgShimmerButton
+          borderRadius="6px"
+          className="w-full mb-4 hover:bg-gray-800 h-[44px] text-black rounded font-bold"
+        >
+          VIEW TRANSACTION
+        </WhiteBgShimmerButton>
+      </Link>
     </div>
   );
 
@@ -1054,7 +1054,7 @@ export default function MintButton({
       >
         ALREADY CLAIMED
       </WhiteBgShimmerButton>
-      
+
       {collectible.batch_listing_id && (
         <Link
           href={`/batch/${collectible.batch_listing_id}`}

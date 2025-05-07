@@ -4,12 +4,16 @@ interface ClaimEmailTemplateProps {
   platform: string;
   nftImageUrl: string;
   signatureCode: string;
+  batchUrl?: string;
+  batchName?: string;
 }
 
 export default function ClaimEmailTemplate({
   platform,
   nftImageUrl,
   signatureCode,
+  batchUrl,
+  batchName,
 }: ClaimEmailTemplateProps) {
   if (!platform) {
     platform = "STREETMINT";
@@ -44,6 +48,20 @@ export default function ClaimEmailTemplate({
         >
           ✨ Claim ✨
         </a>
+        ${
+          batchUrl
+            ? `
+        <a
+          href="${batchUrl}"
+          style="color: #3498db; text-decoration: underline; font-size: 16px; font-style: italic; font-weight: bold;"
+          target="_blank"
+        >
+          Click here to check how many ${batchName} stamps you've collected
+        </a>
+        `
+            : ""
+        }
+
         <p>${
           platform === "STREETMINT"
             ? `P.S. Want to learn more about Street Mint and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://streetmint.xyz/faq">https://streetmint.xyz/faq</a>`

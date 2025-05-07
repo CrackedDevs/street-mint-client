@@ -1,11 +1,11 @@
 'use server'
 
 import { createClient } from "@supabase/supabase-js";
-import { createFetch, fetchCollectibleById, getCollectionById, getArtistById, Collectible, Sponsor } from "./supabaseClient";
+import { createFetch, fetchCollectibleById, getCollectionById, getArtistById, Collectible, Sponsor, uploadFileToPinata } from "./supabaseClient";
 import { Database } from "./types/database.types";
 import { isSignatureValid } from "./nfcVerificationHellper";
 import Stripe from "stripe";
-
+import { BatchListing } from "./supabaseClient";
 
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -22,6 +22,7 @@ export type ChipLink = {
     id: number;
     chip_id: string;
     collectible_id: number | null;
+    batch_listing_id?: number | null;
     artists_id?: number | null | null;
     active: boolean;
     created_at: string;
@@ -241,6 +242,20 @@ export async function getChipTap(x: string, n: string, e: string, uuid: string):
     return data;
 }
 
+export async function disconnectChipToCollectible(chipId: string) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { error } = await supabaseAdmin
+        .from('chip_links')
+        .update({ collectible_id: null })
+        .eq('chip_id', chipId);
+
+    if (error) {
+        console.error('Error disconnecting chip to collectible:', error);
+        return false;
+    }
+    return true;
+}
+
 export async function getAllChipLinks() {
     console.log("getAllChipLinks");
     const supabaseAdmin = await getSupabaseAdmin();
@@ -426,6 +441,7 @@ export async function createChipLink(chipLink: ChipLinkCreate): Promise<{ succes
         .insert({
             chip_id: chipLink.chip_id,
             collectible_id: chipLink.collectible_id,
+            batch_listing_id: chipLink.batch_listing_id,
             active: chipLink.active,
             artists_id: chipLink.artists_id
         });
@@ -445,6 +461,7 @@ export async function updateChipLink(id: number, chipLink: ChipLink) {
         .update({
             chip_id: chipLink.chip_id,
             collectible_id: chipLink.collectible_id,
+            batch_listing_id: chipLink.batch_listing_id,
             active: chipLink.active,
         })
         .eq('id', id);
@@ -455,6 +472,65 @@ export async function updateChipLink(id: number, chipLink: ChipLink) {
     }
     return data;
 }
+
+export const createCollectible = async (collectible: Omit<Collectible, 'id'>, collectionId: number): Promise<Collectible | null> => {
+    const nftMetadata = {
+        name: collectible.name,
+        description: collectible.description,
+        image: collectible.primary_image_url,
+        external_url: "https://streetmint.xyz/",
+        properties: {
+            files: [
+                {
+                    uri: collectible.primary_image_url,
+                    type: "image/jpg"
+                },
+                ...collectible.gallery_urls.map(url => ({
+                    uri: url,
+                    type: "image/jpg"
+                }))
+            ],
+            category: "image"
+        }
+    };
+
+    const nftMetadataFileName = `${Date.now()}-${collectible.name}-metadata.json`;
+
+    // Create a JSON file from the NFT metadata
+    const nftMetadataFile = new File([JSON.stringify(nftMetadata)], nftMetadataFileName, {
+        type: "application/json",
+    });
+
+    // Upload the JSON file to Pinata
+    const metadataUrl = await uploadFileToPinata(nftMetadataFile);
+
+    if (!metadataUrl) {
+        console.error('Error uploading NFT metadata to Pinata');
+        return null;
+    }
+
+
+    const collectibleToInsert = {
+        ...collectible,
+        collection_id: collectionId,
+        metadata_uri: metadataUrl
+    };
+
+    const { data: insertedCollectible, error: nftError } = await supabaseAdmin
+        .from('collectibles')
+        .insert(collectibleToInsert)
+        .select();
+
+    if (nftError) {
+        console.error('Error creating collectible:', nftError);
+        return null;
+    }
+
+    if (insertedCollectible && insertedCollectible[0]) {
+        return insertedCollectible[0] as Collectible;
+    }
+    return null;
+};
 
 export async function deleteChipLink(id: number) {
     const supabaseAdmin = await getSupabaseAdmin();
@@ -471,11 +547,100 @@ export async function deleteChipLink(id: number) {
     return true;
 }
 
+export const createBatchListing = async (batchListing: Omit<BatchListing, 'id'>, collectionId: number, chipLinks: number[]): Promise<BatchListing | null> => {
+    const nftMetadata = {
+        name: batchListing.name,
+        description: batchListing.description,
+        image: batchListing.primary_image_url,
+        external_url: "https://streetmint.xyz/",
+        properties: {
+            files: [
+                {
+                    uri: batchListing.primary_image_url,
+                    type: "image/jpg"
+                },
+                ...batchListing.gallery_urls.map(url => ({
+                    uri: url,
+                    type: "image/jpg"
+                }))
+            ],
+            category: "image"
+        }
+    };
+
+    const nftMetadataFileName = `${Date.now()}-${batchListing.name}-metadata.json`;
+
+    const nftMetadataFile = new File([JSON.stringify(nftMetadata)], nftMetadataFileName, {
+        type: "application/json",
+    });
+
+    const metadataUrl = await uploadFileToPinata(nftMetadataFile);
+
+    if (!metadataUrl) {
+        console.error('Error uploading NFT metadata to Pinata');
+        return null;
+    }
+
+    const batchListingToInsert = {
+        ...batchListing,
+        collection_id: collectionId,
+        metadata_uri: metadataUrl
+    };
+
+    const { data: insertedBatchListing, error: nftError } = await supabaseAdmin
+        .from('batch_listings')
+        .insert(batchListingToInsert)
+        .select();
+
+    if (nftError) {
+        console.error('Error creating collectible:', nftError);
+        return null;
+    }
+
+    console.log('insertedBatchListing', insertedBatchListing);
+    console.log('chipLinks', chipLinks);
+
+    if (chipLinks.length > 0) {
+        console.log('chipLinks', chipLinks);
+        const { data: insertedChipLinks, error: chipLinksError } = await supabaseAdmin
+            .from('chip_links')
+            .update({ batch_listing_id: insertedBatchListing[0].id })
+            .in('id', chipLinks)
+            .select();
+
+        console.log('insertedChipLinks', insertedChipLinks);
+
+        if (chipLinksError) {
+            console.error('Error updating chip links:', chipLinksError);
+        }
+    }
+
+    if (insertedBatchListing && insertedBatchListing[0]) {
+        return insertedBatchListing[0] as BatchListing;
+    }
+    return null;
+};
+
+export async function disconnectChipFromBatch(chipId: number) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { error } = await supabaseAdmin
+        .from('chip_links')
+        .update({ batch_listing_id: null })
+        .eq('id', chipId);
+
+    if (error) {
+        console.error('Error disconnecting chip from batch:', error);
+        return false;
+    }
+
+    return true;
+}
+
 export async function getChipLinksByArtistId(artistId: number) {
     const supabaseAdmin = await getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
         .from('chip_links')
-        .select(`id, chip_id, collectible_id, active, created_at, artists_id`)
+        .select(`id, chip_id, collectible_id, active, created_at, artists_id, batch_listing_id`)
         .eq('artists_id', artistId)
         .order('created_at', { ascending: false });
     

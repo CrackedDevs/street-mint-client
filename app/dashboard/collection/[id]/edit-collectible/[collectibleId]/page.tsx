@@ -171,12 +171,15 @@ function EditCollectiblePage() {
         try {
           const chips = await getChipLinksByArtistId(userProfile.id);
           if (chips) {
+            // Filter out chips that are already assigned to other collectibles
+            const availableChips = chips.filter((chip) => !chip.collectible_id && !chip.batch_listing_id);
+
             // Get all chips, including those already assigned to other collectibles
-            setAvailableChips(chips);
+            setAvailableChips(availableChips);
 
             // Set selected chips that are already assigned to this collectible
             if (collectible?.id) {
-              const assignedToThisCollectible = chips
+              const assignedToThisCollectible = availableChips
                 .filter((chip) => chip.collectible_id === collectible.id)
                 .map((chip) => chip.id);
 

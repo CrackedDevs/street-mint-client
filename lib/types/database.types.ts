@@ -94,7 +94,6 @@ export type Database = {
           batch_start_date: string | null
           bg_color: string | null
           chain: string | null
-          chip_link_id: number
           collectible_description: string
           collectible_name: string
           collectible_sample_media: string | null
@@ -138,7 +137,7 @@ export type Database = {
           quantity_type: Database["public"]["Enums"]["quantity_type"]
           sponsor_id: number | null
           stripe_price_id: string | null
-          total_collectibles: number | null
+          total_collectibles: number
           whitelist: boolean | null
         }
         Insert: {
@@ -148,7 +147,6 @@ export type Database = {
           batch_start_date?: string | null
           bg_color?: string | null
           chain?: string | null
-          chip_link_id: number
           collectible_description: string
           collectible_name: string
           collectible_sample_media?: string | null
@@ -192,7 +190,7 @@ export type Database = {
           quantity_type: Database["public"]["Enums"]["quantity_type"]
           sponsor_id?: number | null
           stripe_price_id?: string | null
-          total_collectibles?: number | null
+          total_collectibles?: number
           whitelist?: boolean | null
         }
         Update: {
@@ -202,7 +200,6 @@ export type Database = {
           batch_start_date?: string | null
           bg_color?: string | null
           chain?: string | null
-          chip_link_id?: number
           collectible_description?: string
           collectible_name?: string
           collectible_sample_media?: string | null
@@ -246,17 +243,10 @@ export type Database = {
           quantity_type?: Database["public"]["Enums"]["quantity_type"]
           sponsor_id?: number | null
           stripe_price_id?: string | null
-          total_collectibles?: number | null
+          total_collectibles?: number
           whitelist?: boolean | null
         }
         Relationships: [
-          {
-            foreignKeyName: "batch_listings_chip_link_id_fkey"
-            columns: ["chip_link_id"]
-            isOneToOne: false
-            referencedRelation: "chip_links"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "batch_listings_collection_id_fkey"
             columns: ["collection_id"]
@@ -277,6 +267,7 @@ export type Database = {
         Row: {
           active: boolean
           artists_id: number | null
+          batch_listing_id: number | null
           chip_id: string
           collectible_id: number | null
           created_at: string
@@ -285,6 +276,7 @@ export type Database = {
         Insert: {
           active?: boolean
           artists_id?: number | null
+          batch_listing_id?: number | null
           chip_id: string
           collectible_id?: number | null
           created_at?: string
@@ -293,6 +285,7 @@ export type Database = {
         Update: {
           active?: boolean
           artists_id?: number | null
+          batch_listing_id?: number | null
           chip_id?: string
           collectible_id?: number | null
           created_at?: string
@@ -304,6 +297,13 @@ export type Database = {
             columns: ["artists_id"]
             isOneToOne: false
             referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chip_links_batch_listing_id_fkey"
+            columns: ["batch_listing_id"]
+            isOneToOne: false
+            referencedRelation: "batch_listings"
             referencedColumns: ["id"]
           },
           {

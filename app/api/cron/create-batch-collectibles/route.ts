@@ -2,6 +2,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdminClient";
 import { Collectible, QuantityType } from "@/lib/supabaseClient";
 import { NumericUUID } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
+import { createCollectible } from "@/lib/supabaseAdminClient";
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,25 +31,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-
     for (const listing of batchListings) {
       const now = new Date();
       const currentUTCHour = now.getUTCHours();
 
-      if (
-        listing.batch_hour === currentUTCHour
-      ) {
-        const mintStart = new Date(Date.UTC(
-          now.getUTCFullYear(),
-          now.getUTCMonth(),
-          now.getUTCDate(),
-          listing.batch_hour,
-          0,
-          0,
-          0
-        ));
+      if (listing.batch_hour === currentUTCHour) {
+        const mintStart = new Date(
+          Date.UTC(
+            now.getUTCFullYear(),
+            now.getUTCMonth(),
+            now.getUTCDate(),
+            listing.batch_hour,
+            0,
+            0,
+            0
+          )
+        );
 
-        const mintEnd = new Date(mintStart.getTime() + (23 * 60 + 59) * 60 * 1000);
+        const mintEnd = new Date(
+          mintStart.getTime() + (23 * 60 + 59) * 60 * 1000
+        );
 
         const collectible: Collectible = {
           id: listing.id,
@@ -57,7 +59,14 @@ export async function GET(request: NextRequest) {
           primary_image_url: listing.primary_image_url,
           quantity_type: listing.quantity_type as QuantityType,
           quantity: listing.quantity,
-          creator_royalty_array: listing.creator_royalty_array as { creator_wallet_address: string; royalty_percentage: number; name: string; }[] | null ?? null,
+          creator_royalty_array:
+            (listing.creator_royalty_array as
+              | {
+                  creator_wallet_address: string;
+                  royalty_percentage: number;
+                  name: string;
+                }[]
+              | null) ?? null,
           price_usd: listing.price_usd,
           location: listing.location,
           location_note: listing.location_note,
@@ -76,8 +85,8 @@ export async function GET(request: NextRequest) {
           cta_link: listing.cta_link,
           cta_has_email_capture: listing.cta_has_email_capture ? true : false,
           cta_has_text_capture: listing.cta_has_text_capture ? true : false,
-          cta_email_list: listing.cta_email_list as { [key: string]: string; }[],
-          cta_text_list: listing.cta_text_list as { [key: string]: string; }[],
+          cta_email_list: listing.cta_email_list as { [key: string]: string }[],
+          cta_text_list: listing.cta_text_list as { [key: string]: string }[],
           enable_card_payments: listing.enable_card_payments ? true : false,
           only_card_payment: listing.only_card_payment ? true : false,
           stripe_price_id: listing.stripe_price_id ?? undefined,
@@ -90,7 +99,9 @@ export async function GET(request: NextRequest) {
           custom_email_body: listing.custom_email_body || null,
           gallery_name: listing.gallery_name,
           batch_listing_id: listing.id,
-          day_number: listing.total_collectibles ? listing.total_collectibles + 1 : 1,
+          day_number: listing.total_collectibles
+            ? listing.total_collectibles + 1
+            : 1,
         };
 
         const collectibleToInsert: Collectible & { collection_id: number } = {
@@ -98,27 +109,52 @@ export async function GET(request: NextRequest) {
           id: NumericUUID(),
           mint_start_date: mintStart.toISOString(),
           mint_end_date: mintEnd.toISOString(),
-          collection_id: listing.collection_id
+          collection_id: listing.collection_id,
         };
 
-        const { data: newCollectible, error: nftError } = await supabaseAdmin
-          .from('collectibles')
-          .insert(collectibleToInsert)
-          .select()
-          .single();
+        const newCollectible = await createCollectible(
+          collectibleToInsert,
+          listing.collection_id
+        );
 
-        if (nftError) {
-          console.error('Error creating collectible:', nftError);
+        if (!newCollectible) {
+          console.error("Error creating collectible:", newCollectible);
+          continue;
         }
 
-        const { error: chipError } = await supabaseAdmin
+        const { data: chipLinks, error: chipLinksError } = await supabaseAdmin
           .from('chip_links')
-          .update({ collectible_id: newCollectible?.id })
-          .eq('id', listing.chip_link_id)
+          .select('id')
+          .eq('batch_listing_id', listing.id);
+
+        console.log('chipLinks', chipLinks);
+
+        if (chipLinks && Array.isArray(chipLinks) && chipLinks.length > 0) {
+          if (chipLinks.length > 0) {
+            const { error: chipError } = await supabaseAdmin
+              .from('chip_links')
+              .update({ collectible_id: newCollectible?.id })
+              .in('id', chipLinks.map(chip => chip.id))
+              .select();
+    
+            if (chipError) {
+              console.error(`Error updating chip links:`, chipError);
+            }
+          }
+        }
+
+        const { error: updateBatchListingError } = await supabaseAdmin
+          .from("batch_listings")
+          .update({ total_collectibles: listing.total_collectibles + 1 })
+          .eq("id", listing.id)
           .select();
 
-        if (chipError) {
-          console.error('Error updating chip links:', chipError);
+        if (updateBatchListingError) {
+          console.error(
+            "Error updating batch listing:",
+            updateBatchListingError
+          );
+          continue;
         }
       }
     }
@@ -129,6 +165,9 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error("Error in GET /api/cron/create-daily-collectibles:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
