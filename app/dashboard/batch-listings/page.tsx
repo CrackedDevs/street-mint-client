@@ -36,7 +36,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 
 type BatchListingWithMetadata = BatchListing & {
-  chip_id: string | null;
+  chip_links_count: number;
 };
 
 export default function BatchListingPage() {
@@ -67,10 +67,11 @@ export default function BatchListingPage() {
 
 
         const updatedBatchListing = batchListings.map((batchListing) => {
-          const matchingChipLink = chipLinks.find((chipLink) => chipLink.id === batchListing.chip_link_id);
+          const matchingChipLinks = chipLinks.filter((chipLink) => chipLink.batch_listing_id === batchListing.id);
+          console.log('matchingChipLinks', matchingChipLinks);
           return {
             ...batchListing,
-            chip_id: matchingChipLink ? matchingChipLink.chip_id : null,
+            chip_links_count: matchingChipLinks.length,
           };
         });
 
@@ -195,7 +196,7 @@ export default function BatchListingPage() {
                     <TableHead>Batch Name</TableHead>
                     <TableHead className="hidden md:table-cell">Description</TableHead>
                     <TableHead className="hidden sm:table-cell">Collectible Name</TableHead>
-                    <TableHead className="hidden sm:table-cell">Chip Id</TableHead>
+                    <TableHead className="hidden sm:table-cell">Chip Count</TableHead>
                     <TableHead className="hidden sm:table-cell">Start Date</TableHead>
                     <TableHead className="hidden sm:table-cell">End Date</TableHead>
                     <TableHead className="hidden md:table-cell">Hour</TableHead>
@@ -209,7 +210,7 @@ export default function BatchListingPage() {
                       <TableCell>{item.name}</TableCell>
                       <TableCell className="hidden md:table-cell max-w-[200px] truncate">{item.description}</TableCell>
                       <TableCell className="hidden sm:table-cell">{item.collectible_name}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{item.chip_id}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{item.chip_links_count}</TableCell>
                       <TableCell className="hidden sm:table-cell">
                         {item.batch_start_date ? new Date(item.batch_start_date).toLocaleDateString("en-GB") : "N/A"}
                       </TableCell>

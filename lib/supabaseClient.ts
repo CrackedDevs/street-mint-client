@@ -119,7 +119,6 @@ export type BatchListing = {
     batch_hour: number | null;
     gallery_name: string | null;
     collection_id: number;
-    chip_link_id: number;
     logo_image: string | null;
     bg_color: string | null;
 };
@@ -925,63 +924,6 @@ export type Sponsor = {
     img_url: string | null;
     artist_id: number | null;
     created_at: string;
-};
-
-export const createBatchListing = async (batchListing: Omit<BatchListing, 'id'>, collectionId: number): Promise<BatchListing | null> => {
-    const nftMetadata = {
-        name: batchListing.name,
-        description: batchListing.description,
-        image: batchListing.primary_image_url,
-        external_url: "https://streetmint.xyz/",
-        properties: {
-            files: [
-                {
-                    uri: batchListing.primary_image_url,
-                    type: "image/jpg"
-                },
-                ...batchListing.gallery_urls.map(url => ({
-                    uri: url,
-                    type: "image/jpg"
-                }))
-            ],
-            category: "image"
-        }
-    };
-
-    const nftMetadataFileName = `${Date.now()}-${batchListing.name}-metadata.json`;
-
-    const nftMetadataFile = new File([JSON.stringify(nftMetadata)], nftMetadataFileName, {
-        type: "application/json",
-    });
-
-    const metadataUrl = await uploadFileToPinata(nftMetadataFile);
-
-    if (!metadataUrl) {
-        console.error('Error uploading NFT metadata to Pinata');
-        return null;
-    }
-
-    const batchListingToInsert = {
-        ...batchListing,
-        collection_id: collectionId,
-        metadata_uri: metadataUrl
-    };
-
-    const { data: insertedBatchListing, error: nftError } = await supabase
-        .from('batch_listings')
-        .insert(batchListingToInsert)
-        .select();
-
-    if (nftError) {
-        console.error('Error creating collectible:', nftError);
-        return null;
-    }
-
-
-    if (insertedBatchListing && insertedBatchListing[0]) {
-        return insertedBatchListing[0] as BatchListing;
-    }
-    return null;
 };
 
 export const updateBatchListing = async (batchListing: BatchListing): Promise<{ success: boolean; error: Error | null }> => {

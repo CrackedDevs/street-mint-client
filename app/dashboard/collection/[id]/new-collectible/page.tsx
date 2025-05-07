@@ -90,7 +90,7 @@ function CreateCollectiblePage() {
           const chips = await getChipLinksByArtistId(userProfile.id);
           if (chips) {
             // Filter out chips that are already assigned to collectibles
-            const availableChips = chips.filter((chip) => !chip.collectible_id);
+            const availableChips = chips.filter((chip) => !chip.collectible_id && !chip.batch_listing_id);
             setAvailableChips(availableChips);
           }
         } catch (error) {

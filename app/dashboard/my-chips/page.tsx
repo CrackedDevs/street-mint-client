@@ -26,6 +26,7 @@ import {
   deleteScheduledCollectibleChange,
   ScheduledCollectibleChange,
   disconnectChipToCollectible,
+  disconnectChipFromBatch,
 } from "@/lib/supabaseAdminClient";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,7 @@ import { formatDate } from "@/helper/date";
 type ChipLinkWithMetadata = ChipLink & {
   collectibleName?: string;
   collectionId?: number;
+  batch_listing_id?: string | null;
 };
 
 // Type for scheduled changes - using the type from supabaseAdminClient
@@ -92,6 +94,8 @@ function MyChipsPage() {
   );
   // Add state for disconnect confirmation
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+  // Add state for batch disconnect confirmation
+  const [showBatchDisconnectConfirm, setShowBatchDisconnectConfirm] = useState(false);
 
   useEffect(() => {
     async function fetchChipLinks() {
@@ -134,7 +138,12 @@ function MyChipsPage() {
           const enhancedChipLinks = await Promise.all(
             enhancedChipLinksPromises
           );
-          setChipLinks(enhancedChipLinks);
+          // Convert batch_listing_id from number to string or null if undefined
+          const formattedEnhancedChipLinks = enhancedChipLinks.map(link => ({
+            ...link,
+            batch_listing_id: link.batch_listing_id ? String(link.batch_listing_id) : null
+          }));
+          setChipLinks(formattedEnhancedChipLinks);
 
           // Fetch scheduled changes from the database
           const scheduledChangesData = await getScheduledCollectibleChanges();
@@ -231,6 +240,16 @@ function MyChipsPage() {
       return;
     }
 
+    // Check if chip is assigned to a batch
+    if (selectedChip.batch_listing_id) {
+      toast({
+        title: "Error",
+        description: "Cannot schedule changes for chips assigned to a batch. Please disconnect from batch first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const scheduledDateTime = new Date(
       formatDate(
         `${scheduledDate}T${scheduledTime}`,
@@ -287,7 +306,6 @@ function MyChipsPage() {
     if (!selectedChip) return;
     
     try {
-
       if (selectedChip.collectible_id) {
         const disconnectChipSuccess = await disconnectChipToCollectible(selectedChip.chip_id);
 
@@ -329,6 +347,52 @@ function MyChipsPage() {
     }
   };
 
+  // Handle disconnecting chip from batch
+  const handleDisconnectChipFromBatch = async () => {
+    if (!selectedChip) return;
+    
+    try {
+      if (selectedChip.batch_listing_id) {
+        const disconnectSuccess = await disconnectChipFromBatch(selectedChip.id);
+
+        if (!disconnectSuccess) {
+          toast({
+            title: "Error",
+            description: "Failed to disconnect chip from batch. Please try again later.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const updatedChipLinks = chipLinks.map((chip) => {
+          if (chip.id === selectedChip.id) {
+            return {
+              ...chip,
+              batch_listing_id: null,
+            };
+          }
+          return chip;
+        });
+        setChipLinks(updatedChipLinks);
+      }
+
+      toast({
+        title: "Success",
+        description: "Chip disconnected from batch successfully.",
+      });
+
+      setShowBatchDisconnectConfirm(false);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Error disconnecting chip from batch:", error);
+      toast({
+        title: "Error",
+        description: "Failed to disconnect chip from batch. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDeleteScheduledChange = async (id: number) => {
     try {
       // Delete the scheduled change from the database
@@ -364,6 +428,9 @@ function MyChipsPage() {
       chip.chip_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (chip.collectibleName || "")
         .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (chip.batch_listing_id || "")
+        .toLowerCase()
         .includes(searchQuery.toLowerCase())
   );
 
@@ -388,7 +455,7 @@ function MyChipsPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
               type="text"
-              placeholder="Search by chip ID or collectible name..."
+              placeholder="Search by chip ID, collectible name, or batch ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 py-2"
@@ -431,6 +498,9 @@ function MyChipsPage() {
                   </TableHead>
                   <TableHead className="font-semibold text-gray-600">
                     Collectible
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-600">
+                    Batch Listing
                   </TableHead>
                   <TableHead className="font-semibold text-gray-600">
                     Status
@@ -483,6 +553,15 @@ function MyChipsPage() {
                       )}
                     </TableCell>
                     <TableCell>
+                      {chip.batch_listing_id ? (
+                        <div className="flex items-center justify-between">
+                          <span>{chip.batch_listing_id}</span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">Not assigned</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           chip.active
@@ -526,6 +605,32 @@ function MyChipsPage() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Show batch info if assigned */}
+            {selectedChip?.batch_listing_id && (
+              <div>
+                <h3 className="text-sm font-medium mb-2">Batch Listing</h3>
+                <div className="p-3 bg-blue-50 rounded-md flex justify-between items-center">
+                  <div>
+                    <p className="font-medium">
+                      Batch ID: {selectedChip.batch_listing_id}
+                    </p>
+                    <p className="text-sm text-red-500">
+                      Chip is assigned to a batch. Cannot schedule or assign collectibles.
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500 hover:text-red-700"
+                    onClick={() => setShowBatchDisconnectConfirm(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Disconnect
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div>
               <h3 className="text-sm font-medium mb-2">Current Collectible</h3>
               <div className="p-3 bg-gray-50 rounded-md">
@@ -545,6 +650,7 @@ function MyChipsPage() {
                       size="sm"
                       className="text-red-500 hover:text-red-700"
                       onClick={() => setShowDisconnectConfirm(true)}
+                      disabled={!!selectedChip?.batch_listing_id}
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
                       Disconnect
@@ -599,78 +705,83 @@ function MyChipsPage() {
                 </div>
               )}
 
-            <div>
-              <h3 className="text-sm font-medium mb-2">Schedule a Change</h3>
+            {/* Schedule a change section - only shown if not in batch */}
+            {!selectedChip?.batch_listing_id && (
+              <div>
+                <h3 className="text-sm font-medium mb-2">Schedule a Change</h3>
 
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm text-gray-500 mb-1 block">
-                    Select Collectible
-                  </label>
-                  <Select
-                    value={selectedCollectibleId?.toString() || ""}
-                    onValueChange={(value) =>
-                      setSelectedCollectibleId(Number(value))
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a collectible" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {loadingCollectibles ? (
-                        <div className="flex justify-center p-2">
-                          <Loader2Icon className="h-4 w-4 animate-spin" />
-                        </div>
-                      ) : (
-                        collectibles.map((collectible) => (
-                          <SelectItem
-                            key={collectible.id}
-                            value={collectible.id.toString()}
-                          >
-                            {collectible.name} (ID: {collectible.id})
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-3">
                   <div>
                     <label className="text-sm text-gray-500 mb-1 block">
-                      Date
+                      Select Collectible
                     </label>
-                    <Input
-                      type="date"
-                      value={scheduledDate}
-                      onChange={(e) => {
-                        setScheduledDate(e.target.value);
-                      }}
-                      min={new Date().toISOString().split("T")[0]}
-                    />
+                    <Select
+                      value={selectedCollectibleId?.toString() || ""}
+                      onValueChange={(value) =>
+                        setSelectedCollectibleId(Number(value))
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a collectible" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {loadingCollectibles ? (
+                          <div className="flex justify-center p-2">
+                            <Loader2Icon className="h-4 w-4 animate-spin" />
+                          </div>
+                        ) : (
+                          collectibles.map((collectible) => (
+                            <SelectItem
+                              key={collectible.id}
+                              value={collectible.id.toString()}
+                            >
+                              {collectible.name} (ID: {collectible.id})
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div>
-                    <label className="text-sm text-gray-500 mb-1 block">
-                      Time
-                    </label>
-                    <Input
-                      type="time"
-                      value={scheduledTime}
-                      onChange={(e) => {
-                        setScheduledTime(e.target.value);
-                      }}
-                    />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm text-gray-500 mb-1 block">
+                        Date
+                      </label>
+                      <Input
+                        type="date"
+                        value={scheduledDate}
+                        onChange={(e) => {
+                          setScheduledDate(e.target.value);
+                        }}
+                        min={new Date().toISOString().split("T")[0]}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-500 mb-1 block">
+                        Time
+                      </label>
+                      <Input
+                        type="time"
+                        value={scheduledTime}
+                        onChange={(e) => {
+                          setScheduledTime(e.target.value);
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleScheduleChange}>Schedule Change</Button>
+            {!selectedChip?.batch_listing_id && (
+              <Button onClick={handleScheduleChange}>Schedule Change</Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -690,6 +801,27 @@ function MyChipsPage() {
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDisconnectChip}>
+              Disconnect
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add batch disconnect confirmation dialog */}
+      <Dialog open={showBatchDisconnectConfirm} onOpenChange={setShowBatchDisconnectConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Disconnect from Batch</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to disconnect this chip from its batch listing? This action will remove the association immediately.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setShowBatchDisconnectConfirm(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDisconnectChipFromBatch}>
               Disconnect
             </Button>
           </DialogFooter>

@@ -34,11 +34,11 @@ import {
 import {
   BatchListing,
   Brand,
-  createBatchListing,
   QuantityType,
   Sponsor,
   uploadFileToPinata
 } from "@/lib/supabaseClient";
+import { createBatchListing } from "@/lib/supabaseAdminClient";
 import { NumericUUID } from "@/lib/utils";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -90,7 +90,7 @@ function CreateBatchListingPage() {
           const chips = await getChipLinksByArtistId(userProfile.id);
           if (chips) {
             // Filter out chips that are already assigned to collectibles
-            const availableChips = chips.filter((chip) => !chip.collectible_id);
+            const availableChips = chips.filter((chip) => !chip.collectible_id && !chip.batch_listing_id);
             setAvailableChips(availableChips);
           }
         } catch (error) {
@@ -153,7 +153,6 @@ function CreateBatchListingPage() {
     batch_end_date: "",
     batch_hour: 0,
     collection_id: Number(collectionId),
-    chip_link_id: 0,
     logo_image: null,
     bg_color: null,
   });
@@ -371,6 +370,17 @@ function CreateBatchListingPage() {
     });
   };
 
+  const handleChipSelection = (chipId: number) => {
+    setSelectedChipIds(prev => {
+      if (prev.includes(chipId)) {
+        return prev.filter(id => id !== chipId);
+      } else {
+        return [...prev, chipId];
+      }
+    });
+    console.log('selectedChipIds', selectedChipIds);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!publicKey) {
@@ -465,12 +475,14 @@ function CreateBatchListingPage() {
         stripe_price_id: stripePriceId || "",
         batch_start_date: formatDate(`${batchListing.batch_start_date}T00:00`),
         batch_end_date: formatDate(`${batchListing.batch_end_date}T00:00`),
-        chip_link_id: selectedChipIds[0],
       };
+
+      console.log('selectedChipIds', selectedChipIds);
 
       const createdBatchListing = await createBatchListing(
         newBatchListing,
-        Number(collectionId)
+        Number(collectionId),
+        selectedChipIds
       );
 
       if (!createdBatchListing) {
@@ -746,7 +758,7 @@ function CreateBatchListingPage() {
                     htmlFor="chip-selection"
                     className="text-lg font-semibold"
                   >
-                    Assign Chip <span className="text-destructive">*</span>
+                    Assign Chips <span className="text-destructive">*</span>
                   </Label>
                   {isLoadingChips ? (
                     <div className="flex items-center space-x-2">
@@ -762,13 +774,12 @@ function CreateBatchListingPage() {
                             className="flex items-center space-x-2 p-2 hover:bg-primary/5 rounded-md"
                           >
                             <Input
-                              type="radio"
+                              type="checkbox"
                               name="nfc-chip"
                               id={`chip-${chip.id}`}
                               checked={selectedChipIds.includes(chip.id)}
-                              onChange={() => setSelectedChipIds([chip.id])}
+                              onChange={() => handleChipSelection(chip.id)}
                               className="h-4 w-4 rounded border-gray-300"
-                              required
                             />
                             <label
                               htmlFor={`chip-${chip.id}`}
@@ -780,11 +791,11 @@ function CreateBatchListingPage() {
                         ))}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Select one chip to link to this collectible. <span className="text-destructive font-medium">Required</span>
+                        Select chips to link to this collectible. <span className="text-destructive font-medium">At least one required</span>
                       </p>
                       {selectedChipIds.length > 0 && (
                         <p className="text-sm text-primary">
-                          1 chip selected
+                          {selectedChipIds.length} chip{selectedChipIds.length > 1 ? 's' : ''} selected
                         </p>
                       )}
                     </div>

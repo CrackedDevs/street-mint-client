@@ -122,15 +122,28 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
-        const { error: chipError } = await supabaseAdmin
+        const { data: chipLinks, error: chipLinksError } = await supabaseAdmin
           .from('chip_links')
-          .update({ collectible_id: newCollectible?.id })
-          .eq('id', listing.chip_link_id)
-          .select();
+          .select('id')
+          .eq('batch_listing_id', listing.id);
 
-        if (chipError) {
-          console.error("Error updating chip links:", chipError);
-          continue;
+        if (chipLinks && Array.isArray(chipLinks) && chipLinks.length > 0) {
+          const validChipLinkIds = chipLinks.filter(id => typeof id === 'number');
+
+          console.log('validChipLinkIds', validChipLinkIds);
+
+          
+          if (validChipLinkIds.length > 0) {
+            const { error: chipError } = await supabaseAdmin
+              .from('chip_links')
+              .update({ collectible_id: newCollectible?.id })
+              .in('id', validChipLinkIds)
+              .select();
+    
+            if (chipError) {
+              console.error(`Error updating chip links:`, chipError);
+            }
+          }
         }
 
         const { error: updateBatchListingError } = await supabaseAdmin
