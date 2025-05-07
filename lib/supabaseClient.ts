@@ -1097,3 +1097,26 @@ export const getChipsByArtistId = async (artistId: number) => {
 
     return chipLinks;
 }
+
+export const getLatestCollectibleByBatchListingId = async (
+  batchListingId: number
+): Promise<Collectible | null> => {
+  try {
+    const { data, error } = await supabase
+      .from("collectibles")
+      .select("*")
+      .eq("batch_listing_id", batchListingId)
+      .order("day_number", { ascending: false })
+      .limit(1);
+
+    if (error) {
+      console.error("Error fetching latest collectible:", error);
+      return null;
+    }
+
+    return data && data.length > 0 ? data[0] as Collectible : null;
+  } catch (error) {
+    console.error("Error in getLatestCollectibleByBatchListingId:", error);
+    return null;
+  }
+};

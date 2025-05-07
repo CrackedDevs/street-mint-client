@@ -127,17 +127,14 @@ export async function GET(request: NextRequest) {
           .select('id')
           .eq('batch_listing_id', listing.id);
 
+        console.log('chipLinks', chipLinks);
+
         if (chipLinks && Array.isArray(chipLinks) && chipLinks.length > 0) {
-          const validChipLinkIds = chipLinks.filter(id => typeof id === 'number');
-
-          console.log('validChipLinkIds', validChipLinkIds);
-
-          
-          if (validChipLinkIds.length > 0) {
+          if (chipLinks.length > 0) {
             const { error: chipError } = await supabaseAdmin
               .from('chip_links')
               .update({ collectible_id: newCollectible?.id })
-              .in('id', validChipLinkIds)
+              .in('id', chipLinks.map(chip => chip.id))
               .select();
     
             if (chipError) {

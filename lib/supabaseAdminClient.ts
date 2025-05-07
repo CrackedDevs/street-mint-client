@@ -22,6 +22,7 @@ export type ChipLink = {
     id: number;
     chip_id: string;
     collectible_id: number | null;
+    batch_listing_id?: number | null;
     artists_id?: number | null | null;
     active: boolean;
     created_at: string;
@@ -440,6 +441,7 @@ export async function createChipLink(chipLink: ChipLinkCreate): Promise<{ succes
         .insert({
             chip_id: chipLink.chip_id,
             collectible_id: chipLink.collectible_id,
+            batch_listing_id: chipLink.batch_listing_id,
             active: chipLink.active,
             artists_id: chipLink.artists_id
         });
@@ -459,6 +461,7 @@ export async function updateChipLink(id: number, chipLink: ChipLink) {
         .update({
             chip_id: chipLink.chip_id,
             collectible_id: chipLink.collectible_id,
+            batch_listing_id: chipLink.batch_listing_id,
             active: chipLink.active,
         })
         .eq('id', id);

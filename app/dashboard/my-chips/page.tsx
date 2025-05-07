@@ -57,7 +57,6 @@ import { formatDate } from "@/helper/date";
 type ChipLinkWithMetadata = ChipLink & {
   collectibleName?: string;
   collectionId?: number;
-  batch_listing_id?: string | null;
 };
 
 // Type for scheduled changes - using the type from supabaseAdminClient
@@ -141,7 +140,7 @@ function MyChipsPage() {
           // Convert batch_listing_id from number to string or null if undefined
           const formattedEnhancedChipLinks = enhancedChipLinks.map(link => ({
             ...link,
-            batch_listing_id: link.batch_listing_id ? String(link.batch_listing_id) : null
+            batch_listing_id: link.batch_listing_id ? Number(link.batch_listing_id) : null
           }));
           setChipLinks(formattedEnhancedChipLinks);
 
@@ -429,9 +428,8 @@ function MyChipsPage() {
       (chip.collectibleName || "")
         .toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
-      (chip.batch_listing_id || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
+      (chip.batch_listing_id !== null && 
+       String(chip.batch_listing_id).toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // Get scheduled change for a specific chip
