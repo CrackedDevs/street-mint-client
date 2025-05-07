@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from "@supabase/supabase-js";
-import { createFetch, fetchCollectibleById, getCollectionById, getArtistById, Collectible, Sponsor } from "./supabaseClient";
+import { createFetch, fetchCollectibleById, getCollectionById, getArtistById, Collectible, Sponsor, uploadFileToPinata } from "./supabaseClient";
 import { Database } from "./types/database.types";
 import { isSignatureValid } from "./nfcVerificationHellper";
 import Stripe from "stripe";
@@ -455,6 +455,65 @@ export async function updateChipLink(id: number, chipLink: ChipLink) {
     }
     return data;
 }
+
+export const createCollectible = async (collectible: Omit<Collectible, 'id'>, collectionId: number): Promise<Collectible | null> => {
+    const nftMetadata = {
+        name: collectible.name,
+        description: collectible.description,
+        image: collectible.primary_image_url,
+        external_url: "https://streetmint.xyz/",
+        properties: {
+            files: [
+                {
+                    uri: collectible.primary_image_url,
+                    type: "image/jpg"
+                },
+                ...collectible.gallery_urls.map(url => ({
+                    uri: url,
+                    type: "image/jpg"
+                }))
+            ],
+            category: "image"
+        }
+    };
+
+    const nftMetadataFileName = `${Date.now()}-${collectible.name}-metadata.json`;
+
+    // Create a JSON file from the NFT metadata
+    const nftMetadataFile = new File([JSON.stringify(nftMetadata)], nftMetadataFileName, {
+        type: "application/json",
+    });
+
+    // Upload the JSON file to Pinata
+    const metadataUrl = await uploadFileToPinata(nftMetadataFile);
+
+    if (!metadataUrl) {
+        console.error('Error uploading NFT metadata to Pinata');
+        return null;
+    }
+
+
+    const collectibleToInsert = {
+        ...collectible,
+        collection_id: collectionId,
+        metadata_uri: metadataUrl
+    };
+
+    const { data: insertedCollectible, error: nftError } = await supabaseAdmin
+        .from('collectibles')
+        .insert(collectibleToInsert)
+        .select();
+
+    if (nftError) {
+        console.error('Error creating collectible:', nftError);
+        return null;
+    }
+
+    if (insertedCollectible && insertedCollectible[0]) {
+        return insertedCollectible[0] as Collectible;
+    }
+    return null;
+};
 
 export async function deleteChipLink(id: number) {
     const supabaseAdmin = await getSupabaseAdmin();

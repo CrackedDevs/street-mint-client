@@ -138,7 +138,7 @@ export type Database = {
           quantity_type: Database["public"]["Enums"]["quantity_type"]
           sponsor_id: number | null
           stripe_price_id: string | null
-          total_collectibles: number | null
+          total_collectibles: number
           whitelist: boolean | null
         }
         Insert: {
@@ -192,7 +192,7 @@ export type Database = {
           quantity_type: Database["public"]["Enums"]["quantity_type"]
           sponsor_id?: number | null
           stripe_price_id?: string | null
-          total_collectibles?: number | null
+          total_collectibles?: number
           whitelist?: boolean | null
         }
         Update: {
@@ -246,7 +246,7 @@ export type Database = {
           quantity_type?: Database["public"]["Enums"]["quantity_type"]
           sponsor_id?: number | null
           stripe_price_id?: string | null
-          total_collectibles?: number | null
+          total_collectibles?: number
           whitelist?: boolean | null
         }
         Relationships: [

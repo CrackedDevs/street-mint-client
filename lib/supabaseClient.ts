@@ -323,10 +323,6 @@ export const createCollectible = async (collectible: Omit<Collectible, 'id'>, co
 
 export const uploadFileToPinata = async (file: File) => {
     try {
-        const { user, error: authError } = await getAuthenticatedUser();
-        if (!user || authError) {
-            return null;
-        }
         const fileName = `${Date.now()}-${file.name}`;
         const uploadData = await pinata.upload.file(file, { metadata: { name: fileName } }).key(process.env.NEXT_PUBLIC_PINATA_JWT!)
         const url = await pinata.gateways.convert(uploadData.IpfsHash)
@@ -1076,6 +1072,21 @@ export const getBatchListingById = async (id: number): Promise<BatchListing | nu
     }
 
     return data as BatchListing;
+}
+
+export const getCollectibleById = async (id: number): Promise<Collectible | null> => {
+    const { data, error } = await supabase
+        .from("collectibles")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    if (error) {
+        console.error("Error fetching collectible:", error);
+        return null;
+    }
+
+    return data as Collectible;
 }
 
 export const getCollectiblesAndOrdersByBatchListingId = async (
