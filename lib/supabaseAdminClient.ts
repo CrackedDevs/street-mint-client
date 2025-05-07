@@ -241,6 +241,20 @@ export async function getChipTap(x: string, n: string, e: string, uuid: string):
     return data;
 }
 
+export async function disconnectChipToCollectible(chipId: string) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { error } = await supabaseAdmin
+        .from('chip_links')
+        .update({ collectible_id: null })
+        .eq('chip_id', chipId);
+
+    if (error) {
+        console.error('Error disconnecting chip to collectible:', error);
+        return false;
+    }
+    return true;
+}
+
 export async function getAllChipLinks() {
     console.log("getAllChipLinks");
     const supabaseAdmin = await getSupabaseAdmin();

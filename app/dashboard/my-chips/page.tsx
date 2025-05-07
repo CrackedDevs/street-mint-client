@@ -25,6 +25,7 @@ import {
   scheduleCollectibleChange,
   deleteScheduledCollectibleChange,
   ScheduledCollectibleChange,
+  disconnectChipToCollectible,
 } from "@/lib/supabaseAdminClient";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -89,6 +90,8 @@ function MyChipsPage() {
   const [scheduledChanges, setScheduledChanges] = useState<ScheduledChange[]>(
     []
   );
+  // Add state for disconnect confirmation
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
 
   useEffect(() => {
     async function fetchChipLinks() {
@@ -275,6 +278,52 @@ function MyChipsPage() {
       toast({
         title: "Error",
         description: "Failed to schedule change. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDisconnectChip = async () => {
+    if (!selectedChip) return;
+    
+    try {
+
+      if (selectedChip.collectible_id) {
+        const disconnectChipSuccess = await disconnectChipToCollectible(selectedChip.chip_id);
+
+        if (!disconnectChipSuccess) {
+          toast({
+            title: "Error",
+            description: "Failed to disconnect chip. Please try again later.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const updatedChipLinks = chipLinks.map((chip) => {
+          if (chip.id === selectedChip.id) {
+            return {
+              ...chip,
+              collectible_id: null,
+            };
+          }
+          return chip;
+        });
+        setChipLinks(updatedChipLinks);
+      }
+
+      toast({
+        title: "Success",
+        description: "Chip disconnected successfully.",
+      });
+
+      setShowDisconnectConfirm(false);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Error disconnecting chip:", error);
+      toast({
+        title: "Error",
+        description: "Failed to disconnect chip. Please try again later.",
         variant: "destructive",
       });
     }
@@ -481,13 +530,25 @@ function MyChipsPage() {
               <h3 className="text-sm font-medium mb-2">Current Collectible</h3>
               <div className="p-3 bg-gray-50 rounded-md">
                 {selectedChip?.collectible_id ? (
-                  <div>
-                    <p className="font-medium">
-                      {selectedChip.collectibleName}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      ID: {selectedChip.collectible_id}
-                    </p>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">
+                        {selectedChip.collectibleName}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        ID: {selectedChip.collectible_id}
+                      </p>
+                    </div>
+                    {/* Add disconnect button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-700"
+                      onClick={() => setShowDisconnectConfirm(true)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Disconnect
+                    </Button>
                   </div>
                 ) : (
                   <p className="text-gray-500">No collectible assigned</p>
@@ -610,6 +671,27 @@ function MyChipsPage() {
               Cancel
             </Button>
             <Button onClick={handleScheduleChange}>Schedule Change</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add disconnect confirmation dialog */}
+      <Dialog open={showDisconnectConfirm} onOpenChange={setShowDisconnectConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Disconnect Chip</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to disconnect this chip from its collectible? This action will remove the association immediately.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setShowDisconnectConfirm(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDisconnectChip}>
+              Disconnect
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

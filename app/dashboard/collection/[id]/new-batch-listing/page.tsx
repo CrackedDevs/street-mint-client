@@ -473,11 +473,22 @@ function CreateBatchListingPage() {
         Number(collectionId)
       );
 
+      if (!createdBatchListing) {
+        toast({
+          title: "Error",
+          description: "Failed to create batch listing",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
-        title: "Error",
-        description: "Failed to create batch listing",
-        variant: "destructive",
+        title: "Success",
+        description: "Batch listing created successfully",
+        variant: "default",
       });
+
+      router.push(`/dashboard/collection/${collectionId}`);
     } finally {
       setIsSubmitting(false);
     }
