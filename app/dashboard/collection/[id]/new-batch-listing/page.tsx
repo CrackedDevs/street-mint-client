@@ -81,6 +81,9 @@ function CreateBatchListingPage() {
   >([]);
   const [selectedChipIds, setSelectedChipIds] = useState<number[]>([]);
   const [isLoadingChips, setIsLoadingChips] = useState(false);
+  const [frequencyType, setFrequencyType] = useState<string>("daily");
+  const [selectedWeekDays, setSelectedWeekDays] = useState<number[]>([]);
+  const [selectedMonthDays, setSelectedMonthDays] = useState<number[]>([]);
 
   useEffect(() => {
     const fetchArtistChips = async () => {
@@ -155,7 +158,10 @@ function CreateBatchListingPage() {
     collection_id: Number(collectionId),
     logo_image: null,
     bg_color: null,
+    frequency_type: "daily",
+    frequency_days: [],
   });
+
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
@@ -381,6 +387,44 @@ function CreateBatchListingPage() {
     console.log('selectedChipIds', selectedChipIds);
   };
 
+  const handleFrequencyTypeChange = (type: string) => {
+    setFrequencyType(type);
+    handleBatchListingChange("frequency_type", type);
+    
+    // Reset frequency days when changing type
+    if (type === "daily") {
+      handleBatchListingChange("frequency_days", []);
+      setSelectedWeekDays([]);
+      setSelectedMonthDays([]);
+    } else if (type === "weekly") {
+      handleBatchListingChange("frequency_days", selectedWeekDays);
+    } else if (type === "monthly") {
+      handleBatchListingChange("frequency_days", selectedMonthDays);
+    }
+  };
+
+  const handleWeekDayToggle = (day: number) => {
+    setSelectedWeekDays(prev => {
+      const newSelection = prev.includes(day)
+        ? prev.filter(d => d !== day)
+        : [...prev, day];
+      
+      handleBatchListingChange("frequency_days", newSelection);
+      return newSelection;
+    });
+  };
+
+  const handleMonthDayToggle = (day: number) => {
+    setSelectedMonthDays(prev => {
+      const newSelection = prev.includes(day)
+        ? prev.filter(d => d !== day)
+        : [...prev, day];
+      
+      handleBatchListingChange("frequency_days", newSelection);
+      return newSelection;
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!publicKey) {
@@ -434,6 +478,23 @@ function CreateBatchListingPage() {
       });
       return;
     }
+    if (frequencyType === "weekly" && selectedWeekDays.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least one day of the week",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (frequencyType === "monthly" && selectedMonthDays.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least one day of the month",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       let primaryImageUrl = "";
@@ -475,12 +536,15 @@ function CreateBatchListingPage() {
         stripe_price_id: stripePriceId || "",
         batch_start_date: formatDate(`${batchListing.batch_start_date}T00:00`),
         batch_end_date: formatDate(`${batchListing.batch_end_date}T00:00`),
+        frequency_type: frequencyType,
+        frequency_days: frequencyType === "daily" ? [] : 
+                        frequencyType === "weekly" ? selectedWeekDays : selectedMonthDays,
       };
 
       console.log('selectedChipIds', selectedChipIds);
 
       const createdBatchListing = await createBatchListing(
-        newBatchListing,
+        newBatchListing as any,
         Number(collectionId),
         selectedChipIds
       );
@@ -562,7 +626,7 @@ function CreateBatchListingPage() {
                     setShowSuccessModal(false);
                     router.push(`/dashboard/collection/${collectionId}`);
                   }}
-                  className="w-full bg-primary hover:bg-primary/90 text-white"
+                  className="w-full bg-primary hover:bg-primary/90 text-white h-12"
                 >
                   Back to Collection
                 </Button>
@@ -637,6 +701,109 @@ function CreateBatchListingPage() {
                       required
                     />
                   </div>
+                  
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="batch-frequency"
+                      className="text-lg font-semibold"
+                    >
+                      Frequency Type <span className="text-destructive">*</span>
+                    </Label>
+                    <div className="flex space-x-4 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => handleFrequencyTypeChange("daily")}
+                        className={`px-4 py-2 rounded-md ${
+                          frequencyType === "daily" 
+                            ? "bg-primary text-white" 
+                            : "bg-primary/10 hover:bg-primary/20"
+                        }`}
+                      >
+                        Daily
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleFrequencyTypeChange("weekly")}
+                        className={`px-4 py-2 rounded-md ${
+                          frequencyType === "weekly" 
+                            ? "bg-primary text-white" 
+                            : "bg-primary/10 hover:bg-primary/20"
+                        }`}
+                      >
+                        Weekly
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleFrequencyTypeChange("monthly")}
+                        className={`px-4 py-2 rounded-md ${
+                          frequencyType === "monthly" 
+                            ? "bg-primary text-white" 
+                            : "bg-primary/10 hover:bg-primary/20"
+                        }`}
+                      >
+                        Monthly
+                      </button>
+                    </div>
+                  </div>
+
+                  {frequencyType === "weekly" && (
+                    <div className="space-y-2 mt-4">
+                      <Label className="text-lg font-semibold">
+                        Select Days of Week <span className="text-destructive">*</span>
+                      </Label>
+                      <div className="grid grid-cols-7 gap-2 mt-2">
+                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => handleWeekDayToggle(index)}
+                            className={`p-2 rounded-md text-center ${
+                              selectedWeekDays.includes(index)
+                                ? "bg-primary text-white"
+                                : "bg-primary/10 hover:bg-primary/20"
+                            }`}
+                          >
+                            {day}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        {selectedWeekDays.length === 0 
+                          ? "Please select at least one day" 
+                          : `Selected: ${selectedWeekDays.map(d => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d]).join(", ")}`}
+                      </p>
+                    </div>
+                  )}
+
+                  {frequencyType === "monthly" && (
+                    <div className="space-y-2 mt-4">
+                      <Label className="text-lg font-semibold">
+                        Select Days of Month <span className="text-destructive">*</span>
+                      </Label>
+                      <div className="grid grid-cols-7 gap-2 mt-2">
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                          <button
+                            key={day}
+                            type="button"
+                            onClick={() => handleMonthDayToggle(day)}
+                            className={`p-2 rounded-md text-center ${
+                              selectedMonthDays.includes(day)
+                                ? "bg-primary text-white"
+                                : "bg-primary/10 hover:bg-primary/20"
+                            }`}
+                          >
+                            {day}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        {selectedMonthDays.length === 0 
+                          ? "Please select at least one day" 
+                          : `Selected: ${selectedMonthDays.sort((a, b) => a - b).join(", ")}`}
+                      </p>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label
                       htmlFor="batch-hour"
@@ -1691,7 +1858,13 @@ function CreateBatchListingPage() {
               <Button
                 type="submit"
                 className="w-full text-lg h-14 mt-8"
-                disabled={isSubmitting || selectedChipIds.length === 0 || availableChips.length === 0}
+                disabled={
+                  isSubmitting || 
+                  selectedChipIds.length === 0 || 
+                  availableChips.length === 0 || 
+                  (frequencyType === "weekly" && selectedWeekDays.length === 0) ||
+                  (frequencyType === "monthly" && selectedMonthDays.length === 0)
+                }
               >
                 {isSubmitting ? (
                   <div className="flex items-center gap-6 justify-center">

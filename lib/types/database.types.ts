@@ -116,6 +116,8 @@ export type Database = {
           custom_email_subject: string | null
           description: string | null
           enable_card_payments: boolean | null
+          frequency_days: Json | null
+          frequency_type: string | null
           gallery_name: string | null
           gallery_urls: string[]
           id: number
@@ -169,6 +171,8 @@ export type Database = {
           custom_email_subject?: string | null
           description?: string | null
           enable_card_payments?: boolean | null
+          frequency_days?: Json | null
+          frequency_type?: string | null
           gallery_name?: string | null
           gallery_urls: string[]
           id?: number
@@ -222,6 +226,8 @@ export type Database = {
           custom_email_subject?: string | null
           description?: string | null
           enable_card_payments?: boolean | null
+          frequency_days?: Json | null
+          frequency_type?: string | null
           gallery_name?: string | null
           gallery_urls?: string[]
           id?: number

@@ -440,7 +440,7 @@ function EditCollectiblePage() {
                     setShowSuccessModal(false);
                     router.push(`/dashboard/collection/${collectionId}`);
                   }}
-                  className="w-full bg-primary hover:bg-primary/90 text-white"
+                  className="w-full bg-primary hover:bg-primary/90 text-white h-12"
                 >
                   Back to Collection
                 </Button>
