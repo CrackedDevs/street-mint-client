@@ -383,7 +383,7 @@ export default function MintButton({
     // Auto fill the wallet address if the user has previously minted
     const lastMintInput = localStorage.getItem("lastMintInput");
     if (lastMintInput) {
-      // setWalletAddress(lastMintInput || "");
+      setWalletAddress(lastMintInput || "");
     }
   }, []);
 
