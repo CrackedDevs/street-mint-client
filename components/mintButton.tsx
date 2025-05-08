@@ -387,6 +387,11 @@ export default function MintButton({
     }
   }, []);
 
+  useEffect(() => {
+    console.log("walletAddress", walletAddress);
+  }, [walletAddress]);
+
+
   const handlePaymentAndMint = async (paymentMethod: "card" | "crypto") => {
     console.log("adddressss", cardPaymentAddress);
     const addressToUse = isFreeMint
@@ -607,7 +612,7 @@ export default function MintButton({
           updateOrderAirdropStatus(orderId, true);
         }
         localStorage.setItem("lastMintInput", addressToUse);
-        setWalletAddress("");
+        // setWalletAddress("");
       } else {
         throw new Error("Minting process failed");
       }
@@ -718,7 +723,7 @@ export default function MintButton({
           updateOrderAirdropStatus(orderId, true);
         }
         localStorage.setItem("lastMintInput", addressToUse);
-        setWalletAddress("");
+        // setWalletAddress("");
       } else {
         throw new Error("Minting process failed");
       }
@@ -1057,7 +1062,7 @@ export default function MintButton({
 
       {collectible.batch_listing_id && (
         <Link
-          href={`/batch/${collectible.batch_listing_id}`}
+          href={`/batch/${collectible.batch_listing_id}?search=${walletAddress}`}
           className="w-full"
         >
           <WhiteBgShimmerButton
