@@ -924,7 +924,6 @@ function EditCollectiblePage() {
                     handleCollectibleChange("gallery_name", e.target.value)
                   }
                   className="text-lg"
-                  required
                   maxLength={32}
                 />
               </div>
