@@ -9,6 +9,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdminClient";
 import nodemailer from "nodemailer";
 import ClaimEmailTemplate from "@/components/email/claim-template";
 import { transporter } from "@/lib/nodemailer";
+import { addOrder } from "@/lib/hubspot";
 
 export async function POST(req: Request, res: NextApiResponse) {
   const { collectibleId, emailAddress, deviceId, collectionId } =
@@ -119,6 +120,14 @@ export async function POST(req: Request, res: NextApiResponse) {
         fromEmail = "hello@irls.xyz";
         fromName = "IRLS";
         app_password = process.env.IRLS_NODEMAILER_APP_PASSWORD!;
+      }
+
+      if (order.collectibles && order.collectibles.batch_listing_id && order.collectibles.batch_listing_id === 7030604016) {
+          const hubspotResponse = await addOrder({
+            email: emailAddress,
+            attendance_value: "Day " + (order.collectibles.day_number?.toString() || "")
+          });
+          console.log("hubspotResponse", hubspotResponse);
       }
 
       // Get batch URL if the collectible has a batch_id

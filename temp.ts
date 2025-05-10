@@ -1,19 +1,19 @@
-// import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 // import { uploadFileToPinata } from "@/lib/supabaseClient";
 // import { getSupabaseAdmin } from "@/lib/supabaseAdminClient";
 // import fs from "fs";
 // import path from "path";
 
-// export async function GET(request: Request) {
+// export async function POST(request: Request) {
 //   try {
 //     // Construct the full path to the image in the public folder
-//     const fullPath = path.join(process.cwd(), "public", "day5.jpg");
+//     const fullPath = path.join(process.cwd(), "public", "day6.png");
 
 //     // Check if the file exists
 //     if (!fs.existsSync(fullPath)) {
 //       return NextResponse.json({ error: "File not found" }, { status: 404 });
 //     }
-
+``
 //     // Read the file
 //     const fileBuffer = fs.readFileSync(fullPath);
 
@@ -68,10 +68,10 @@
 //   }
 // }
 
-// export async function POST(request: Request) {
+// export async function GET(request: Request) {
 //   const supabaseAdmin = await getSupabaseAdmin();
 
-//   const id = 3219655203;
+//   const id = 164347059;
 
 //   const collectible = await supabaseAdmin
 //     .from("collectibles")
