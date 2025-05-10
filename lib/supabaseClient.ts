@@ -121,6 +121,8 @@ export type BatchListing = {
     collection_id: number;
     logo_image: string | null;
     bg_color: string | null;
+    frequency_type: string | null;
+    frequency_days: number[];
 };
 
 export interface Order {

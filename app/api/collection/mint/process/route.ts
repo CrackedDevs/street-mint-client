@@ -25,6 +25,7 @@ import { getEmailTemplateHTML } from "@/components/email/tiplink-template";
 import { headers } from "next/headers";
 import { transporter } from "@/lib/nodemailer";
 import { verifySignatureCode } from "@/lib/adminAuth";
+import { addOrder } from "@/lib/hubspot";
 
 function verifyTransactionAmount(
   transaction: Transaction | VersionedTransaction,
@@ -184,7 +185,7 @@ export async function POST(req: Request, res: NextApiResponse) {
 
     const { data: order, error: fetchError } = await supabase
       .from("orders")
-      .select("*, collectibles(name, metadata_uri, creator_royalty_array, batch_listing_id)")
+      .select("*, collectibles(name, metadata_uri, creator_royalty_array, batch_listing_id, day_number)")
       .eq("id", orderId)
       .eq("collectible_id", collectibleId)
       .single();
@@ -370,6 +371,22 @@ export async function POST(req: Request, res: NextApiResponse) {
 
     if (updateAdminSignatureAuth) {
       throw new Error("Failed to update admin signature auth");
+    }
+
+    if (order.collectibles && order.collectibles.batch_listing_id && order.collectibles.batch_listing_id === 7030604016) {
+      if (isEmail) {
+        const hubspotResponse = await addOrder({
+          email: order.wallet_address,
+          attendance_value: "Day " + (order.collectibles.day_number?.toString() || "")
+        });
+        console.log("hubspotResponse", hubspotResponse);
+      } else {
+        const hubspotResponse = await addOrder({
+          solana_wallet_address: resolvedWalletAddress,
+          attendance_value: "Day " + (order.collectibles.day_number?.toString() || "")
+        });
+        console.log("hubspotResponse", hubspotResponse);
+      }
     }
 
     if (isEmail && tipLinkWalletAddress) {

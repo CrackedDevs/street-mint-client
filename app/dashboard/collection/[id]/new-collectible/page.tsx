@@ -539,7 +539,7 @@ function CreateCollectiblePage() {
                     setShowSuccessModal(false);
                     router.push(`/dashboard/collection/${collectionId}`);
                   }}
-                  className="w-full bg-primary hover:bg-primary/90 text-white"
+                  className="w-full bg-primary hover:bg-primary/90 text-white h-12"
                 >
                   Back to Collection
                 </Button>
@@ -1072,7 +1072,6 @@ function CreateCollectiblePage() {
                       handleCollectibleChange("gallery_name", e.target.value)
                     }
                     className="text-lg"
-                    required
                     maxLength={32}
                   />
                 </div>

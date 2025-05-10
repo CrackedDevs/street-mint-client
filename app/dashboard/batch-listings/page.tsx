@@ -194,7 +194,8 @@ export default function BatchListingPage() {
                   <TableRow>
                     <TableHead>ID</TableHead>
                     <TableHead>Batch Name</TableHead>
-                    <TableHead className="hidden md:table-cell">Description</TableHead>
+                    <TableHead className="hidden md:table-cell">Batch Description</TableHead>
+                    <TableHead className="hidden md:table-cell">Batch Type</TableHead>
                     <TableHead className="hidden sm:table-cell">Collectible Name</TableHead>
                     <TableHead className="hidden sm:table-cell">Chip Count</TableHead>
                     <TableHead className="hidden sm:table-cell">Start Date</TableHead>
@@ -209,6 +210,7 @@ export default function BatchListingPage() {
                       <TableCell>{item.id}</TableCell>
                       <TableCell>{item.name}</TableCell>
                       <TableCell className="hidden md:table-cell max-w-[200px] truncate">{item.description}</TableCell>
+                      <TableCell className="hidden md:table-cell">{item.frequency_type === "daily" ? "Daily" : item.frequency_type === "weekly" ? "Weekly" : "Monthly"}</TableCell>
                       <TableCell className="hidden sm:table-cell">{item.collectible_name}</TableCell>
                       <TableCell className="hidden sm:table-cell">{item.chip_links_count}</TableCell>
                       <TableCell className="hidden sm:table-cell">

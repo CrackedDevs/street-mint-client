@@ -189,8 +189,14 @@ function Component() {
                       <p className="text-sm text-gray-600 mb-4">
                         {batchListing.description}
                       </p>
+                      <p className="text-sm mb-1">
+                        Batch Listing ID: {batchListing.id}
+                      </p>
+                      <p className="text-sm mb-4">
+                        {batchListing.frequency_type === "daily" ? "Daily" : batchListing.frequency_type === "weekly" ? "Weekly" : "Monthly"}
+                      </p>
                       <div className="flex justify-between items-center mb-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <Badge
                             variant="secondary"
                             className="text-xs font-semibold"
@@ -208,6 +214,14 @@ function Component() {
                             {batchListing.is_light_version === true
                               ? "Light"
                               : "Standard"}
+                          </Badge>
+                          <Badge
+                            variant="secondary"
+                            className="text-xs font-semibold"
+                          >
+                            {batchListing.is_irls === true
+                              ? "IRLS"
+                              : "StreetMint"}
                           </Badge>
                         </div>
                         <span className="text-lg font-bold text-gray-900">
@@ -239,10 +253,6 @@ function Component() {
                             Collectible Name:{" "}
                             {batchListing.collectible_name}
                           </span>
-                        </div>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <BadgeIcon className="mr-2 h-4 w-4" />
-                          <span>Batch Listing ID: {batchListing.id}</span>
                         </div>
                         <div className="flex items-center text-sm text-gray-600">
                           <Calendar className="mr-2 h-4 w-4" />
@@ -329,7 +339,7 @@ function Component() {
                     {collectible.description}
                   </p>
                   <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Badge
                         variant="secondary"
                         className="text-xs font-semibold"
@@ -347,6 +357,22 @@ function Component() {
                         {collectible.is_light_version === true
                           ? "Light"
                           : "Standard"}
+                      </Badge>
+                      <Badge
+                        variant="secondary"
+                        className="text-xs font-semibold"
+                      >
+                        {collectible.is_irls === true
+                          ? "IRLS"
+                          : "StreetMint"}
+                      </Badge>
+                      <Badge
+                        variant="secondary"
+                        className="text-xs font-semibold"
+                      >
+                        {collectible.batch_listing_id !== null
+                          ? "Batch Listing"
+                          : "No Batch Listing"}
                       </Badge>
                     </div>
                     <span className="text-lg font-bold text-gray-900">
