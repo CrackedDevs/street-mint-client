@@ -425,6 +425,77 @@ export const updateCollectible = async (collectible: Collectible): Promise<{ suc
     return { success: true, error: null };
 };
 
+export const updateCollection = async (collection: Collection): Promise<{ success: boolean; error: Error | null }> => {
+    const { user, error: authError } = await getAuthenticatedUser();
+    if (!user || authError) {
+        return { success: false, error: authError || null };
+    }
+    
+    // First, get the existing collection to check if we need to update metadata
+    const existingCollection = await getCollectionById(collection.id);
+    if (!existingCollection) {
+        return { success: false, error: new Error("Collection not found") };
+    }
+
+    // Check if name or description changed
+    if (existingCollection.name !== collection.name || existingCollection.description !== collection.description) {
+        // Create updated metadata for the collection
+        const collectionMetadata = {
+            name: collection.name,
+            description: collection.description,
+            external_url: process.env.NEXT_PUBLIC_SITE_URL || "https://street-mint-client.vercel.app/",
+            properties: {
+                category: "image"
+            }
+        };
+        
+        // Upload updated collection metadata to Pinata
+        const collectionMetadataFileName = `${Date.now()}-collection-metadata.json`;
+        const metadataFile = new File([JSON.stringify(collectionMetadata)], collectionMetadataFileName, { type: 'application/json' });
+        
+        try {
+            const result = await uploadFileToPinata(metadataFile);
+            if (!result) {
+                return { success: false, error: new Error('Failed to upload collection metadata to Pinata') };
+            }
+            
+            // Update collection with new metadata URI
+            const { error } = await supabase
+                .from('collections')
+                .update({
+                    name: collection.name,
+                    description: collection.description,
+                    metadata_uri: result
+                })
+                .eq('id', collection.id);
+
+            if (error) {
+                console.error("Error updating collection:", error);
+                return { success: false, error: error as unknown as Error };
+            }
+        } catch (error) {
+            console.error('Error uploading collection metadata:', error);
+            return { success: false, error: error as unknown as Error };
+        }
+    } else {
+        // If no metadata needs to be updated, just update the name and description
+        const { error } = await supabase
+            .from('collections')
+            .update({
+                name: collection.name,
+                description: collection.description
+            })
+            .eq('id', collection.id);
+
+        if (error) {
+            console.error("Error updating collection:", error);
+            return { success: false, error: error as unknown as Error };
+        }
+    }
+
+    return { success: true, error: null };
+};
+
 export const updateProfile = async (profileData: Artist) => {
     const { user, error: authError } = await getAuthenticatedUser();
     if (!user || authError) {
