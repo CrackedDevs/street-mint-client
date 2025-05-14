@@ -611,8 +611,10 @@ export default function MintButton({
           setShowAirdropModal(true);
           updateOrderAirdropStatus(orderId, true);
         }
-        localStorage.setItem("lastMintInput", addressToUse);
-        // setWalletAddress("");
+        localStorage.setItem("lastMintInput", addressToUse.trim());
+        if (!isEmail) {
+          localStorage.setItem("lastMintInputWallet", addressToUse.trim());
+        }
       } else {
         throw new Error("Minting process failed");
       }
@@ -1000,22 +1002,30 @@ export default function MintButton({
     </WhiteBgShimmerButton>
   );
 
-  const renderLightVersionMintButton = () => (
-    <WhiteBgShimmerButton
-      borderRadius="9999px"
-      className="w-full my-4 text-black hover:bg-gray-800 h-[44px] rounded font-bold"
-      onClick={handleLightVersionClaim}
+  const renderLightVersionMintButton = () => {
+
+    const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
+      (walletAddress || "").trim()
+    );
+
+    return (
+      <WhiteBgShimmerButton
+        borderRadius="9999px"
+        className="w-full my-4 text-black hover:bg-gray-800 h-[44px] rounded font-bold"
+        onClick={handleLightVersionClaim}
       disabled={
         isMinting ||
         !isEligible ||
         existingOrder?.status === "completed" ||
         isLoading ||
-        !deviceId
+        !deviceId || 
+        !isEmail
       }
     >
       {getButtonText()}
     </WhiteBgShimmerButton>
   );
+  };
 
   const renderCompletedMint = () => (
     <div className="flex flex-col items-center my-3 w-full">

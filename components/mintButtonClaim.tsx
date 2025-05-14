@@ -225,6 +225,13 @@ export default function MintButtonClaim({
     }
   }, [connected]);
 
+  useEffect(() => {
+    const lastMintInputWallet = localStorage.getItem("lastMintInputWallet");
+    if (lastMintInputWallet) {
+      setWalletAddress(lastMintInputWallet || "");
+    }
+  }, []);
+
   const handleLightVersionClaim = async (paymentMethod: "card" | "crypto") => {
     let newOrderId = null;
 
@@ -404,7 +411,7 @@ export default function MintButtonClaim({
             setShowAirdropModal(true);
             updateOrderAirdropStatus(lightOrder.id, true);
           }
-          setWalletAddress("");
+          localStorage.setItem("lastMintInputWallet", walletAddress.trim());
         } else {
           throw new Error("Minting process failed");
         }

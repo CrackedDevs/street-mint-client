@@ -138,7 +138,7 @@ const EditionInformation = ({
               : `$${collectible.price_usd.toFixed(2)}`}
           </span>
         </div>
-        <div className="flex items-center justify-center md:justify-start space-x-2 bg-white/10 rounded-full py-2 px-4">
+        <div className="flex items-center justify-center md:justify-start space-x-2 bg-white/10 rounded-full py-3 px-4">
           <Badge
             variant="secondary"
             className={cn(
@@ -154,6 +154,18 @@ const EditionInformation = ({
             {mintingStatus === "ended" && "Ended"}
             {mintingStatus === "loading" && "Loading..."}
           </Badge>
+          {
+            collectible.is_light_version && (
+              <Badge
+                variant="secondary"
+                className={cn(
+                  "font-semibold rounded-xl bg-gray-500 text-white",
+                )}
+              >
+                Email Only
+              </Badge>
+            )
+          }
           {timeLeft && (
             <>
               <Clock className="w-4 h-4" />
