@@ -225,14 +225,6 @@ export default function MintButtonClaim({
     }
   }, [connected]);
 
-  useEffect(() => {
-    //Auto fill the wallet address if the user has previously minted
-    const lastMintInput = localStorage.getItem("lastMintInput");
-    if (lastMintInput) {
-      setWalletAddress(lastMintInput || "");
-    }
-  }, []);
-
   const handleLightVersionClaim = async (paymentMethod: "card" | "crypto") => {
     let newOrderId = null;
 
