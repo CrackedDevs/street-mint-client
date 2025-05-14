@@ -730,7 +730,7 @@ export default function MintButton({
           setShowAirdropModal(true);
           updateOrderAirdropStatus(orderId, true);
         }
-        localStorage.setItem("lastMintInput", addressToUse);
+        // localStorage.setItem("lastMintInput", addressToUse);
         localStorage.setItem("lastMintInputEmail", addressToUse);
        
       } else {
