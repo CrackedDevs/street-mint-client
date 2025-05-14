@@ -382,10 +382,14 @@ export default function MintButton({
   useEffect(() => {
     // Auto fill the wallet address if the user has previously minted
     const lastMintInput = localStorage.getItem("lastMintInput");
-    if (lastMintInput) {
+    const lastMintInputEmail = localStorage.getItem("lastMintInputEmail");
+    if (isLightVersion) {
+      setWalletAddress(lastMintInputEmail || "");
+    }
+    else if (lastMintInput) {
       setWalletAddress(lastMintInput || "");
     }
-  }, []);
+  }, [isLightVersion]);
 
   useEffect(() => {
     console.log("walletAddress", walletAddress);
@@ -612,7 +616,9 @@ export default function MintButton({
           updateOrderAirdropStatus(orderId, true);
         }
         localStorage.setItem("lastMintInput", addressToUse.trim());
-        if (!isEmail) {
+        if (isEmail) {
+          localStorage.setItem("lastMintInputEmail", addressToUse.trim());
+        } else {
           localStorage.setItem("lastMintInputWallet", addressToUse.trim());
         }
       } else {
@@ -725,7 +731,8 @@ export default function MintButton({
           updateOrderAirdropStatus(orderId, true);
         }
         localStorage.setItem("lastMintInput", addressToUse);
-        // setWalletAddress("");
+        localStorage.setItem("lastMintInputEmail", addressToUse);
+       
       } else {
         throw new Error("Minting process failed");
       }
