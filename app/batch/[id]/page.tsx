@@ -23,7 +23,7 @@ export default function BatchPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
-  const [allDays, setAllDays] = useState<Date[]>([]);
+  const [allDays, setAllDays] = useState<{ date: Date; label: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -48,18 +48,84 @@ export default function BatchPage() {
         setOrders(result.orders || []);
       }
 
-      // Generate all days based on batch_start_date and batch_end_date
+      // Generate days based on frequency type
       if (batchListing?.batch_start_date && batchListing?.batch_end_date) {
         const startDate = new Date(batchListing.batch_start_date);
         const endDate = new Date(batchListing.batch_end_date);
-        const days = [];
+        const frequencyType = batchListing.frequency_type || 'daily';
+        const frequencyDays = batchListing.frequency_days || [];
+        
+        let days: { date: Date; label: string }[] = [];
 
-        let currentDate = new Date(startDate);
+        if (frequencyType === 'daily') {
+          // Add all days from start date to end date
+          let currentDate = new Date(startDate);
+          let dayCount = 1;
 
-        // Add all days from start date to end date
-        while (currentDate <= endDate) {
-          days.push(new Date(currentDate));
-          currentDate.setDate(currentDate.getDate() + 1);
+          while (currentDate <= endDate) {
+            days.push({
+              date: new Date(currentDate),
+              label: `Day ${dayCount}`
+            });
+            currentDate.setDate(currentDate.getDate() + 1);
+            dayCount++;
+          }
+        } 
+        else if (frequencyType === 'weekly') {
+          // Add only specified days of the week
+          const dayNames = ['Sun', 'Mon', 'Tues', 'Wed', 'Thu', 'Fri', 'Sat'];
+          const daysToInclude = frequencyDays.map(Number);
+          
+          let currentDate = new Date(startDate);
+          let weekCount = 1;
+
+          while (currentDate <= endDate) {
+            const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+            
+            if (daysToInclude.includes(dayOfWeek)) {
+              days.push({
+                date: new Date(currentDate),
+                label: `Week ${weekCount} - ${dayNames[dayOfWeek]}`
+              });
+            }
+            
+            // If we're moving to the next week
+            if (dayOfWeek === 6) { // Saturday
+              weekCount++;
+            }
+            
+            currentDate.setDate(currentDate.getDate() + 1);
+          }
+        } 
+        else if (frequencyType === 'monthly') {
+          // Add specified days of each month
+          const daysOfMonth = frequencyDays.map(Number);
+          
+          let currentDate = new Date(startDate);
+          let monthCount = 1;
+          const startMonth = currentDate.getMonth();
+          
+          while (currentDate <= endDate) {
+            const dayOfMonth = currentDate.getDate();
+            
+            if (daysOfMonth.includes(dayOfMonth)) {
+              const month = currentDate.toLocaleString('default', { month: 'short' });
+              days.push({
+                date: new Date(currentDate),
+                label: `Month ${monthCount} - ${month} ${dayOfMonth}`
+              });
+            }
+            
+            // If we're moving to the next month
+            const nextDate = new Date(currentDate);
+            nextDate.setDate(currentDate.getDate() + 1);
+            
+            if (nextDate.getMonth() !== currentDate.getMonth()) {
+              monthCount++;
+            }
+            
+            currentDate = nextDate;
+          }
         }
 
         setAllDays(days);
@@ -173,10 +239,9 @@ export default function BatchPage() {
               </h2>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {allDays.map((day, index) => {
+                {allDays.map((item, index) => {
                   // Find collectible for this day
-                  const dayStr = day.toISOString().split("T")[0];
-                  console.log(dayStr);
+                  const dayStr = item.date.toISOString().split("T")[0];
                   const collectible = collectibles.find(
                     (c) =>
                       c.mint_start_date &&
@@ -201,7 +266,7 @@ export default function BatchPage() {
                     }
                   }
 
-                  const isFutureDate = day > new Date();
+                  const isFutureDate = item.date > new Date();
 
                   return (
                     <div key={index} className="flex flex-col items-center">
@@ -228,7 +293,7 @@ export default function BatchPage() {
                         )}
                       </div>
                       <span className="text-sm text-black font-semibold mt-2">
-                        Day {index + 1}
+                        {item.label}
                       </span>
                     </div>
                   );
