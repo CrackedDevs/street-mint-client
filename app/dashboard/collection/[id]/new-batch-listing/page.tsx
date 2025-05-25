@@ -160,6 +160,7 @@ function CreateBatchListingPage() {
     bg_color: null,
     frequency_type: "daily",
     frequency_days: [],
+    always_active: true,
   });
 
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
@@ -494,6 +495,16 @@ function CreateBatchListingPage() {
       });
       return;
     }
+    
+    // Validate always_active is set for weekly/monthly frequency types
+    if ((frequencyType === "weekly" || frequencyType === "monthly") && batchListing.always_active === undefined) {
+      toast({
+        title: "Error",
+        description: "Please select when the collectible should end",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -539,6 +550,7 @@ function CreateBatchListingPage() {
         frequency_type: frequencyType,
         frequency_days: frequencyType === "daily" ? [] : 
                         frequencyType === "weekly" ? selectedWeekDays : selectedMonthDays,
+        always_active: batchListing.always_active,
       };
 
       console.log('selectedChipIds', selectedChipIds);
@@ -801,6 +813,63 @@ function CreateBatchListingPage() {
                           ? "Please select at least one day" 
                           : `Selected: ${selectedMonthDays.sort((a, b) => a - b).join(", ")}`}
                       </p>
+                    </div>
+                  )}
+
+                  {(frequencyType === "weekly" || frequencyType === "monthly") && (
+                    <div className="space-y-2 mt-4">
+                      <Label className="text-lg font-semibold">
+                        End collectible at <span className="text-destructive">*</span>
+                      </Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <button
+                          type="button"
+                          onClick={() => handleBatchListingChange("always_active", true)}
+                          className={`p-4 rounded-lg border-2 transition-colors ${
+                            batchListing.always_active === true 
+                              ? "border-primary bg-primary/10" 
+                              : "border-gray-200 hover:border-primary/50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold">New Collectible Created</h3>
+                            <div className={`w-5 h-5 rounded-full border-2 border-black flex items-center justify-center ${
+                              batchListing.always_active === true ? "bg-primary/20" : ""
+                            }`}>
+                              {batchListing.always_active === true && (
+                                <div className="w-3 h-3 rounded-full bg-primary"></div>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            This collectible will remain active until a new collectible is created in this batch
+                          </p>
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={() => handleBatchListingChange("always_active", false)}
+                          className={`p-4 rounded-lg border-2 transition-colors ${
+                            batchListing.always_active === false 
+                              ? "border-primary bg-primary/10" 
+                              : "border-gray-200 hover:border-primary/50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold">After 24 Hours</h3>
+                            <div className={`w-5 h-5 rounded-full border-2 border-black flex items-center justify-center ${
+                              batchListing.always_active === false ? "bg-primary/20" : ""
+                            }`}>
+                              {batchListing.always_active === false && (
+                                <div className="w-3 h-3 rounded-full bg-primary"></div>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            This collectible will automatically expire 24 hours after creation
+                          </p>
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -1863,7 +1932,8 @@ function CreateBatchListingPage() {
                   selectedChipIds.length === 0 || 
                   availableChips.length === 0 || 
                   (frequencyType === "weekly" && selectedWeekDays.length === 0) ||
-                  (frequencyType === "monthly" && selectedMonthDays.length === 0)
+                  (frequencyType === "monthly" && selectedMonthDays.length === 0) ||
+                  ((frequencyType === "weekly" || frequencyType === "monthly") && batchListing.always_active === undefined)
                 }
               >
                 {isSubmitting ? (

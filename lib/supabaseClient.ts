@@ -123,6 +123,7 @@ export type BatchListing = {
     bg_color: string | null;
     frequency_type: string | null;
     frequency_days: number[];
+    always_active: boolean;
 };
 
 export interface Order {

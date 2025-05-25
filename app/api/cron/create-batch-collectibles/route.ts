@@ -92,90 +92,100 @@ export async function GET(request: NextRequest) {
           mintStart.getTime() + (23 * 60 + 59) * 60 * 1000
         );
       } else if (frequencyType === 'weekly') {
-        // For weekly, find the next scheduled day
-        // Convert frequencyDays to number array for proper sorting and comparison
-        const numericDays = frequencyDays.map(day => Number(day)).filter(day => !isNaN(day));
-        const sortedDays = [...numericDays].sort((a, b) => a - b);
-        let nextDay = sortedDays.find(day => day > currentDayOfWeek);
-        
-        // If no next day found, get the first day of next week
-        if (nextDay === undefined) {
-          nextDay = sortedDays[0];
-          // Calculate days until next occurrence (days until next week + the selected day)
-          const daysUntilNext = 7 - currentDayOfWeek + nextDay;
+        if (listing.always_active) {
+          // For weekly with always_active true, find the next scheduled day
+          // Convert frequencyDays to number array for proper sorting and comparison
+          const numericDays = frequencyDays.map(day => Number(day)).filter(day => !isNaN(day));
+          const sortedDays = [...numericDays].sort((a, b) => a - b);
+          let nextDay = sortedDays.find(day => day > currentDayOfWeek);
           
-          // End time is just before the next scheduled batch
-          mintEnd = new Date(
-            Date.UTC(
-              now.getUTCFullYear(),
-              now.getUTCMonth(),
-              now.getUTCDate() + daysUntilNext,
-              listing.batch_hour,
-              0,
-              0,
-              0
-            )
-          );
-          // Subtract 1 minute to make it end just before
-          mintEnd.setMinutes(mintEnd.getMinutes() - 1);
+          // If no next day found, get the first day of next week
+          if (nextDay === undefined) {
+            nextDay = sortedDays[0];
+            // Calculate days until next occurrence (days until next week + the selected day)
+            const daysUntilNext = 7 - currentDayOfWeek + nextDay;
+            
+            // End time is just before the next scheduled batch
+            mintEnd = new Date(
+              Date.UTC(
+                now.getUTCFullYear(),
+                now.getUTCMonth(),
+                now.getUTCDate() + daysUntilNext,
+                listing.batch_hour,
+                0,
+                0,
+                0
+              )
+            );
+            // Subtract 1 minute to make it end just before
+            mintEnd.setMinutes(mintEnd.getMinutes() - 1);
+          } else {
+            // Calculate days until next occurrence
+            const daysUntilNext = nextDay - currentDayOfWeek;
+            
+            // End time is just before the next scheduled batch
+            mintEnd = new Date(
+              Date.UTC(
+                now.getUTCFullYear(),
+                now.getUTCMonth(),
+                now.getUTCDate() + daysUntilNext,
+                listing.batch_hour,
+                0,
+                0,
+                0
+              )
+            );
+            // Subtract 1 minute to make it end just before
+            mintEnd.setMinutes(mintEnd.getMinutes() - 1);
+          }
         } else {
-          // Calculate days until next occurrence
-          const daysUntilNext = nextDay - currentDayOfWeek;
-          
-          // End time is just before the next scheduled batch
-          mintEnd = new Date(
-            Date.UTC(
-              now.getUTCFullYear(),
-              now.getUTCMonth(),
-              now.getUTCDate() + daysUntilNext,
-              listing.batch_hour,
-              0,
-              0,
-              0
-            )
-          );
-          // Subtract 1 minute to make it end just before
-          mintEnd.setMinutes(mintEnd.getMinutes() - 1);
+          // If always_active is false, set mintEnd to 23 hours and 59 minutes after mintStart
+          mintEnd = new Date(mintStart.getTime() + (23 * 60 + 59) * 60 * 1000);
         }
       } else if (frequencyType === 'monthly') {
-        // For monthly, find the next scheduled day
-        // Convert frequencyDays to number array for proper sorting and comparison
-        const numericDays = frequencyDays.map(day => Number(day)).filter(day => !isNaN(day));
-        const sortedDays = [...numericDays].sort((a, b) => a - b);
-        let nextDay = sortedDays.find(day => day > currentDayOfMonth);
-        
-        // If no next day found, get the first day of next month
-        if (nextDay === undefined) {
-          nextDay = sortedDays[0];
-          // Move to next month, on the selected day
-          mintEnd = new Date(
-            Date.UTC(
-              now.getUTCFullYear(),
-              now.getUTCMonth() + 1,
-              nextDay,
-              listing.batch_hour,
-              0,
-              0,
-              0
-            )
-          );
-          // Subtract 1 minute to make it end just before
-          mintEnd.setMinutes(mintEnd.getMinutes() - 1);
+        if (listing.always_active) {
+          // For monthly with always_active true, find the next scheduled day
+          // Convert frequencyDays to number array for proper sorting and comparison
+          const numericDays = frequencyDays.map(day => Number(day)).filter(day => !isNaN(day));
+          const sortedDays = [...numericDays].sort((a, b) => a - b);
+          let nextDay = sortedDays.find(day => day > currentDayOfMonth);
+          
+          // If no next day found, get the first day of next month
+          if (nextDay === undefined) {
+            nextDay = sortedDays[0];
+            // Move to next month, on the selected day
+            mintEnd = new Date(
+              Date.UTC(
+                now.getUTCFullYear(),
+                now.getUTCMonth() + 1,
+                nextDay,
+                listing.batch_hour,
+                0,
+                0,
+                0
+              )
+            );
+            // Subtract 1 minute to make it end just before
+            mintEnd.setMinutes(mintEnd.getMinutes() - 1);
+          } else {
+            // Set to next occurrence this month
+            mintEnd = new Date(
+              Date.UTC(
+                now.getUTCFullYear(),
+                now.getUTCMonth(),
+                nextDay,
+                listing.batch_hour,
+                0,
+                0,
+                0
+              )
+            );
+            // Subtract 1 minute to make it end just before
+            mintEnd.setMinutes(mintEnd.getMinutes() - 1);
+          }
         } else {
-          // Set to next occurrence this month
-          mintEnd = new Date(
-            Date.UTC(
-              now.getUTCFullYear(),
-              now.getUTCMonth(),
-              nextDay,
-              listing.batch_hour,
-              0,
-              0,
-              0
-            )
-          );
-          // Subtract 1 minute to make it end just before
-          mintEnd.setMinutes(mintEnd.getMinutes() - 1);
+          // If always_active is false, set mintEnd to 23 hours and 59 minutes after mintStart
+          mintEnd = new Date(mintStart.getTime() + (23 * 60 + 59) * 60 * 1000);
         }
       } else {
         // Fallback to daily behavior

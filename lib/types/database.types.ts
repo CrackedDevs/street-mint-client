@@ -89,6 +89,7 @@ export type Database = {
       batch_listings: {
         Row: {
           airdrop_eligibility_index: number | null
+          always_active: boolean | null
           batch_end_date: string | null
           batch_hour: number | null
           batch_start_date: string | null
@@ -144,6 +145,7 @@ export type Database = {
         }
         Insert: {
           airdrop_eligibility_index?: number | null
+          always_active?: boolean | null
           batch_end_date?: string | null
           batch_hour?: number | null
           batch_start_date?: string | null
@@ -199,6 +201,7 @@ export type Database = {
         }
         Update: {
           airdrop_eligibility_index?: number | null
+          always_active?: boolean | null
           batch_end_date?: string | null
           batch_hour?: number | null
           batch_start_date?: string | null
