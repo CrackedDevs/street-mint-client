@@ -64,8 +64,8 @@ export default function ClaimEmailTemplate({
 
         <p>${
           platform === "STREETMINT"
-            ? `P.S. Want to learn more about Street Mint and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://streetmint.xyz/faq">https://streetmint.xyz/faq</a>`
-            : `P.S. Want to learn more about IRLS and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://irls.xyz/faq">https://irls.xyz/faq</a>`
+            ? `P.S. Want to learn more about Street Mint and the exciting world of digital collectibles? Check out our FAQs: <a href="https://streetmint.xyz/faq">https://streetmint.xyz/faq</a>`
+            : `P.S. Want to learn more about IRLS and the exciting world of digital collectibles? Check out our FAQs: <a href="https://irls.xyz/faq">https://irls.xyz/faq</a>`
         }
         </p>
       </div>
