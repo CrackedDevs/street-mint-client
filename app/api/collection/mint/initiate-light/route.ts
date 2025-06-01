@@ -31,12 +31,27 @@ export async function POST(req: Request, res: NextApiResponse) {
     // Fetch collectible details
     const { data: collectible, error: collectibleError } = await supabase
       .from("collectibles")
-      .select("*, collections(id)")
+      .select("*, collections(id, artist)")
       .eq("id", collectibleId)
       .single();
 
     if (collectibleError || !collectible) {
       throw new Error("Failed to fetch collectible");
+    }
+
+    const artistId = collectible.collections?.artist;
+    let artist = null;
+    
+    if (artistId) {
+      const { data: artistData, error: artistError } = await supabase
+        .from("artists")
+        .select("username")
+        .eq("id", artistId)
+        .single();
+      
+      if (!artistError && artistData) {
+        artist = artistData.username;
+      }
     }
 
     // Check eligibility
@@ -142,7 +157,7 @@ export async function POST(req: Request, res: NextApiResponse) {
       const mailOptions = {
         from: `${fromName} <${fromEmail}>`,
         to: emailAddress,
-        subject: `Congrats! You now own an IRLS Collectible`,
+        subject: `Congrats! You now own an IRLS Collectible${artist ? ` by ${artist}` : ''}`,
         html: ClaimEmailTemplate({
           platform,
           nftImageUrl: collectible.primary_image_url,
