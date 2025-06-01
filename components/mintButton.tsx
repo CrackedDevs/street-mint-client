@@ -133,7 +133,7 @@ export default function MintButton({
   const connection = new Connection(process.env.NEXT_PUBLIC_RPC_URL!);
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
   const [showSuccessPopUp, setShowSuccessPopUp] = useState(false);
-  const [isLightVersion, setIsLightVersion] = useState(false);
+  const [isLightVersion, setIsLightVersion] = useState<boolean | null>(null);
   const [signatureCode, setSignatureCode] = useState<string | null>(null);
   const [showPaymentMethodDialog, setShowPaymentMethodDialog] = useState(false);
   const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] =
@@ -383,11 +383,11 @@ export default function MintButton({
     // Auto fill the wallet address if the user has previously minted
     const lastMintInput = localStorage.getItem("lastMintInput");
     const lastMintInputEmail = localStorage.getItem("lastMintInputEmail");
-    if (isLightVersion) {
-      setWalletAddress(lastMintInputEmail || "");
+    if (isLightVersion && lastMintInputEmail) {
+      setWalletAddress(lastMintInputEmail);
     }
-    else if (lastMintInput) {
-      setWalletAddress(lastMintInput || "");
+    else if (isLightVersion && !isLightVersion && lastMintInput) {
+      setWalletAddress(lastMintInput);
     }
   }, [isLightVersion]);
 
@@ -1247,7 +1247,7 @@ export default function MintButton({
           collectible={collectible}
           publicKey={publicKey?.toString() ?? ""}
           existingOrderId={existingOrder?.id ?? ""}
-          isLightVersion={isLightVersion}
+          isLightVersion={isLightVersion ?? false}
         />
       )}
       <SuccessPopup
