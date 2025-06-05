@@ -1000,6 +1000,99 @@ export type Sponsor = {
     created_at: string;
 };
 
+export type Stampbook = {
+    id: number;
+    name: string | null;
+    description: string | null;
+    bg_color: string | null;
+    loyalty_bg_color: string | null;
+    logo_image: string | null;
+    collectibles: number[];
+    artist_id: number;
+    created_at: string;
+};
+
+export const createStampbook = async (stampbook: Omit<Stampbook, 'id' | 'created_at'>): Promise<Stampbook | null> => {
+    try {
+        const { data, error } = await supabase
+            .from('stampbooks')
+            .insert([{
+                ...stampbook,
+                created_at: new Date().toISOString(),
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error in createStampbook:', error);
+        return null;
+    }
+};
+
+export const getStampbooksByArtistId = async (artistId: number): Promise<Stampbook[] | null> => {
+    try {
+        const { data, error } = await supabase
+            .from('stampbooks')
+            .select('*')
+            .eq('artist_id', artistId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error in getStampbooksByArtistId:', error);
+        return null;
+    }
+};
+
+export const getStampbookById = async (id: number): Promise<Stampbook | null> => {
+    try {
+        const { data, error } = await supabase
+            .from('stampbooks')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error in getStampbookById:', error);
+        return null;
+    }
+};
+
+export const updateStampbook = async (stampbook: Stampbook): Promise<{ success: boolean; error: Error | null }> => {
+    try {
+        const { error } = await supabase
+            .from('stampbooks')
+            .update(stampbook)
+            .eq('id', stampbook.id);
+
+        if (error) throw error;
+        return { success: true, error: null };
+    } catch (error) {
+        console.error('Error in updateStampbook:', error);
+        return { success: false, error: error as Error };
+    }
+};
+
+export const deleteStampbookById = async (id: number): Promise<{ success: boolean; error: Error | null }> => {
+    try {
+        const { error } = await supabase
+            .from('stampbooks')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        return { success: true, error: null };
+    } catch (error) {
+        console.error('Error in deleteStampbookById:', error);
+        return { success: false, error: error as Error };
+    }
+};
+
 export const updateBatchListing = async (batchListing: BatchListing): Promise<{ success: boolean; error: Error | null }> => {
     const { user, error: authError } = await getAuthenticatedUser();
     if (!user || authError) {
@@ -1192,5 +1285,28 @@ export const getLatestCollectibleByBatchListingId = async (
   } catch (error) {
     console.error("Error in getLatestCollectibleByBatchListingId:", error);
     return null;
+  }
+};
+
+export const getCollectiblesForStampbook = async () => {
+  try {
+    const { data: collectibles, error } = await supabase
+      .from("collectibles")
+      .select(`
+        *,
+        collections (
+          name,
+          artist,
+          artist_details:artists (
+            username
+          )
+        )
+      `);
+
+    if (error) throw error;
+    return { collectibles, error: null };
+  } catch (error) {
+    console.error("Error fetching collectibles:", error);
+    return { collectibles: null, error };
   }
 };

@@ -840,6 +840,50 @@ export type Database = {
           },
         ]
       }
+      stampbooks: {
+        Row: {
+          artist_id: number
+          bg_color: string | null
+          collectibles: number[]
+          created_at: string
+          description: string | null
+          id: number
+          logo_image: string | null
+          loyalty_bg_color: string | null
+          name: string | null
+        }
+        Insert: {
+          artist_id: number
+          bg_color?: string | null
+          collectibles?: number[]
+          created_at?: string
+          description?: string | null
+          id?: number
+          logo_image?: string | null
+          loyalty_bg_color?: string | null
+          name?: string | null
+        }
+        Update: {
+          artist_id?: number
+          bg_color?: string | null
+          collectibles?: number[]
+          created_at?: string
+          description?: string | null
+          id?: number
+          logo_image?: string | null
+          loyalty_bg_color?: string | null
+          name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stampbooks_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount: number | null

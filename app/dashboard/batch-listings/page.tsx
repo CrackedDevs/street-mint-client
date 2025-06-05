@@ -183,7 +183,7 @@ export default function BatchListingPage() {
             <Card className="w-full">
               <CardContent className="p-6">
                 <p className="text-center text-gray-500">
-                  You have no batch listings yet. Create a new batch listing to get started.
+                  You have no batch listings yet. Create a new batch listing by navigating to a collection and creating one to get started.
                 </p>
               </CardContent>
             </Card>
@@ -230,13 +230,13 @@ export default function BatchListingPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleCopyStampBookLink(item)}>
+                              <Copy className="mr-2 h-4 w-4" />
+                              <span>Copy Stampbook Link</span>
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => router.push(`/dashboard/collection/${item.collection_id}/edit-batch-listing/${item.id}`)}>
                               <Pencil className="mr-2 h-4 w-4" />
                               <span>Edit</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleCopyStampBookLink(item)}>
-                              <Copy className="mr-2 h-4 w-4" />
-                              <span>Copy Stamp Book Link</span>
                             </DropdownMenuItem>
                             <Dialog>
                               <DialogTrigger asChild>
