@@ -7,6 +7,7 @@ import { Loader2, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getCollectiblesForStampbook } from "@/lib/supabaseClient";
 import { Tables } from "@/lib/types/database.types";
+import Image from "next/image";
 
 type Collectible = Tables<"collectibles"> & {
   collections: {
@@ -114,13 +115,39 @@ export function CollectibleSelector({
                     className="rounded border-gray-300 h-5 w-5"
                   />
                   <div className="flex items-center flex-1 space-x-4">
-                    {collectible.primary_image_url && (
-                      <img 
-                        src={collectible.primary_image_url} 
-                        alt={collectible.name}
-                        className="h-16 w-16 object-cover rounded-lg"
-                      />
-                    )}
+                    <div className="flex items-center space-x-2">
+                      {collectible.primary_image_url && (
+                        <>
+                          {collectible.primary_media_type === "video" ? (
+                            <video
+                              src={collectible.primary_image_url}
+                              width={48}
+                              height={48}
+                              className="h-12 w-12 rounded-md object-cover"
+                              autoPlay
+                              loop
+                              muted
+                            />
+                          ) : collectible.primary_media_type === "audio" ? (
+                            <audio
+                              src={collectible.primary_image_url}
+                              controls
+                              loop
+                              controlsList="nodownload"
+                              className="h-12 w-48"
+                            />
+                          ) : (
+                            <Image
+                              src={collectible.primary_image_url}
+                              alt={collectible.name}
+                              width={48}
+                              height={48}
+                              className="h-12 w-12 rounded-md object-cover"
+                            />
+                          )}
+                        </>
+                      )}
+                    </div>
                     <div>
                       <div className="font-medium text-lg">
                         {collectible.name}

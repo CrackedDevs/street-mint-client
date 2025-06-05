@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -249,9 +250,11 @@ function CreateStampbookPage() {
                   />
                   {logoPreviewUrl && (
                     <div className="mt-2 rounded-lg overflow-hidden">
-                      <img
+                      <Image
                         src={logoPreviewUrl}
                         alt="Logo preview"
+                        width={200}
+                        height={200}
                         className="max-w-[200px] h-auto object-contain"
                       />
                     </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -207,7 +208,7 @@ export default function EditStampbookPage() {
               Unauthorized Access
             </CardTitle>
             <CardDescription className="text-center text-lg">
-              You don't have permission to edit this stampbook.
+              You don&apos;t have permission to edit this stampbook.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center pb-6">
@@ -329,9 +330,11 @@ export default function EditStampbookPage() {
                   />
                   {logoPreviewUrl && (
                     <div className="mt-2 rounded-lg overflow-hidden">
-                      <img
+                      <Image
                         src={logoPreviewUrl}
                         alt="Logo preview"
+                        width={200}
+                        height={200}
                         className="max-w-[200px] h-auto object-contain"
                       />
                     </div>

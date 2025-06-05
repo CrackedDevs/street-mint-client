@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Copy, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -203,7 +204,7 @@ export default function StampbooksPage() {
           <TableCell colSpan={7} className="text-center py-8">
             {searchQuery ? (
               <p className="text-gray-500">
-                No stampbooks found matching "{searchQuery}"
+                No stampbooks found matching &quot;{searchQuery}&quot;
               </p>
             ) : (
               <div className="space-y-3">
@@ -224,9 +225,11 @@ export default function StampbooksPage() {
         <TableCell className="text-center">
           {stampbook.logo_image ? (
             <div className="flex justify-center">
-              <img
+              <Image
                 src={stampbook.logo_image}
                 alt={`${stampbook.name} logo`}
+                width={48}
+                height={48}
                 className="h-12 w-12 object-cover rounded"
               />
             </div>
@@ -257,9 +260,11 @@ export default function StampbooksPage() {
                         className="flex items-start space-x-4 border-b border-border pb-4 last:border-0 last:pb-0"
                       >
                         {collectible.primary_image_url && (
-                          <img
+                          <Image
                             src={collectible.primary_image_url}
                             alt={collectible.name}
+                            width={48}
+                            height={48}
                             className="h-12 w-12 rounded-md object-cover"
                           />
                         )}
