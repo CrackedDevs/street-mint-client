@@ -547,6 +547,21 @@ export async function deleteChipLink(id: number) {
     return true;
 }
 
+export async function disconnectChipLink(id: number) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { error } = await supabaseAdmin
+        .from('chip_links')
+        .update({ collectible_id: null, batch_listing_id: null })
+        .eq('id', id);
+    
+    if (error) {
+        console.error('Error disconnecting chip link:', error);
+        return false;
+    }
+    
+    return true;
+}
+
 export const createBatchListing = async (batchListing: Omit<BatchListing, 'id'>, collectionId: number, chipLinks: number[]): Promise<BatchListing | null> => {
     const nftMetadata = {
         name: batchListing.name,

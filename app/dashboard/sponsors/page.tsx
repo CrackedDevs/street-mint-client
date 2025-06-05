@@ -33,6 +33,7 @@ import {
   getSponsorsByArtistId,
   updateSponsor,
 } from "@/lib/supabaseAdminClient";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -260,7 +261,7 @@ function SponsorsPage() {
   };
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="min-h-screen bg-background text-foreground p-4 sm:p-8 w-full">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Sponsors</h1>
         <Button onClick={() => setShowAddDialog(true)}>
@@ -270,8 +271,21 @@ function SponsorsPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, index) => (
+            <Card key={index} className="overflow-hidden">
+              <div className="h-48">
+                <Skeleton className="h-full w-full" />
+              </div>
+              <CardContent className="pt-6">
+                <Skeleton className="h-6 w-32" />
+              </CardContent>
+              <CardFooter className="flex justify-end space-x-2 pt-0">
+                <Skeleton className="h-9 w-20" />
+                <Skeleton className="h-9 w-20" />
+              </CardFooter>
+            </Card>
+          ))}
         </div>
       ) : sponsors.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">

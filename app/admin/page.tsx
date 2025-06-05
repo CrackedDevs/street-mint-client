@@ -79,13 +79,13 @@ export default function AdminOverview() {
 
   // Admin sections with descriptions
   const adminSections = [
-    {
-      title: "Dashboard",
-      description: "Link chips to collectible",
-      icon: <LayoutDashboard className="h-6 w-6" />,
-      path: "/admin/dashboard",
-      color: "bg-blue-500",
-    },
+    // {
+    //   title: "Dashboard",
+    //   description: "Link chips to collectible",
+    //   icon: <LayoutDashboard className="h-6 w-6" />,
+    //   path: "/admin/dashboard",
+    //   color: "bg-blue-500",
+    // },
     {
       title: "Chip Management",
       description: "Assign chips to artists",

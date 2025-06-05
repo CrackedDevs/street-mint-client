@@ -3,14 +3,16 @@ import { useUserProfile } from "@/app/providers/UserProfileProvider";
 import ConnectedWalletWidget from "@/components/connectedWalletWidget";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Award, Bolt, Layers, PaletteIcon, UserIcon } from "lucide-react";
+import { Award, Bolt, BookOpen, Layers, PaletteIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import React from "react";
 
 const DashboardHeader: React.FC = () => {
   const { publicKey } = useWallet();
   const { userProfile, isLoading } = useUserProfile();
+  const pathname = usePathname();
 
   const showNavbarItems = userProfile && !isLoading && userProfile.email;
 
@@ -33,34 +35,49 @@ const DashboardHeader: React.FC = () => {
             <div className="flex items-center space-x-4">
               {publicKey && (
                 <>
-                  <Link href="/dashboard/batch-listings">
-                    <Button variant="ghost">
-                      <Layers className="h-5 w-5 mr-2" />
-                      Batch Listing
-                    </Button>
-                  </Link>
                   <Link href="/dashboard/collection">
-                    <Button variant="ghost">
+                    <Button 
+                      variant={pathname === "/dashboard/collection" ? "default" : "ghost"}
+                      className={pathname === "/dashboard/collection" ? "bg-gray-900" : ""}
+                    >
                       <PaletteIcon className="h-5 w-5 mr-2" />
                       Collections
                     </Button>
                   </Link>
                   <Link href="/dashboard/my-chips">
-                    <Button variant="ghost">
+                    <Button 
+                      variant={pathname === "/dashboard/my-chips" ? "default" : "ghost"}
+                      className={pathname === "/dashboard/my-chips" ? "bg-gray-900" : ""}
+                    >
                       <Bolt className="h-5 w-5 mr-2" />
-                      My Chips
+                      Chips
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard/batch-listings">
+                    <Button 
+                      variant={pathname === "/dashboard/batch-listings" ? "default" : "ghost"}
+                      className={pathname === "/dashboard/batch-listings" ? "bg-gray-900" : ""}
+                    >
+                      <Layers className="h-5 w-5 mr-2" />
+                      Batch Listings
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard/stampbooks">
+                    <Button 
+                      variant={pathname === "/dashboard/stampbooks" ? "default" : "ghost"}
+                      className={pathname === "/dashboard/stampbooks" ? "bg-gray-900" : ""}
+                    >
+                      <BookOpen className="h-5 w-5 mr-2" />
+                      Stampbooks
                     </Button>
                   </Link>
                   <Link href="/dashboard/sponsors">
-                    <Button variant="ghost">
+                    <Button 
+                      variant={pathname === "/dashboard/sponsors" ? "default" : "ghost"}
+                      className={pathname === "/dashboard/sponsors" ? "bg-gray-900" : ""}
+                    >
                       <Award className="h-5 w-5 mr-2" />
                       Sponsors
-                    </Button>
-                  </Link>
-                  <Link href="/dashboard/profile">
-                    <Button variant="ghost">
-                      <UserIcon className="h-5 w-5 mr-2" />
-                      Profile
                     </Button>
                   </Link>
                 </>

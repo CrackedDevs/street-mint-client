@@ -3,13 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -24,14 +18,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Trash2, ArrowUpDown, Search, X } from "lucide-react";
+import { MoreVertical, Trash2, Search, X, ChevronDown } from "lucide-react";
 import {
   getAllArtists,
   createChipLink,
   getAllChipLinks,
   deleteChipLink,
   ChipLinkDetailed,
+  disconnectChipLink,
 } from "@/lib/supabaseAdminClient";
+import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Message component with progress bar and close button
 const AutoDismissMessage = ({
@@ -96,14 +99,19 @@ const AutoDismissMessage = ({
 };
 
 export default function ChipsManagementPage() {
-  const [chipIds, setChipIds] = useState("");
+  const [chipIdArray, setChipIdArray] = useState<string[]>([]);
   const [selectedArtistId, setSelectedArtistId] = useState<number | null>(null);
   const [artists, setArtists] = useState<any[]>([]);
+  const [artistSearchQuery, setArtistSearchQuery] = useState("");
   const [chipLinks, setChipLinks] = useState<ChipLinkDetailed[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const { toast } = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isArtistDropdownOpen, setIsArtistDropdownOpen] = useState(false);
+  const artistDropdownRef = useRef<HTMLDivElement>(null);
 
   // Refs to store timeout IDs for message clearing
   const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -176,21 +184,45 @@ export default function ChipsManagementPage() {
     }
   };
 
+  const handleChipInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',' || e.key === ' ') {
+      e.preventDefault();
+      const value = e.currentTarget.value.trim();
+      if (value) {
+        addChipId(value);
+        e.currentTarget.value = '';
+      }
+    } else if (e.key === 'Backspace' && !e.currentTarget.value && chipIdArray.length > 0) {
+      // Remove the last chip when backspace is pressed on empty input
+      setChipIdArray(prev => prev.slice(0, -1));
+    }
+  };
+
+  const handleChipInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.target.value.trim();
+    if (value) {
+      addChipId(value);
+      e.target.value = '';
+    }
+  };
+
+  const addChipId = (chipId: string) => {
+    if (!chipIdArray.includes(chipId)) {
+      setChipIdArray(prev => [...prev, chipId]);
+    }
+  };
+
+  const removeChipId = (chipId: string) => {
+    setChipIdArray(prev => prev.filter(id => id !== chipId));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chipIds || !selectedArtistId) return;
+    if (!selectedArtistId || chipIdArray.length === 0) return;
 
     // Clear any previous messages
     setErrorMessage(null);
     setSuccessMessage(null);
-
-    // Split the input by commas, new lines, or spaces and filter out empty strings
-    const chipIdArray = chipIds
-      .split(/[\n,\s]+/)
-      .map((id) => id.trim())
-      .filter((id) => id.length > 0);
-
-    if (chipIdArray.length === 0) return;
 
     console.log(
       `Processing ${chipIdArray.length} chip IDs for artist ID ${selectedArtistId}`
@@ -227,66 +259,73 @@ export default function ChipsManagementPage() {
       }
     }
 
+    const artistName = artists.find((artist) => artist.id === selectedArtistId)?.username || "selected artist";
+
     // Show error message if there were errors
     if (errors.length > 0) {
-      // Format the error messages for better readability
       const formattedErrors = errors.map((error) => {
-        // Extract the chip ID from the error message (format: "chipId: error message")
         const [chipId, ...errorParts] = error.split(":");
         const errorMessage = errorParts.join(":").trim();
-
-        // Return a formatted error message
-        return `• ${chipId}: ${errorMessage}`;
+        return `${chipId}: ${errorMessage}`;
       });
 
-      setErrorMessage(
-        `Failed to assign the following chip IDs:\n${formattedErrors.join(
-          "\n"
-        )}`
-      );
+      toast({
+        title: "Failed to Assign Chips",
+        description: `Failed to assign ${errors.length} chip(s) to ${artistName}:\n${formattedErrors.slice(0, 3).join("\n")}${errors.length > 3 ? `\n...and ${errors.length - 3} more` : ""}`,
+        variant: "destructive",
+      });
     }
 
     // Show success message if any chips were successfully assigned
     if (successfulChips.length > 0) {
-      const artistName =
-        artists.find((artist) => artist.id === selectedArtistId)?.username ||
-        "selected artist";
-
-      // Format the success message
-      let successMsg = `Successfully assigned ${successfulChips.length} chip(s) to ${artistName} (ID: ${selectedArtistId})`;
-
-      // If there are 5 or fewer successful chips, list them all
-      if (successfulChips.length <= 5) {
-        successMsg += `:\n${successfulChips
-          .map((chipId) => `• ${chipId}`)
-          .join("\n")}`;
-      }
-      // If there are more than 5, show the first 5 and indicate there are more
-      else {
-        const shownChips = successfulChips.slice(0, 5);
-        const remainingCount = successfulChips.length - 5;
-        successMsg += `:\n${shownChips
-          .map((chipId) => `• ${chipId}`)
-          .join("\n")}\n• ... and ${remainingCount} more`;
-      }
-
-      setSuccessMessage(successMsg);
+      toast({
+        title: "Chips Assigned Successfully",
+        description: `Successfully assigned ${successfulChips.length} chip(s) to ${artistName}${successfulChips.length <= 3 ? `:\n${successfulChips.join("\n")}` : ""}`,
+      });
     }
 
-    // Log summary
-    console.log(
-      `Assignment complete. Successfully assigned ${successfulChips.length} chips, failed to assign ${errors.length} chips.`
-    );
-
-    setChipIds("");
+    setChipIdArray([]);
     setSelectedArtistId(null);
+    await fetchChipLinks();
+    setIsLoading(false);
+  };
+
+  const handleDisconnect = async (id: number) => {
+    setIsLoading(true);
+    const chip = chipLinks.find(c => c.id === id);
+    const result = await disconnectChipLink(id);
+    if (result) {
+      toast({
+        title: "Chip Disconnected",
+        description: `Successfully disconnected chip ${chip?.chip_id || id} from its collectible.`,
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to disconnect the chip. Please try again.",
+        variant: "destructive",
+      });
+    }
     await fetchChipLinks();
     setIsLoading(false);
   };
 
   const handleDelete = async (id: number) => {
     setIsLoading(true);
-    await deleteChipLink(id);
+    const chip = chipLinks.find(c => c.id === id);
+    const result = await deleteChipLink(id);
+    if (result) {
+      toast({
+        title: "Chip Revoked",
+        description: `Successfully revoked chip ${chip?.chip_id || id} from the artist.`,
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to revoke the chip. Please try again.",
+        variant: "destructive",
+      });
+    }
     await fetchChipLinks();
     setIsLoading(false);
   };
@@ -310,102 +349,236 @@ export default function ChipsManagementPage() {
     return acc;
   }, {} as Record<string, ChipLinkDetailed[]>);
 
+  const handleArtistSearch = (e: React.MouseEvent | React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if ('target' in e && e.target instanceof HTMLInputElement) {
+      setArtistSearchQuery(e.target.value);
+    }
+  };
+
+  const selectedArtist = artists.find(artist => artist.id === selectedArtistId);
+  const filteredArtists = artists.filter(artist => 
+    artist.username.toLowerCase().includes(artistSearchQuery.toLowerCase())
+  );
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (artistDropdownRef.current && !artistDropdownRef.current.contains(event.target as Node)) {
+        setIsArtistDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="container mx-auto p-4 py-10 space-y-8">
-      <h1 className="text-3xl font-bold text-center mb-12">
-        Chip Management for Artists
-      </h1>
-
-      <form onSubmit={handleSubmit} className="flex flex-col space-y-4 w-full">
-        {errorMessage && (
-          <AutoDismissMessage
-            message={errorMessage}
-            type="error"
-            onDismiss={() => setErrorMessage(null)}
-          />
-        )}
-
-        {successMessage && (
-          <AutoDismissMessage
-            message={successMessage}
-            type="success"
-            onDismiss={() => setSuccessMessage(null)}
-          />
-        )}
-
-        <div className="flex flex-col space-y-2">
-          <label htmlFor="chipIds" className="text-sm font-medium">
-            Chip IDs (separate multiple IDs with commas, spaces, or new lines)
-          </label>
-          <textarea
-            id="chipIds"
-            placeholder="Enter chip IDs here..."
-            value={chipIds}
-            onChange={(e) => setChipIds(e.target.value)}
-            className="px-5 py-3 text-base font-semibold min-h-[100px] rounded-md border border-input"
-            required
-          />
-        </div>
-
-        <div className="flex space-x-4">
-          <Select
-            value={selectedArtistId?.toString() || ""}
-            onValueChange={(value) => setSelectedArtistId(Number(value))}
-          >
-            <SelectTrigger className="w-[280px]">
-              <SelectValue placeholder="Select an artist" />
-            </SelectTrigger>
-            <SelectContent>
-              {artists.map((artist) => (
-                <SelectItem key={artist.id} value={artist.id.toString()}>
-                  {artist.username}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button
-            type="submit"
-            className="min-w-24 font-semibold"
-            size="lg"
-            disabled={isLoading || !chipIds || !selectedArtistId}
-          >
-            {isLoading ? "Adding..." : "Assign Chips"}
-          </Button>
-        </div>
-      </form>
-
-      <div className="mb-4">
-        <form className="flex space-x-4">
-          <Input
-            type="text"
-            placeholder="Search chips or artists..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-grow max-w-[380px] px-5 text-base"
-          />
-        </form>
+      <div className="text-center space-y-2">
+        <h1 className="text-4xl font-bold tracking-tight">Chip Management</h1>
+        <p className="text-muted-foreground">Assign, track, and manage chips for your artists</p>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
+      {/* Section 1: Chip Assignment Form */}
+      <div className="grid gap-8 md:grid-cols-2">
+        <div className="p-6 border rounded-xl bg-card space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight">Assign New Chips</h2>
+            <p className="text-sm text-muted-foreground mt-1">Add new chips to your artists' collections</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {errorMessage && (
+              <AutoDismissMessage
+                message={errorMessage}
+                type="error"
+                onDismiss={() => setErrorMessage(null)}
+              />
+            )}
+
+            {successMessage && (
+              <AutoDismissMessage
+                message={successMessage}
+                type="success"
+                onDismiss={() => setSuccessMessage(null)}
+              />
+            )}
+
+            <div className="space-y-2">
+              <label htmlFor="chipIds" className="text-sm font-medium">
+                Chip IDs
+              </label>
+              <div 
+                className="min-h-[120px] w-full px-3 py-2 rounded-md border bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+                onClick={() => inputRef.current?.focus()}
+              >
+                <div className="flex flex-wrap gap-2">
+                  {chipIdArray.map((chipId) => (
+                    <div
+                      key={chipId}
+                      className="flex items-center gap-1 bg-primary/10 text-primary rounded-md px-2 py-1 text-sm group"
+                    >
+                      <span>{chipId}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeChipId(chipId);
+                        }}
+                        className="opacity-50 hover:opacity-100 focus:opacity-100 transition-opacity"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    id="chipIds"
+                    placeholder={chipIdArray.length === 0 ? "Enter chip IDs (press Enter, comma, or space to add)" : ""}
+                    className="flex-1 min-w-[200px] bg-transparent border-none outline-none placeholder:text-muted-foreground"
+                    onKeyDown={handleChipInputKeyDown}
+                    onBlur={handleChipInputBlur}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Press Enter, comma, or space to add multiple chip IDs
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Select Artist
+                </label>
+                <div className="relative" ref={artistDropdownRef}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={isArtistDropdownOpen}
+                    className="w-full justify-between font-normal"
+                    onClick={() => setIsArtistDropdownOpen(!isArtistDropdownOpen)}
+                  >
+                    {selectedArtist ? selectedArtist.username : "Select an artist..."}
+                    <ChevronDown className={`ml-2 h-4 w-4 shrink-0 transition-transform ${isArtistDropdownOpen ? 'rotate-180' : ''}`} />
+                  </Button>
+                  
+                  {isArtistDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-popover text-popover-foreground shadow-md rounded-md border animate-in fade-in-0 zoom-in-95">
+                      <div className="p-2">
+                        <Input
+                          type="text"
+                          placeholder="Search artists..."
+                          value={artistSearchQuery}
+                          onChange={(e) => setArtistSearchQuery(e.target.value)}
+                          className="mb-2"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-[200px] overflow-auto">
+                        {filteredArtists.length === 0 ? (
+                          <div className="py-2 px-3 text-sm text-muted-foreground">
+                            No artists found
+                          </div>
+                        ) : (
+                          <div className="py-1">
+                            {filteredArtists.map((artist) => (
+                              <button
+                                key={artist.id}
+                                type="button"
+                                className={cn(
+                                  "relative w-full flex items-center py-1.5 px-3 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
+                                  selectedArtistId === artist.id && "bg-accent text-accent-foreground"
+                                )}
+                                onClick={() => {
+                                  setSelectedArtistId(artist.id);
+                                  setIsArtistDropdownOpen(false);
+                                  setArtistSearchQuery("");
+                                }}
+                              >
+                                {artist.username}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Search and select an artist to assign the chips to
+                </p>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full font-semibold"
+                size="lg"
+                disabled={isLoading || !selectedArtistId || chipIdArray.length === 0}
+              >
+                {isLoading ? "Adding..." : "Assign Chips"}
+              </Button>
+            </div>
+          </form>
+        </div>
+
+        {/* Section 2: Search and Filter */}
+        <div className="p-6 border rounded-xl bg-card space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight">Search Chips</h2>
+            <p className="text-sm text-muted-foreground mt-1">Find and manage existing chip assignments</p>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search by chip ID or artist..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-4 py-2 text-base w-full"
+            />
+          </div>
+
+          <div className="mt-4 space-y-4">
+            <div className="flex items-center justify-between text-sm text-muted-foreground border-b pb-2">
+              <span>Total Chips</span>
+              <span className="font-medium text-foreground">{chipLinks.length}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm text-muted-foreground border-b pb-2">
+              <span>Connected to Collectibles</span>
+              <span className="font-medium text-foreground">
+                {chipLinks.filter(chip => chip.collectible_id).length}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm text-muted-foreground border-b pb-2">
+              <span>Connected to Batch Listings</span>
+              <span className="font-medium text-foreground">
+                {chipLinks.filter(chip => chip.batch_listing_id).length}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold text-gray-600">
+            <TableRow className="bg-muted/50">
+              <TableHead className="font-semibold text-foreground w-[200px] border-r">
                 Artist
               </TableHead>
-              <TableHead className="font-semibold text-gray-600">
-                Chip ID
-              </TableHead>
-              <TableHead className="font-semibold text-gray-600">
-                Collectible
-              </TableHead>
-              <TableHead className="font-semibold text-gray-600">
-                Status
-              </TableHead>
-              <TableHead className="font-semibold text-gray-600">
-                Actions
-              </TableHead>
+              <TableHead className="font-semibold text-foreground">Chip ID</TableHead>
+              <TableHead className="font-semibold text-foreground">Collectible</TableHead>
+              <TableHead className="font-semibold text-foreground">Batch</TableHead>
+              <TableHead className="font-semibold text-foreground">Status</TableHead>
+              <TableHead className="font-semibold text-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -413,26 +586,38 @@ export default function ChipsManagementPage() {
               chips.map((chip, index) => (
                 <TableRow
                   key={chip.id}
-                  className="hover:bg-gray-50 transition-colors duration-200"
+                  className="hover:bg-muted/50 transition-colors duration-200"
                 >
                   {index === 0 ? (
-                    <TableCell rowSpan={chips.length} className="font-medium">
+                    <TableCell
+                      rowSpan={chips.length}
+                      className="font-medium border-r bg-muted/30"
+                    >
                       {artistName}
                     </TableCell>
                   ) : null}
-                  <TableCell>{chip.chip_id}</TableCell>
+                  <TableCell className="font-medium">{chip.chip_id}</TableCell>
                   <TableCell>
                     {chip.collectible_id ? (
-                      <div className=" transition-colors underline duration-200">
+                      <div className="text-primary underline hover:text-primary/80 transition-colors">
                         {chip.metadata?.collectible_name || chip.collectible_id}
                       </div>
                     ) : (
-                      <span className="text-gray-500">Not assigned</span>
+                      <span className="text-muted-foreground">Not assigned</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {chip.batch_listing_id ? (
+                      <div className="text-primary underline hover:text-primary/80 transition-colors">
+                        Batch #{chip.batch_listing_id}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">Not assigned</span>
                     )}
                   </TableCell>
                   <TableCell>
                     <span
-                      className={`px-2 py-1 rounded-full text-xs ${
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
                         chip.active
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
@@ -448,21 +633,34 @@ export default function ChipsManagementPage() {
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {/* <DropdownMenuItem
-                          onClick={() =>
-                            window.open(`/chip/${chip.chip_id}`, "_blank")
-                          }
-                          className="cursor-pointer"
-                        >
-                          <span>View Chip URL</span>
-                        </DropdownMenuItem> */}
+                      <DropdownMenuContent align="end" className="w-72">
+                        {chip.collectible_id && (
+                          <DropdownMenuItem
+                            onClick={() => handleDisconnect(chip.id)}
+                            className="cursor-pointer flex-col items-start gap-0.5 py-2"
+                          >
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                              <X className="h-4 w-4" />
+                              <span>Disconnect Chip</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground pl-6">
+                              Disconnect the chip with the collectible and batch if present but will be
+                              still assigned to the artist
+                            </p>
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
                           onClick={() => handleDelete(chip.id)}
-                          className="cursor-pointer text-red-600"
+                          className="cursor-pointer flex-col items-start gap-0.5 py-2 text-red-600 focus:text-red-600 focus:bg-red-50"
                         >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          <span>Disconnect</span>
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <Trash2 className="h-4 w-4" />
+                            <span>Revoke Chip</span>
+                          </div>
+                          <p className="text-xs text-red-500/80 pl-6">
+                            Permanently delete this chip from the system and
+                            artist
+                          </p>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -473,10 +671,14 @@ export default function ChipsManagementPage() {
             {Object.keys(chipsByArtist).length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={5}
-                  className="text-center py-8 text-gray-500"
+                  colSpan={6}
+                  className="h-32 text-center text-muted-foreground"
                 >
-                  No chip assignments found. Add a new chip assignment above.
+                  <div className="flex flex-col items-center gap-2">
+                    <Search className="h-8 w-8" />
+                    <p>No chip assignments found</p>
+                    <p className="text-sm">Add a new chip assignment using the form above</p>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
