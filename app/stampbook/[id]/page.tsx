@@ -83,7 +83,7 @@ export default function StampbookPage() {
     setIsSearching(true);
     try {
       const collectibleIds = collectibles.map(c => c.id);
-      const orders = await searchOrdersByEmailOrWallet(searchQuery.trim(), collectibleIds);
+      const orders = await searchOrdersByEmailOrWallet(searchQuery.trim(), collectibleIds, isLightVersion);
       setFilteredOrders(orders);
       setHasSearched(true);
     } catch (error) {
@@ -92,7 +92,7 @@ export default function StampbookPage() {
     } finally {
       setIsSearching(false);
     }
-  }, [searchQuery, collectibles]);
+  }, [searchQuery, collectibles, isLightVersion]);
 
   // Debounced search effect
   useEffect(() => {

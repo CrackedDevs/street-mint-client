@@ -1420,48 +1420,50 @@ export const getOrdersForCollectibles = async (collectibles: Collectible[]): Pro
 
 export const searchOrdersByEmailOrWallet = async (
   searchQuery: string,
-  collectibleIds: number[]
+  collectibleIds: number[],
+  isLightVersion: boolean
 ): Promise<(LightOrder | RegularOrder)[]> => {
   try {
-    // Search in light_orders table
-    const { data: lightOrders, error: lightError } = await supabase
-      .from('light_orders')
-      .select('id, collectible_id, email, wallet_address, status, created_at')
-      .in('collectible_id', collectibleIds)
-      .or(`email.eq.${searchQuery},wallet_address.eq.${searchQuery}`)
-      .in('status', ['pending', 'completed']);
+    if (isLightVersion) {
+      // Search only in light_orders table
+      const { data: lightOrders, error: lightError } = await supabase
+        .from('light_orders')
+        .select('id, collectible_id, email, wallet_address, status, created_at')
+        .in('collectible_id', collectibleIds)
+        .or(`email.eq.${searchQuery},wallet_address.eq.${searchQuery}`)
+        .in('status', ['pending', 'completed']);
 
-    if (lightError) throw lightError;
+      if (lightError) throw lightError;
 
-    // Search in orders table (for regular orders)
-    const { data: regularOrders, error: regularError } = await supabase
-      .from('orders')
-      .select('id, collectible_id, wallet_address, status, created_at')
-      .in('collectible_id', collectibleIds)
-      .eq('wallet_address', searchQuery)
-      .eq('status', 'completed');
+      // Transform and validate the data
+      return (lightOrders || []).map(order => ({
+        id: Number(order.id),
+        collectible_id: Number(order.collectible_id),
+        email: order.email,
+        wallet_address: order.wallet_address || undefined,
+        status: order.status as 'pending' | 'completed',
+        created_at: order.created_at || new Date().toISOString()
+      }));
+    } else {
+      // Search only in orders table (for regular orders)
+      const { data: regularOrders, error: regularError } = await supabase
+        .from('orders')
+        .select('id, collectible_id, wallet_address, status, created_at')
+        .in('collectible_id', collectibleIds)
+        .eq('wallet_address', searchQuery)
+        .eq('status', 'completed');
 
-    if (regularError) throw regularError;
+      if (regularError) throw regularError;
 
-    // Transform and validate the data
-    const validLightOrders = (lightOrders || []).map(order => ({
-      id: Number(order.id),
-      collectible_id: Number(order.collectible_id),
-      email: order.email,
-      wallet_address: order.wallet_address || undefined,
-      status: order.status as 'pending' | 'completed',
-      created_at: order.created_at || new Date().toISOString()
-    }));
-
-    const validRegularOrders = (regularOrders || []).map(order => ({
-      id: Number(order.id),
-      collectible_id: Number(order.collectible_id),
-      wallet_address: order.wallet_address,
-      status: 'completed' as const,
-      created_at: order.created_at || new Date().toISOString()
-    }));
-
-    return [...validLightOrders, ...validRegularOrders];
+      // Transform and validate the data
+      return (regularOrders || []).map(order => ({
+        id: Number(order.id),
+        collectible_id: Number(order.collectible_id),
+        wallet_address: order.wallet_address,
+        status: 'completed' as const,
+        created_at: order.created_at || new Date().toISOString()
+      }));
+    }
   } catch (error) {
     console.error('Error in searchOrdersByEmailOrWallet:', error);
     return [];
