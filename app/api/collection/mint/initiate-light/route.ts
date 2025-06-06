@@ -164,6 +164,7 @@ export async function POST(req: Request, res: NextApiResponse) {
           signatureCode,
           batchUrl,
           batchName,
+          artist: artist || "",
         }),
       };
 
