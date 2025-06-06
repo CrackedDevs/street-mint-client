@@ -20,6 +20,13 @@ import { useUserProfile } from "@/app/providers/UserProfileProvider";
 import { getStampbookById, updateStampbook, uploadFileToPinata } from "@/lib/supabaseClient";
 import { CollectibleSelector } from "@/components/CollectibleSelector";
 import type { Tables } from "@/lib/types/database.types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Stampbook = Tables<"stampbooks">;
 
@@ -42,6 +49,8 @@ export default function EditStampbookPage() {
     collectibles: [],
     artist_id: 0,
     created_at: new Date().toISOString(),
+    sorting_method: "latest",
+    is_light: false,
   });
 
   useEffect(() => {
@@ -92,7 +101,7 @@ export default function EditStampbookPage() {
 
   const handleStampbookChange = (
     field: keyof typeof stampbook,
-    value: string | number[]
+    value: string | number[] | boolean
   ) => {
     setStampbook((prev) => ({
       ...prev,
@@ -141,6 +150,15 @@ export default function EditStampbookPage() {
       toast({
         title: "Error",
         description: "Please enter a description for the stampbook",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (stampbook.is_light === undefined) {
+      toast({
+        title: "Error",
+        description: "Please select a stampbook version",
         variant: "destructive",
       });
       return;
@@ -341,11 +359,72 @@ export default function EditStampbookPage() {
                   )}
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="sorting_method" className="text-lg font-semibold">
+                    Sorting Method
+                  </Label>
+                  <Select
+                    value={stampbook.sorting_method || "latest"}
+                    onValueChange={(value) => handleStampbookChange("sorting_method", value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a sorting method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="latest">Sort by latest timestamp by collectibles</SelectItem>
+                      <SelectItem value="selection">Sort by selection method by collectibles</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-lg font-semibold">
+                    Stampbook Version <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      className={`relative flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${
+                        !stampbook.is_light
+                          ? "border-primary bg-primary/10"
+                          : "border-muted hover:border-primary/50"
+                      }`}
+                      onClick={() => {
+                        handleStampbookChange("is_light", false);
+                        handleStampbookChange("collectibles", []);
+                      }}
+                    >
+                      <h3 className="text-lg font-semibold">Standard Version</h3>
+                      <p className="text-sm text-muted-foreground text-center mt-2">
+                        Select the standard collectibles for the stampbook in which the user can mint either by wallet address or by email address.
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      className={`relative flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${
+                        stampbook.is_light
+                          ? "border-primary bg-primary/10"
+                          : "border-muted hover:border-primary/50"
+                      }`}
+                      onClick={() => {
+                        handleStampbookChange("is_light", true);
+                        handleStampbookChange("collectibles", []);
+                      }}
+                    >
+                      <h3 className="text-lg font-semibold">Light Version</h3>
+                      <p className="text-sm text-muted-foreground text-center mt-2">
+                        Select the light collectibles for the stampbook in which the user can mint by email address only.
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
                 {userProfile && (
                   <CollectibleSelector
                     artistId={userProfile.id}
                     selectedCollectibles={stampbook.collectibles}
                     onCollectiblesChange={(collectibles: number[]) => handleStampbookChange("collectibles", collectibles)}
+                    isLight={stampbook.is_light}
                   />
                 )}
               </div>

@@ -848,9 +848,11 @@ export type Database = {
           created_at: string
           description: string | null
           id: number
+          is_light: boolean
           logo_image: string | null
           loyalty_bg_color: string | null
           name: string | null
+          sorting_method: string | null
         }
         Insert: {
           artist_id: number
@@ -859,9 +861,11 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: number
+          is_light?: boolean
           logo_image?: string | null
           loyalty_bg_color?: string | null
           name?: string | null
+          sorting_method?: string | null
         }
         Update: {
           artist_id?: number
@@ -870,9 +874,11 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: number
+          is_light?: boolean
           logo_image?: string | null
           loyalty_bg_color?: string | null
           name?: string | null
+          sorting_method?: string | null
         }
         Relationships: [
           {

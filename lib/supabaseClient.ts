@@ -1010,6 +1010,8 @@ export type Stampbook = {
     collectibles: number[];
     artist_id: number;
     created_at: string;
+    sorting_method: string | null;
+    is_light: boolean;
 };
 
 export const createStampbook = async (stampbook: Omit<Stampbook, 'id' | 'created_at'>): Promise<Stampbook | null> => {
@@ -1288,7 +1290,7 @@ export const getLatestCollectibleByBatchListingId = async (
   }
 };
 
-export const getCollectiblesForStampbook = async () => {
+export const getCollectiblesForStampbook = async (isLight: boolean) => {
   try {
     const { data: collectibles, error } = await supabase
       .from("collectibles")
@@ -1301,12 +1303,167 @@ export const getCollectiblesForStampbook = async () => {
             username
           )
         )
-      `);
+      `)
+      .eq('is_light_version', isLight);
 
     if (error) throw error;
     return { collectibles, error: null };
   } catch (error) {
     console.error("Error fetching collectibles:", error);
     return { collectibles: null, error };
+  }
+};
+
+export type BaseOrder = {
+  id: string;
+  collectible_id: number | null;
+  collection_id: number | null;
+  created_at: string | null;
+  device_id: string | null;
+  status: string | null;
+  price_usd: number | null;
+  price_sol: number | null;
+  quantity: number | null;
+  updated_at: string | null;
+  cta_email: string | null;
+  cta_text: string | null;
+};
+
+export type LightOrder = {
+  id: number;
+  collectible_id: number;
+  email: string;
+  wallet_address?: string;
+  status: 'pending' | 'completed';
+  created_at: string;
+};
+
+export type RegularOrder = {
+  id: number;
+  collectible_id: number;
+  wallet_address: string;
+  status: 'completed';
+  created_at: string;
+};
+
+export const getStampbookWithCollectibles = async (stampbookId: number): Promise<{
+  stampbook: Stampbook | null;
+  collectibles: Collectible[];
+}> => {
+  try {
+    // Get stampbook data
+    const stampbook = await getStampbookById(stampbookId);
+    if (!stampbook) {
+      return { stampbook: null, collectibles: [] };
+    }
+
+    // Get collectibles data
+    const collectiblesData = await Promise.all(
+      stampbook.collectibles.map(async (id) => {
+        const collectible = await getCollectibleById(id);
+        return collectible;
+      })
+    );
+
+    return {
+      stampbook,
+      collectibles: collectiblesData.filter(Boolean) as Collectible[],
+    };
+  } catch (error) {
+    console.error("Error fetching stampbook with collectibles:", error);
+    return { stampbook: null, collectibles: [] };
+  }
+};
+
+export const getOrdersForCollectibles = async (collectibles: Collectible[]): Promise<(LightOrder | RegularOrder)[]> => {
+  try {
+    const allOrders = await Promise.all(
+      collectibles.map(async (collectible) => {
+        if (collectible.is_light_version) {
+          const { data } = await supabase
+            .from('light_orders')
+            .select('id, collectible_id, email, wallet_address, status, created_at')
+            .eq('collectible_id', collectible.id);
+          
+          return (data || []).map(order => ({
+            id: Number(order.id),
+            collectible_id: Number(order.collectible_id),
+            email: order.email,
+            wallet_address: order.wallet_address || undefined,
+            status: order.status as 'pending' | 'completed',
+            created_at: order.created_at || new Date().toISOString()
+          }));
+        } else {
+          const { data } = await supabase
+            .from('orders')
+            .select('id, collectible_id, wallet_address, status, created_at')
+            .eq('collectible_id', collectible.id)
+            .eq('status', 'completed');
+          
+          return (data || []).map(order => ({
+            id: Number(order.id),
+            collectible_id: Number(order.collectible_id),
+            wallet_address: order.wallet_address,
+            status: 'completed' as const,
+            created_at: order.created_at || new Date().toISOString()
+          }));
+        }
+      })
+    );
+
+    return allOrders.flat();
+  } catch (error) {
+    console.error("Error fetching orders for collectibles:", error);
+    return [];
+  }
+};
+
+export const searchOrdersByEmailOrWallet = async (
+  searchQuery: string,
+  collectibleIds: number[]
+): Promise<(LightOrder | RegularOrder)[]> => {
+  try {
+    // Search in light_orders table
+    const { data: lightOrders, error: lightError } = await supabase
+      .from('light_orders')
+      .select('id, collectible_id, email, wallet_address, status, created_at')
+      .in('collectible_id', collectibleIds)
+      .or(`email.eq.${searchQuery},wallet_address.eq.${searchQuery}`)
+      .in('status', ['pending', 'completed']);
+
+    if (lightError) throw lightError;
+
+    // Search in orders table (for regular orders)
+    const { data: regularOrders, error: regularError } = await supabase
+      .from('orders')
+      .select('id, collectible_id, wallet_address, status, created_at')
+      .in('collectible_id', collectibleIds)
+      .eq('wallet_address', searchQuery)
+      .eq('status', 'completed');
+
+    if (regularError) throw regularError;
+
+    // Transform and validate the data
+    const validLightOrders = (lightOrders || []).map(order => ({
+      id: Number(order.id),
+      collectible_id: Number(order.collectible_id),
+      email: order.email,
+      wallet_address: order.wallet_address || undefined,
+      status: order.status as 'pending' | 'completed',
+      created_at: order.created_at || new Date().toISOString()
+    }));
+
+    const validRegularOrders = (regularOrders || []).map(order => ({
+      id: Number(order.id),
+      collectible_id: Number(order.collectible_id),
+      wallet_address: order.wallet_address,
+      status: 'completed' as const,
+      created_at: order.created_at || new Date().toISOString()
+    }));
+
+    return [...validLightOrders, ...validRegularOrders];
+  } catch (error) {
+    console.error('Error in searchOrdersByEmailOrWallet:', error);
+    return [];
   }
 };

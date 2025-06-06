@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Loader2, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getCollectiblesForStampbook } from "@/lib/supabaseClient";
@@ -23,12 +24,59 @@ interface CollectibleSelectorProps {
   artistId: number;
   selectedCollectibles: number[];
   onCollectiblesChange: (collectibles: number[]) => void;
+  isLight: boolean;
 }
+
+type CollectibleStatus = "live" | "ended" | "upcoming";
+
+const getCollectibleStatus = (collectible: Collectible): CollectibleStatus => {
+  const now = new Date().getTime();
+  const startDate = collectible.mint_start_date ? new Date(collectible.mint_start_date).getTime() : null;
+  const endDate = collectible.mint_end_date ? new Date(collectible.mint_end_date).getTime() : null;
+
+  // If no start date and no end date, it's live (infinite)
+  if (!startDate && !endDate) {
+    return "live";
+  }
+
+  // If only end date exists
+  if (!startDate && endDate) {
+    return now > endDate ? "ended" : "live";
+  }
+
+  // If only start date exists
+  if (startDate && !endDate) {
+    return now < startDate ? "upcoming" : "live";
+  }
+
+  // If both dates exist
+  if (startDate && endDate) {
+    if (now < startDate) return "upcoming";
+    if (now > endDate) return "ended";
+    return "live";
+  }
+
+  return "live"; // Default case
+};
+
+const getStatusColor = (status: CollectibleStatus): "default" | "secondary" | "destructive" => {
+  switch (status) {
+    case "live":
+      return "default"; // Green
+    case "upcoming":
+      return "secondary"; // Yellow
+    case "ended":
+      return "destructive"; // Red
+    default:
+      return "default";
+  }
+};
 
 export function CollectibleSelector({
   artistId,
   selectedCollectibles,
   onCollectiblesChange,
+  isLight,
 }: CollectibleSelectorProps) {
   const { toast } = useToast();
   const [availableCollectibles, setAvailableCollectibles] = useState<Collectible[]>([]);
@@ -41,7 +89,7 @@ export function CollectibleSelector({
       
       setIsLoadingCollectibles(true);
       try {
-        const { collectibles, error } = await getCollectiblesForStampbook();
+        const { collectibles, error } = await getCollectiblesForStampbook(isLight);
 
         if (error) throw error;
         setAvailableCollectibles(collectibles || []);
@@ -58,7 +106,7 @@ export function CollectibleSelector({
     }
 
     fetchCollectibles();
-  }, [artistId, toast]);
+  }, [artistId, toast, isLight]);
 
   const filteredCollectibles = availableCollectibles.filter((collectible) => {
     const searchLower = searchQuery.toLowerCase();
@@ -149,8 +197,16 @@ export function CollectibleSelector({
                       )}
                     </div>
                     <div>
-                      <div className="font-medium text-lg">
-                        {collectible.name}
+                      <div className="font-medium text-lg flex flex-wrap items-center gap-2">
+                        <span className="break-all">{collectible.name}</span>
+                        {(() => {
+                          const status = getCollectibleStatus(collectible);
+                          return (
+                            <Badge variant={getStatusColor(status)} className="text-xs shrink-0">
+                              {status.charAt(0).toUpperCase() + status.slice(1)}
+                            </Badge>
+                          );
+                        })()}
                       </div>
                       <div className="text-sm text-gray-500 mt-1">
                         ID: {collectible.id} • Artist: {collectible.collections?.artist_details?.username || "Unknown"}

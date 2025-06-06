@@ -51,10 +51,12 @@ interface Collectible {
   description: string;
   primary_image_url: string;
   price_usd: number;
-  quantity_type: string;
+  quantity_type: "limited" | "unlimited" | "single";
   quantity: number | null;
   collection_id: number;
   created_at: string;
+  is_light_version: boolean;
+  is_irls: boolean | null;
 }
 
 type StampbookWithCollectibles = Omit<Stampbook, 'collectibles'> & {
@@ -127,7 +129,7 @@ export default function StampbooksPage() {
   };
 
   const handleCopyLink = (id: number) => {
-    const link = `${window.location.origin}/stamps/${id}`;
+    const link = `${window.location.origin}/stampbook/${id}`;
     navigator.clipboard.writeText(link);
     toast({
       title: "Link copied",
@@ -171,6 +173,9 @@ export default function StampbooksPage() {
           </TableCell>
           <TableCell>
             <Skeleton className="h-4 w-48" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-4 w-16" />
           </TableCell>
           <TableCell>
             <Skeleton className="h-4 w-16" />
@@ -250,14 +255,14 @@ export default function StampbooksPage() {
                 {stampbook.collectibles.length} collectibles
               </Button>
             </HoverCardTrigger>
-            <HoverCardContent className="w-80 text-left">
-              <ScrollArea className="h-[300px] pr-4">
+            <HoverCardContent className="w-96 text-left">
+              <ScrollArea className="h-[300px] pr-2">
                 {stampbook.collectibles.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-2">
                     {stampbook.collectibles.map((collectible, index) => (
                       <div
                         key={collectible.id}
-                        className="flex items-start space-x-4 border-b border-border pb-4 last:border-0 last:pb-0"
+                        className="flex items-start space-x-2 border-b border-border pb-4 last:border-0 last:pb-0"
                       >
                         {collectible.primary_image_url && (
                           <Image
@@ -269,11 +274,16 @@ export default function StampbooksPage() {
                           />
                         )}
                         <div className="flex-1 space-y-1">
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-start w-full gap-2">
                             <p className="font-medium">{collectible.name}</p>
-                            <Badge variant="secondary" className="text-xs">
-                              #{index + 1}
-                            </Badge>
+                            <div className="flex gap-2">
+                              <Badge variant="secondary" className="text-xs">
+                                #{index + 1}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs capitalize">
+                                {collectible.is_irls ? "IRLS" : "Street Mint"}
+                              </Badge>
+                            </div>
                           </div>
                           <p className="text-sm text-muted-foreground line-clamp-2">
                             {collectible.description}
@@ -295,6 +305,16 @@ export default function StampbooksPage() {
               </ScrollArea>
             </HoverCardContent>
           </HoverCard>
+        </TableCell>
+        <TableCell className="text-center">
+          <Badge variant="secondary" className="capitalize">
+            {stampbook.is_light ? "Light" : "Standard"}
+          </Badge>
+        </TableCell>
+        <TableCell className="text-center">
+          <Badge variant="secondary" className="capitalize">
+            {stampbook.sorting_method || "latest"}
+          </Badge>
         </TableCell>
         <TableCell className="text-center">
           {new Date(stampbook.created_at).toLocaleString()}
@@ -362,6 +382,8 @@ export default function StampbooksPage() {
                 <TableHead className="text-center">Name</TableHead>
                 <TableHead className="text-center">Description</TableHead>
                 <TableHead className="text-center">Collectibles</TableHead>
+                <TableHead className="text-center">Version</TableHead>
+                <TableHead className="text-center">Sorting Method</TableHead>
                 <TableHead className="text-center">Created At</TableHead>
                 <TableHead className="text-center">Actions</TableHead>
               </TableRow>
