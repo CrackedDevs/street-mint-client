@@ -56,6 +56,7 @@ export type Collectible = {
     cta_title: string | null;
     cta_description: string | null;
     cta_logo_url: string | null;
+    cta_image_url: string | null;
     cta_text: string | null;
     cta_link: string | null;
     cta_has_email_capture: boolean;

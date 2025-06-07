@@ -70,7 +70,12 @@ function EditCollectiblePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [collectible, setCollectible] = useState<Collectible | null>(null);
   const [newGalleryImages, setNewGalleryImages] = useState<File[]>([]);
-  const [newCtaLogoImage, setNewCtaLogoImage] = useState<File>();
+  const [primaryImageLocalFile, setPrimaryImageLocalFile] = useState<File | null>(
+    null
+  );
+  const [galleryImages, setGalleryImages] = useState<File[]>([]);
+  const [newCtaLogoImage, setNewCtaLogoImage] = useState<File | null>(null);
+  const [newCtaImage, setNewCtaImage] = useState<File | null>(null);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [isLoadingSponsors, setIsLoadingSponsors] = useState(false);
   const [isFreeMint, setIsFreeMint] = useState(false);
@@ -210,17 +215,32 @@ function EditCollectiblePage() {
   };
 
   const handleCtaLogoImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files) {
       const file = e.target.files[0];
-      if (file.size > MAX_FILE_SIZE) {
+      if (file.size <= MAX_FILE_SIZE) {
+        setNewCtaLogoImage(file);
+      } else {
         toast({
           title: "Error",
-          description: "Image size should not exceed 10MB",
+          description: "File size must be less than 10MB",
           variant: "destructive",
         });
-        return;
       }
-      setNewCtaLogoImage(file);
+    }
+  };
+
+  const handleCtaImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const file = e.target.files[0];
+      if (file.size <= MAX_FILE_SIZE) {
+        setNewCtaImage(file);
+      } else {
+        toast({
+          title: "Error",
+          description: "File size must be less than 10MB",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -293,6 +313,12 @@ function EditCollectiblePage() {
         ctaLogoUrl = await uploadFileToPinata(newCtaLogoImage);
       }
 
+      // Upload new CTA image if any
+      let ctaImageUrl = collectible.cta_image_url;
+      if (newCtaImage) {
+        ctaImageUrl = await uploadFileToPinata(newCtaImage);
+      }
+
       // Update collectible with new data
       const updatedCollectible: Collectible = {
         ...collectible,
@@ -301,6 +327,8 @@ function EditCollectiblePage() {
           ...(newGalleryUrls.filter(Boolean) as string[]),
         ],
         cta_logo_url: ctaLogoUrl,
+        cta_image_url: ctaImageUrl,
+        stripe_price_id: collectible.stripe_price_id || "",
       };
 
       const result = await updateCollectible(updatedCollectible);
@@ -1013,6 +1041,38 @@ function EditCollectiblePage() {
                         type="file"
                         accept="image/*"
                         onChange={handleCtaLogoImageChange}
+                        className="sr-only"
+                      />
+                    </div>
+                    <div>
+                      <Label
+                        htmlFor="call-to-action-image-url"
+                        className="text-lg font-semibold"
+                      >
+                        CTA Image
+                      </Label>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        This image will be displayed in the CTA popup after the button
+                      </p>
+                      <div
+                        className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/50 transition-colors"
+                        onClick={() => document.getElementById("call-to-action-image-url")?.click()}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <UploadIcon className="w-6 h-6 text-muted-foreground" />
+                          <span className="text-base font-medium text-muted-foreground">
+                            {newCtaImage
+                              ? newCtaImage.name
+                              : "Add CTA Image"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Input
+                        id="call-to-action-image-url"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleCtaImageChange}
                         className="sr-only"
                       />
                     </div>

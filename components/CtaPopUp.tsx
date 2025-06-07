@@ -22,6 +22,7 @@ interface CtaPopUpProps {
   publicKey: string;
   existingOrderId: string;
   isLightVersion?: boolean;
+  mintEmailOrWallet: string;
   // onSubmit?: (data: { email?: string; text?: string }) => void;
 }
 
@@ -40,6 +41,7 @@ function CtaPopUp({
   publicKey,
   existingOrderId,
   isLightVersion,
+  mintEmailOrWallet,
 }: // onSubmit,
 CtaPopUpProps) {
   const [email, setEmail] = useState("");
@@ -60,9 +62,7 @@ CtaPopUpProps) {
 
     if (ctaLink) {
       // Replace {#email#} placeholder with the captured email
-      const finalCtaLink = hasEmailCapture && email
-        ? ctaLink.replace("{#email#}", encodeURIComponent(email))
-        : ctaLink;
+      const finalCtaLink = ctaLink.replace("{#email#}", mintEmailOrWallet || email || "");
 
       // Wait for confetti animation before redirect
       window.open(
@@ -170,6 +170,21 @@ CtaPopUpProps) {
         {/* Content */}
         <h2 className="mb-2 text-2xl font-bold text-gray-900">{title}</h2>
         <p className="mb-6 text-gray-600">{description}</p>
+
+        {/* CTA Image */}
+        {collectible.cta_image_url && (
+          <div className="mb-6 flex justify-center">
+            <div className="relative w-full max-w-[800px] aspect-[4/3]">
+              <Image
+                src={collectible.cta_image_url}
+                alt="CTA Image"
+                fill
+                className="rounded-lg object-contain"
+                sizes="(max-width: 768px) 100vw, 800px"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">

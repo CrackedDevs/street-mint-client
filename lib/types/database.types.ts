@@ -107,6 +107,7 @@ export type Database = {
           cta_enable: boolean | null
           cta_has_email_capture: boolean | null
           cta_has_text_capture: boolean | null
+          cta_image_url: string | null
           cta_link: string | null
           cta_logo_url: string | null
           cta_text: string | null
@@ -163,6 +164,7 @@ export type Database = {
           cta_enable?: boolean | null
           cta_has_email_capture?: boolean | null
           cta_has_text_capture?: boolean | null
+          cta_image_url?: string | null
           cta_link?: string | null
           cta_logo_url?: string | null
           cta_text?: string | null
@@ -219,6 +221,7 @@ export type Database = {
           cta_enable?: boolean | null
           cta_has_email_capture?: boolean | null
           cta_has_text_capture?: boolean | null
+          cta_image_url?: string | null
           cta_link?: string | null
           cta_logo_url?: string | null
           cta_text?: string | null
@@ -426,6 +429,7 @@ export type Database = {
           cta_enable: boolean | null
           cta_has_email_capture: boolean | null
           cta_has_text_capture: boolean | null
+          cta_image_url: string | null
           cta_link: string | null
           cta_logo_url: string | null
           cta_text: string | null
@@ -472,6 +476,7 @@ export type Database = {
           cta_enable?: boolean | null
           cta_has_email_capture?: boolean | null
           cta_has_text_capture?: boolean | null
+          cta_image_url?: string | null
           cta_link?: string | null
           cta_logo_url?: string | null
           cta_text?: string | null
@@ -518,6 +523,7 @@ export type Database = {
           cta_enable?: boolean | null
           cta_has_email_capture?: boolean | null
           cta_has_text_capture?: boolean | null
+          cta_image_url?: string | null
           cta_link?: string | null
           cta_logo_url?: string | null
           cta_text?: string | null

@@ -1236,6 +1236,7 @@ export default function MintButton({
       {ctaEnabled && showCtaPopUp && (
         <CtaPopUp
           title={collectible.cta_title ?? ""}
+          mintEmailOrWallet={walletAddress || ""}
           description={collectible.cta_description ?? ""}
           logoUrl={collectible.cta_logo_url ?? ""}
           ctaText={collectible.cta_text ?? ""}
