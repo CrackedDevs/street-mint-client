@@ -752,6 +752,7 @@ export default function MintButtonClaim({
         <CtaPopUp
           title={collectible.cta_title ?? ""}
           description={collectible.cta_description ?? ""}
+          mintEmailOrWallet={walletAddress || ""}
           logoUrl={collectible.cta_logo_url ?? ""}
           ctaText={collectible.cta_text ?? ""}
           ctaLink={collectible.cta_link ?? ""}
