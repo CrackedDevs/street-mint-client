@@ -458,7 +458,7 @@ export async function createChipLink(chipLink: ChipLinkCreate): Promise<{ succes
 
 export async function updateChipLink(id: number, chipLink: ChipLink) {
     const supabaseAdmin = await getSupabaseAdmin();
-    const { data, error }: { data: ChipLink | null, error: any } = await supabaseAdmin
+    const { data, error }: { data: ChipLink[] | null, error: any } = await supabaseAdmin
         .from('chip_links')
         .update({
             chip_id: chipLink.chip_id,
@@ -467,13 +467,15 @@ export async function updateChipLink(id: number, chipLink: ChipLink) {
             active: chipLink.active,
             label: chipLink.label,
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
     if (error) {
         console.error('Error updating chip link:', error);
         return null;
     }
-    return data;
+    
+    return data && data.length > 0 ? data[0] : null;
 }
 
 export const createCollectible = async (collectible: Omit<Collectible, 'id'>, collectionId: number): Promise<Collectible | null> => {

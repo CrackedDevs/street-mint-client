@@ -1022,6 +1022,39 @@ function EditCollectiblePage() {
                       >
                         Logo
                       </Label>
+                      
+                      {/* Display existing CTA logo */}
+                      {collectible.cta_logo_url && !newCtaLogoImage && (
+                        <div className="mb-4">
+                          <p className="text-sm text-muted-foreground mb-2">Current logo:</p>
+                          <div className="relative inline-block">
+                            <Image
+                              src={collectible.cta_logo_url}
+                              alt="Current CTA Logo"
+                              width={150}
+                              height={150}
+                              className="object-contain border rounded-md bg-gray-50"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Display new CTA logo preview */}
+                      {newCtaLogoImage && (
+                        <div className="mb-4">
+                          <p className="text-sm text-muted-foreground mb-2">New logo preview:</p>
+                          <div className="relative inline-block">
+                            <Image
+                              src={URL.createObjectURL(newCtaLogoImage)}
+                              alt="New CTA Logo Preview"
+                              width={150}
+                              height={150}
+                              className="object-contain border rounded-md bg-gray-50"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
                       <Label
                         htmlFor="call-to-action-logo-url"
                         className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/50 transition-colors"
@@ -1030,7 +1063,9 @@ function EditCollectiblePage() {
                           <UploadIcon className="w-6 h-6 text-muted-foreground" />
                           <span className="text-base font-medium text-muted-foreground">
                             {newCtaLogoImage
-                              ? newCtaLogoImage.name
+                              ? `Replace with: ${newCtaLogoImage.name}`
+                              : collectible.cta_logo_url
+                              ? "Replace Logo"
                               : "Add Logo"}
                           </span>
                         </div>
@@ -1054,6 +1089,39 @@ function EditCollectiblePage() {
                       <p className="text-sm text-muted-foreground mb-2">
                         This image will be displayed in the CTA popup after the button
                       </p>
+                      
+                      {/* Display existing CTA image */}
+                      {collectible.cta_image_url && !newCtaImage && (
+                        <div className="mb-4">
+                          <p className="text-sm text-muted-foreground mb-2">Current CTA image:</p>
+                          <div className="relative inline-block">
+                            <Image
+                              src={collectible.cta_image_url}
+                              alt="Current CTA Image"
+                              width={200}
+                              height={200}
+                              className="object-contain border rounded-md bg-gray-50"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Display new CTA image preview */}
+                      {newCtaImage && (
+                        <div className="mb-4">
+                          <p className="text-sm text-muted-foreground mb-2">New CTA image preview:</p>
+                          <div className="relative inline-block">
+                            <Image
+                              src={URL.createObjectURL(newCtaImage)}
+                              alt="New CTA Image Preview"
+                              width={200}
+                              height={200}
+                              className="object-contain border rounded-md bg-gray-50"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
                       <div
                         className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/50 transition-colors"
                         onClick={() => document.getElementById("call-to-action-image-url")?.click()}
@@ -1062,7 +1130,9 @@ function EditCollectiblePage() {
                           <UploadIcon className="w-6 h-6 text-muted-foreground" />
                           <span className="text-base font-medium text-muted-foreground">
                             {newCtaImage
-                              ? newCtaImage.name
+                              ? `Replace with: ${newCtaImage.name}`
+                              : collectible.cta_image_url
+                              ? "Replace CTA Image"
                               : "Add CTA Image"}
                           </span>
                         </div>

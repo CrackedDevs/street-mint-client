@@ -187,14 +187,14 @@ CtaPopUpProps) {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 flex flex-col items-center">
           {hasTextCapture && (
             <input
               type="text"
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Enter your text"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2  focus:outline-none text-black"
+              className="w-full max-w-sm rounded-lg border border-gray-300 px-4 py-2 focus:outline-none text-black text-center"
               required
             />
           )}
@@ -205,7 +205,7 @@ CtaPopUpProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2  focus:outline-none text-black"
+              className="w-full max-w-sm rounded-lg border border-gray-300 px-4 py-2 focus:outline-none text-black text-center"
               required
             />
           )}
@@ -215,7 +215,7 @@ CtaPopUpProps) {
             <Button
               type="submit"
               disabled={isLoading}
-              className="relative rounded-lg  px-6 py-2 text-white transition-all  disabled:opacity-50"
+              className="relative rounded-lg px-6 py-2 text-white transition-all disabled:opacity-50"
             >
               <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
               {ctaText}

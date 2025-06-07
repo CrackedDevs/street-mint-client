@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Trash2, Search, X, ChevronDown } from "lucide-react";
+import { MoreVertical, Trash2, Search, X, ChevronDown, Edit } from "lucide-react";
 import {
   getAllArtists,
   createChipLink,
@@ -26,7 +26,9 @@ import {
   deleteChipLink,
   ChipLinkDetailed,
   disconnectChipLink,
+  updateChipLink,
 } from "@/lib/supabaseAdminClient";
+import EditChipModal from "@/components/EditChipModal";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -116,6 +118,8 @@ export default function ChipsManagementPage() {
   const { toast } = useToast();
   const [isArtistDropdownOpen, setIsArtistDropdownOpen] = useState(false);
   const artistDropdownRef = useRef<HTMLDivElement>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedChipForEdit, setSelectedChipForEdit] = useState<ChipLinkDetailed | null>(null);
 
   // Refs to store timeout IDs for message clearing
   const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -320,6 +324,45 @@ export default function ChipsManagementPage() {
     }
     await fetchChipLinks();
     setIsLoading(false);
+  };
+
+  const handleEdit = (chip: ChipLinkDetailed) => {
+    setSelectedChipForEdit(chip);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (chipId: number, updatedData: { chip_id: string; label: string | null }) => {
+    setIsLoading(true);
+    const originalChip = chipLinks.find(c => c.id === chipId);
+    
+    if (originalChip) {
+      const updatedChip = {
+        ...originalChip,
+        chip_id: updatedData.chip_id,
+        label: updatedData.label,
+      };
+      
+      const result = await updateChipLink(chipId, updatedChip);
+      if (result) {
+        toast({
+          title: "Chip Updated",
+          description: `Successfully updated chip to "${updatedData.chip_id}"${updatedData.label ? ` with label "${updatedData.label}"` : ''}.`,
+        });
+        await fetchChipLinks();
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to update the chip. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+    setIsLoading(false);
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setSelectedChipForEdit(null);
   };
 
   // Filter chip links by search query
@@ -645,6 +688,18 @@ export default function ChipsManagementPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-72">
+                        <DropdownMenuItem
+                          onClick={() => handleEdit(chip)}
+                          className="cursor-pointer flex-col items-start gap-0.5 py-2"
+                        >
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <Edit className="h-4 w-4" />
+                            <span>Edit Chip</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground pl-6">
+                            Edit the chip ID and label
+                          </p>
+                        </DropdownMenuItem>
                         {chip.collectible_id && (
                           <DropdownMenuItem
                             onClick={() => handleDisconnect(chip.id)}
@@ -696,6 +751,15 @@ export default function ChipsManagementPage() {
           </TableBody>
         </Table>
       </div>
+
+      <EditChipModal
+        key={selectedChipForEdit?.id || 'edit-modal'}
+        isOpen={isEditModalOpen}
+        onClose={handleEditModalClose}
+        chip={selectedChipForEdit}
+        onUpdate={handleEditSubmit}
+        isLoading={isLoading}
+      />
     </div>
   );
 }
