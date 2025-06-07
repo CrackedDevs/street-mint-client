@@ -42,6 +42,7 @@ function CreateStampbookPage() {
     collectibles: [] as number[],
     sorting_method: "latest",
     is_light: false,
+    loyalty_card_title: "LOYALTY CARD",
   });
 
   const handleStampbookChange = (
@@ -147,6 +148,7 @@ function CreateStampbookPage() {
         logo_image: logoImageUrl,
         sorting_method: stampbook.sorting_method,
         is_light: stampbook.is_light,
+        loyalty_card_title: stampbook.loyalty_card_title,
       });
 
       if (!newStampbook) throw new Error("Failed to create stampbook");
@@ -286,6 +288,20 @@ function CreateStampbookPage() {
                       placeholder="#000000"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="loyalty_card_title" className="text-lg font-semibold">
+                    Loyalty Card Title
+                  </Label>
+                  <Input
+                    id="loyalty_card_title"
+                    type="text"
+                    value={stampbook.loyalty_card_title || ""}
+                    onChange={(e) => handleStampbookChange("loyalty_card_title", e.target.value)}
+                    className="flex-1"
+                    placeholder="LOYALTY CARD"
+                  />
                 </div>
 
                 <div className="space-y-2">

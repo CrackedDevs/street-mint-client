@@ -1047,6 +1047,9 @@ function EditCollectiblePage() {
                           handleCollectibleChange("cta_link", e.target.value)
                         }
                       />
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Use {"{#email#}"} in the link to include the captured email address (e.g., https://example.com/signup?email={"{#email#}"})
+                      </p>
                     </div>
                     <div className="flex gap-2 items-center">
                       <Label

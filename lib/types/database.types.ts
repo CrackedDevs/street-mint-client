@@ -851,6 +851,7 @@ export type Database = {
           is_light: boolean
           logo_image: string | null
           loyalty_bg_color: string | null
+          loyalty_card_title: string | null
           name: string | null
           sorting_method: string | null
         }
@@ -864,6 +865,7 @@ export type Database = {
           is_light?: boolean
           logo_image?: string | null
           loyalty_bg_color?: string | null
+          loyalty_card_title?: string | null
           name?: string | null
           sorting_method?: string | null
         }
@@ -877,6 +879,7 @@ export type Database = {
           is_light?: boolean
           logo_image?: string | null
           loyalty_bg_color?: string | null
+          loyalty_card_title?: string | null
           name?: string | null
           sorting_method?: string | null
         }

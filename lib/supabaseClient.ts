@@ -1012,6 +1012,7 @@ export type Stampbook = {
     created_at: string;
     sorting_method: string | null;
     is_light: boolean;
+    loyalty_card_title: string | null;
 };
 
 export const createStampbook = async (stampbook: Omit<Stampbook, 'id' | 'created_at'>): Promise<Stampbook | null> => {
@@ -1430,7 +1431,7 @@ export const searchOrdersByEmailOrWallet = async (
         .from('light_orders')
         .select('id, collectible_id, email, wallet_address, status, created_at')
         .in('collectible_id', collectibleIds)
-        .or(`email.eq.${searchQuery},wallet_address.eq.${searchQuery}`)
+        .or(`email.ilike.${searchQuery},wallet_address.ilike.${searchQuery}`)
         .in('status', ['pending', 'completed']);
 
       if (lightError) throw lightError;
@@ -1450,7 +1451,7 @@ export const searchOrdersByEmailOrWallet = async (
         .from('orders')
         .select('id, collectible_id, wallet_address, status, created_at')
         .in('collectible_id', collectibleIds)
-        .eq('wallet_address', searchQuery)
+        .ilike('wallet_address', searchQuery)
         .eq('status', 'completed');
 
       if (regularError) throw regularError;

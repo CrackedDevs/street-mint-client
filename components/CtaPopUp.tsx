@@ -59,9 +59,14 @@ CtaPopUpProps) {
     setIsLoading(true);
 
     if (ctaLink) {
+      // Replace {#email#} placeholder with the captured email
+      const finalCtaLink = hasEmailCapture && email
+        ? ctaLink.replace("{#email#}", encodeURIComponent(email))
+        : ctaLink;
+
       // Wait for confetti animation before redirect
       window.open(
-        ctaLink.includes("http") ? ctaLink : `https://${ctaLink}`,
+        finalCtaLink.includes("http") ? finalCtaLink : `https://${finalCtaLink}`,
         "_blank"
       );
     }
