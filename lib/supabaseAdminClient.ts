@@ -26,6 +26,7 @@ export type ChipLink = {
     artists_id?: number | null | null;
     active: boolean;
     created_at: string;
+    label?: string | null;
 }
 
 export type CollectibleBySignatureCode = {
@@ -261,7 +262,7 @@ export async function getAllChipLinks() {
     const supabaseAdmin = await getSupabaseAdmin();
     const { data, error } : { data: ChipLink[] | null, error: any } = await supabaseAdmin
         .from('chip_links')
-        .select(`id, chip_id, collectible_id, artists_id, active, created_at`)
+        .select(`id, chip_id, collectible_id, artists_id, active, created_at, label`)
         .order('created_at', { ascending: false });
 
         if (error) {
@@ -443,7 +444,8 @@ export async function createChipLink(chipLink: ChipLinkCreate): Promise<{ succes
             collectible_id: chipLink.collectible_id,
             batch_listing_id: chipLink.batch_listing_id,
             active: chipLink.active,
-            artists_id: chipLink.artists_id
+            artists_id: chipLink.artists_id,
+            label: chipLink.label
         });
 
     if (insertError) {
@@ -463,6 +465,7 @@ export async function updateChipLink(id: number, chipLink: ChipLink) {
             collectible_id: chipLink.collectible_id,
             batch_listing_id: chipLink.batch_listing_id,
             active: chipLink.active,
+            label: chipLink.label,
         })
         .eq('id', id);
 
@@ -655,7 +658,7 @@ export async function getChipLinksByArtistId(artistId: number) {
     const supabaseAdmin = await getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
         .from('chip_links')
-        .select(`id, chip_id, collectible_id, active, created_at, artists_id, batch_listing_id`)
+        .select(`id, chip_id, collectible_id, active, created_at, artists_id, batch_listing_id, label`)
         .eq('artists_id', artistId)
         .order('created_at', { ascending: false });
     

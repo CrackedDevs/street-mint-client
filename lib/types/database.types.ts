@@ -284,6 +284,7 @@ export type Database = {
           collectible_id: number | null
           created_at: string
           id: number
+          label: string | null
         }
         Insert: {
           active?: boolean
@@ -293,6 +294,7 @@ export type Database = {
           collectible_id?: number | null
           created_at?: string
           id?: number
+          label?: string | null
         }
         Update: {
           active?: boolean
@@ -302,6 +304,7 @@ export type Database = {
           collectible_id?: number | null
           created_at?: string
           id?: number
+          label?: string | null
         }
         Relationships: [
           {

@@ -98,8 +98,13 @@ const AutoDismissMessage = ({
   );
 };
 
+type ChipData = {
+  chipId: string;
+  label: string;
+};
+
 export default function ChipsManagementPage() {
-  const [chipIdArray, setChipIdArray] = useState<string[]>([]);
+  const [chipDataArray, setChipDataArray] = useState<ChipData[]>([{ chipId: '', label: '' }]);
   const [selectedArtistId, setSelectedArtistId] = useState<number | null>(null);
   const [artists, setArtists] = useState<any[]>([]);
   const [artistSearchQuery, setArtistSearchQuery] = useState("");
@@ -109,7 +114,6 @@ export default function ChipsManagementPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const { toast } = useToast();
-  const inputRef = useRef<HTMLInputElement>(null);
   const [isArtistDropdownOpen, setIsArtistDropdownOpen] = useState(false);
   const artistDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -184,48 +188,35 @@ export default function ChipsManagementPage() {
     }
   };
 
-  const handleChipInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === ',' || e.key === ' ') {
-      e.preventDefault();
-      const value = e.currentTarget.value.trim();
-      if (value) {
-        addChipId(value);
-        e.currentTarget.value = '';
-      }
-    } else if (e.key === 'Backspace' && !e.currentTarget.value && chipIdArray.length > 0) {
-      // Remove the last chip when backspace is pressed on empty input
-      setChipIdArray(prev => prev.slice(0, -1));
+  const addChipRow = () => {
+    setChipDataArray(prev => [...prev, { chipId: '', label: '' }]);
+  };
+
+  const removeChipRow = (index: number) => {
+    if (chipDataArray.length > 1) {
+      setChipDataArray(prev => prev.filter((_, i) => i !== index));
     }
   };
 
-  const handleChipInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const value = e.target.value.trim();
-    if (value) {
-      addChipId(value);
-      e.target.value = '';
-    }
-  };
-
-  const addChipId = (chipId: string) => {
-    if (!chipIdArray.includes(chipId)) {
-      setChipIdArray(prev => [...prev, chipId]);
-    }
-  };
-
-  const removeChipId = (chipId: string) => {
-    setChipIdArray(prev => prev.filter(id => id !== chipId));
+  const updateChipData = (index: number, field: keyof ChipData, value: string) => {
+    setChipDataArray(prev => 
+      prev.map((chip, i) => 
+        i === index ? { ...chip, [field]: value } : chip
+      )
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedArtistId || chipIdArray.length === 0) return;
+    const validChips = chipDataArray.filter(chip => chip.chipId.trim() !== '');
+    if (!selectedArtistId || validChips.length === 0) return;
 
     // Clear any previous messages
     setErrorMessage(null);
     setSuccessMessage(null);
 
     console.log(
-      `Processing ${chipIdArray.length} chip IDs for artist ID ${selectedArtistId}`
+      `Processing ${validChips.length} chip entries for artist ID ${selectedArtistId}`
     );
     setIsLoading(true);
 
@@ -233,29 +224,30 @@ export default function ChipsManagementPage() {
     const errors: string[] = [];
     const successfulChips: string[] = [];
 
-    // Process each chip ID
-    for (const chipId of chipIdArray) {
+    // Process each chip entry
+    for (const chipData of validChips) {
       console.log(
-        `Attempting to assign chip ID ${chipId} to artist ID ${selectedArtistId}`
+        `Attempting to assign chip ID ${chipData.chipId} with label "${chipData.label}" to artist ID ${selectedArtistId}`
       );
 
       // Create the chip link
       const result = await createChipLink({
-        chip_id: chipId,
+        chip_id: chipData.chipId,
         collectible_id: null,
         active: true,
         artists_id: selectedArtistId,
+        label: chipData.label || null,
       });
 
       // If there was an error, add it to the errors list
       if (!result.success && result.error) {
-        console.error(`Failed to assign chip ID ${chipId}: ${result.error}`);
-        errors.push(`${chipId}: ${result.error}`);
+        console.error(`Failed to assign chip ID ${chipData.chipId}: ${result.error}`);
+        errors.push(`${chipData.chipId}: ${result.error}`);
       } else {
         console.log(
-          `Successfully assigned chip ID ${chipId} to artist ID ${selectedArtistId}`
+          `Successfully assigned chip ID ${chipData.chipId} to artist ID ${selectedArtistId}`
         );
-        successfulChips.push(chipId);
+        successfulChips.push(chipData.chipId);
       }
     }
 
@@ -284,7 +276,7 @@ export default function ChipsManagementPage() {
       });
     }
 
-    setChipIdArray([]);
+    setChipDataArray([{ chipId: '', label: '' }]);
     setSelectedArtistId(null);
     await fetchChipLinks();
     setIsLoading(false);
@@ -335,6 +327,9 @@ export default function ChipsManagementPage() {
     (chip) =>
       chip.chip_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (chip.metadata?.artist || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (chip.label || "")
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
   );
@@ -409,45 +404,51 @@ export default function ChipsManagementPage() {
             )}
 
             <div className="space-y-2">
-              <label htmlFor="chipIds" className="text-sm font-medium">
-                Chip IDs
+              <label className="text-sm font-medium">
+                Chip IDs and Labels
               </label>
-              <div 
-                className="min-h-[120px] w-full px-3 py-2 rounded-md border bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
-                onClick={() => inputRef.current?.focus()}
-              >
-                <div className="flex flex-wrap gap-2">
-                  {chipIdArray.map((chipId) => (
-                    <div
-                      key={chipId}
-                      className="flex items-center gap-1 bg-primary/10 text-primary rounded-md px-2 py-1 text-sm group"
-                    >
-                      <span>{chipId}</span>
-                      <button
+              <div className="space-y-2">
+                {chipDataArray.map((chipData, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <Input
+                      type="text"
+                      placeholder="Chip ID"
+                      value={chipData.chipId}
+                      onChange={(e) => updateChipData(index, 'chipId', e.target.value)}
+                      className="flex-1"
+                    />
+                    <Input
+                      type="text"
+                      placeholder="Label (optional)"
+                      value={chipData.label}
+                      onChange={(e) => updateChipData(index, 'label', e.target.value)}
+                      className="flex-1"
+                    />
+                    {chipDataArray.length > 1 && (
+                      <Button
                         type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeChipId(chipId);
-                        }}
-                        className="opacity-50 hover:opacity-100 focus:opacity-100 transition-opacity"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeChipRow(index)}
+                        className="p-2"
                       >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    id="chipIds"
-                    placeholder={chipIdArray.length === 0 ? "Enter chip IDs (press Enter, comma, or space to add)" : ""}
-                    className="flex-1 min-w-[200px] bg-transparent border-none outline-none placeholder:text-muted-foreground"
-                    onKeyDown={handleChipInputKeyDown}
-                    onBlur={handleChipInputBlur}
-                  />
-                </div>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addChipRow}
+                  className="w-full"
+                >
+                  + Add Another Chip
+                </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Press Enter, comma, or space to add multiple chip IDs
+                Enter chip IDs and optional labels for each chip
               </p>
             </div>
 
@@ -520,7 +521,7 @@ export default function ChipsManagementPage() {
                 type="submit"
                 className="w-full font-semibold"
                 size="lg"
-                disabled={isLoading || !selectedArtistId || chipIdArray.length === 0}
+                disabled={isLoading || !selectedArtistId || chipDataArray.every(chip => chip.chipId.trim() === '')}
               >
                 {isLoading ? "Adding..." : "Assign Chips"}
               </Button>
@@ -539,7 +540,7 @@ export default function ChipsManagementPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Search by chip ID or artist..."
+              placeholder="Search by chip ID, label, or artist..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 pr-4 py-2 text-base w-full"
@@ -575,6 +576,7 @@ export default function ChipsManagementPage() {
                 Artist
               </TableHead>
               <TableHead className="font-semibold text-foreground">Chip ID</TableHead>
+              <TableHead className="font-semibold text-foreground">Label</TableHead>
               <TableHead className="font-semibold text-foreground">Collectible</TableHead>
               <TableHead className="font-semibold text-foreground">Batch</TableHead>
               <TableHead className="font-semibold text-foreground">Status</TableHead>
@@ -597,6 +599,15 @@ export default function ChipsManagementPage() {
                     </TableCell>
                   ) : null}
                   <TableCell className="font-medium">{chip.chip_id}</TableCell>
+                  <TableCell>
+                    {chip.label ? (
+                      <span className="text-sm bg-secondary/50 px-2 py-1 rounded">
+                        {chip.label}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">No label</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     {chip.collectible_id ? (
                       <div className="text-primary underline hover:text-primary/80 transition-colors">
@@ -671,7 +682,7 @@ export default function ChipsManagementPage() {
             {Object.keys(chipsByArtist).length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="h-32 text-center text-muted-foreground"
                 >
                   <div className="flex flex-col items-center gap-2">
