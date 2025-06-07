@@ -146,7 +146,7 @@ export default function StampbookPage() {
 
           {/* Description Field */}
           <div className="mb-10">
-            <p className="text-base">{stampbook?.description}</p>
+            <p className="text-base whitespace-pre-wrap">{stampbook?.description}</p>
           </div>
 
           {/* Email/Wallet Input */}
