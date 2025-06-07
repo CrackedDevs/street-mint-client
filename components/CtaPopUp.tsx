@@ -168,8 +168,8 @@ CtaPopUpProps) {
         )}
 
         {/* Content */}
-        <h2 className="mb-2 text-2xl font-bold text-gray-900">{title}</h2>
-        <p className="mb-6 text-gray-600">{description}</p>
+        <h2 className="mb-2 text-2xl font-bold text-gray-900 whitespace-pre-wrap text-center">{title}</h2>
+        <p className="mb-6 text-gray-600 whitespace-pre-wrap text-center">{description}</p>
 
         {/* CTA Image */}
         {collectible.cta_image_url && (
