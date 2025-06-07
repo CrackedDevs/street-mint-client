@@ -244,6 +244,7 @@ export async function GET(request: NextRequest) {
         cta_logo_url: listing.cta_logo_url,
         cta_text: listing.cta_text,
         cta_link: listing.cta_link,
+        cta_image_url: listing.cta_image_url,
         cta_has_email_capture: listing.cta_has_email_capture ? true : false,
         cta_has_text_capture: listing.cta_has_text_capture ? true : false,
         cta_email_list: listing.cta_email_list as { [key: string]: string }[],
