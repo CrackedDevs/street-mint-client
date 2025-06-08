@@ -154,6 +154,21 @@ export async function POST(req: Request, res: NextApiResponse) {
         batchName = order.collectibles.name;
       }
 
+      // Check if collectible is part of stampbook 9
+      let stampbookUrl: string | undefined = undefined;
+      const { data: stampbook, error: stampbookError } = await supabase
+        .from("stampbooks")
+        .select("collectibles")
+        .eq("id", 9)
+        .single();
+
+      if (!stampbookError && stampbook && Array.isArray(stampbook.collectibles)) {
+        const isInStampbook = stampbook.collectibles.includes(collectibleId);
+        if (isInStampbook) {
+          stampbookUrl = `https://www.irls.xyz/stampbook/9?search=${emailAddress}`;
+        }
+      }
+
       const mailOptions = {
         from: `${fromName} <${fromEmail}>`,
         to: emailAddress,
@@ -165,6 +180,7 @@ export async function POST(req: Request, res: NextApiResponse) {
           batchUrl,
           batchName,
           artist: artist || "",
+          stampbookUrl,
         }),
       };
 
