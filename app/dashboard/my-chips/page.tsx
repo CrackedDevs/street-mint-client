@@ -95,6 +95,11 @@ function MyChipsPage() {
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
   // Add state for batch disconnect confirmation
   const [showBatchDisconnectConfirm, setShowBatchDisconnectConfirm] = useState(false);
+  // Add state for collectible name lookup
+  const [collectibleNamesMap, setCollectibleNamesMap] = useState<Record<number, string>>({});
+  // Add state for collectible search
+  const [collectibleSearchQuery, setCollectibleSearchQuery] = useState("");
+  const [isCollectibleDropdownOpen, setIsCollectibleDropdownOpen] = useState(false);
 
   useEffect(() => {
     async function fetchChipLinks() {
@@ -148,6 +153,21 @@ function MyChipsPage() {
           const scheduledChangesData = await getScheduledCollectibleChanges();
           if (scheduledChangesData) {
             setScheduledChanges(scheduledChangesData);
+            
+            // Build collectible names map for scheduled changes
+            const collectibleIds = [...new Set(scheduledChangesData.map(change => change.collectible_id).filter((id): id is number => id !== null))];
+            const collectibleNamePromises = collectibleIds.map(async (id) => {
+              const collectible = await fetchCollectibleById(id);
+              return { id, name: collectible?.name || `Collectible ${id}` };
+            });
+            
+            const collectibleNames = await Promise.all(collectibleNamePromises);
+            const namesMap = collectibleNames.reduce((acc, { id, name }) => {
+              acc[id] = name;
+              return acc;
+            }, {} as Record<number, string>);
+            
+            setCollectibleNamesMap(namesMap);
           }
         }
       } catch (error) {
@@ -220,6 +240,8 @@ function MyChipsPage() {
     setSelectedCollectibleId(chip.collectible_id || null);
     setScheduledDate("");
     setScheduledTime("");
+    setCollectibleSearchQuery("");
+    setIsCollectibleDropdownOpen(false);
     fetchCollectiblesForArtist();
     setIsModalOpen(true);
   };
@@ -425,6 +447,9 @@ function MyChipsPage() {
   const filteredChipLinks = chipLinks.filter(
     (chip) =>
       chip.chip_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (chip.label || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
       (chip.collectibleName || "")
         .toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
@@ -435,6 +460,19 @@ function MyChipsPage() {
   // Get scheduled change for a specific chip
   const getScheduledChangeForChip = (chipId: string) => {
     return scheduledChanges.find((change) => change.chip_id === chipId);
+  };
+
+  // Filter collectibles based on search query
+  const filteredCollectibles = collectibles.filter((collectible) =>
+    collectible.name.toLowerCase().includes(collectibleSearchQuery.toLowerCase()) ||
+    collectible.id.toString().includes(collectibleSearchQuery.toLowerCase())
+  );
+
+  // Get display value for selected collectible
+  const getSelectedCollectibleDisplay = () => {
+    if (!selectedCollectibleId) return "";
+    const selected = collectibles.find(c => c.id === selectedCollectibleId);
+    return selected ? `${selected.name} (ID: ${selected.id})` : "";
   };
 
   if (!connected) {
@@ -453,7 +491,7 @@ function MyChipsPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
               type="text"
-              placeholder="Search by chip ID, collectible name, or batch ID..."
+              placeholder="Search by chip ID, label, collectible name, or batch ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 py-2"
@@ -495,6 +533,9 @@ function MyChipsPage() {
                     Chip ID
                   </TableHead>
                   <TableHead className="font-semibold text-gray-600">
+                    Label
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-600">
                     Collectible
                   </TableHead>
                   <TableHead className="font-semibold text-gray-600">
@@ -518,6 +559,11 @@ function MyChipsPage() {
                       {chip.chip_id}
                     </TableCell>
                     <TableCell>
+                      {chip.label || (
+                        <span className="text-gray-400">No label</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       {chip.collectible_id ? (
                         <div className="flex items-center space-x-3">
                           {chip.collectibleName || "Unnamed Collectible"}
@@ -533,11 +579,9 @@ function MyChipsPage() {
                       {getScheduledChangeForChip(chip.chip_id) && (
                         <div className="mt-1 text-sm text-blue-600 flex items-center">
                           <Calendar className="h-3 w-3 mr-1" />
-                          Change scheduled to ID:{" "}
-                          {
-                            getScheduledChangeForChip(chip.chip_id)
-                              ?.collectible_id
-                          }{" "}
+                          Change scheduled to{" "}
+                          {collectibleNamesMap[getScheduledChangeForChip(chip.chip_id)?.collectible_id!]}
+                           {` (ID: ${getScheduledChangeForChip(chip.chip_id)?.collectible_id}) `}
                           on{" "}
                           {formatDate(
                             new Date(
@@ -668,11 +712,9 @@ function MyChipsPage() {
                   <div className="p-3 bg-blue-50 rounded-md flex justify-between items-center">
                     <div>
                       <p className="font-medium">
-                        New Collectible ID:{" "}
-                        {
-                          getScheduledChangeForChip(selectedChip.chip_id)
-                            ?.collectible_id
-                        }
+                        New Collectible:{" "}
+                        {collectibleNamesMap[getScheduledChangeForChip(selectedChip.chip_id)?.collectible_id!] || 
+                         `ID: ${getScheduledChangeForChip(selectedChip.chip_id)?.collectible_id}`}
                       </p>
                       <p className="text-sm text-gray-500">
                         Scheduled for:{" "}
@@ -713,32 +755,69 @@ function MyChipsPage() {
                     <label className="text-sm text-gray-500 mb-1 block">
                       Select Collectible
                     </label>
-                    <Select
-                      value={selectedCollectibleId?.toString() || ""}
-                      onValueChange={(value) =>
-                        setSelectedCollectibleId(Number(value))
-                      }
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a collectible" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {loadingCollectibles ? (
-                          <div className="flex justify-center p-2">
-                            <Loader2Icon className="h-4 w-4 animate-spin" />
-                          </div>
-                        ) : (
-                          collectibles.map((collectible) => (
-                            <SelectItem
-                              key={collectible.id}
-                              value={collectible.id.toString()}
-                            >
-                              {collectible.name} (ID: {collectible.id})
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        placeholder="Search and select a collectible..."
+                        value={isCollectibleDropdownOpen ? collectibleSearchQuery : getSelectedCollectibleDisplay()}
+                        onChange={(e) => {
+                          setCollectibleSearchQuery(e.target.value);
+                          setIsCollectibleDropdownOpen(true);
+                        }}
+                        onFocus={() => {
+                          setCollectibleSearchQuery("");
+                          setIsCollectibleDropdownOpen(true);
+                        }}
+                        onBlur={(e) => {
+                          // Delay closing to allow for selection clicks
+                          setTimeout(() => {
+                            if (!e.currentTarget.contains(document.activeElement)) {
+                              setIsCollectibleDropdownOpen(false);
+                              setCollectibleSearchQuery("");
+                            }
+                          }, 150);
+                        }}
+                        className="w-full"
+                      />
+                      
+                      {isCollectibleDropdownOpen && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                          {loadingCollectibles ? (
+                            <div className="flex justify-center p-3">
+                              <Loader2Icon className="h-4 w-4 animate-spin" />
+                            </div>
+                          ) : filteredCollectibles.length === 0 ? (
+                            <div className="p-3 text-sm text-gray-500 text-center">
+                              {collectibleSearchQuery 
+                                ? "No collectibles found matching your search." 
+                                : "No collectibles available."}
+                            </div>
+                          ) : (
+                            filteredCollectibles.map((collectible) => (
+                              <div
+                                key={collectible.id}
+                                className={`p-3 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0 ${
+                                  selectedCollectibleId === collectible.id ? 'bg-blue-50' : ''
+                                }`}
+                                onMouseDown={(e) => {
+                                  e.preventDefault(); // Prevent input blur
+                                  setSelectedCollectibleId(collectible.id);
+                                  setIsCollectibleDropdownOpen(false);
+                                  setCollectibleSearchQuery("");
+                                }}
+                              >
+                                <div className="font-medium text-sm">
+                                  {collectible.name}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  ID: {collectible.id}
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
