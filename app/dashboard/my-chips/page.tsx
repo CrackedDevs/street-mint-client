@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Settings, Trash2, Calendar } from "lucide-react";
+import { Search, Settings, Trash2, Calendar, Plus } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import withAuth from "../withAuth";
 import { Loader2Icon } from "lucide-react";
@@ -22,7 +22,7 @@ import {
   getChipLinksByArtistId,
   ChipLink,
   getScheduledCollectibleChanges,
-  scheduleCollectibleChange,
+  scheduleMultipleCollectibleChanges,
   deleteScheduledCollectibleChange,
   ScheduledCollectibleChange,
   disconnectChipToCollectible,
@@ -68,6 +68,16 @@ type SimpleCollectible = {
   name: string;
 };
 
+// Type for managing multiple scheduled changes in the form
+type ScheduledChangeForm = {
+  id?: number; // Optional, only for existing changes
+  collectibleId: number | null;
+  scheduledDate: string;
+  scheduledTime: string;
+  collectibleSearchQuery: string;
+  isCollectibleDropdownOpen: boolean;
+};
+
 function MyChipsPage() {
   const [chipLinks, setChipLinks] = useState<ChipLinkWithMetadata[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,11 +92,6 @@ function MyChipsPage() {
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [collectibles, setCollectibles] = useState<SimpleCollectible[]>([]);
-  const [selectedCollectibleId, setSelectedCollectibleId] = useState<
-    number | null
-  >(null);
-  const [scheduledDate, setScheduledDate] = useState<string>("");
-  const [scheduledTime, setScheduledTime] = useState<string>("");
   const [loadingCollectibles, setLoadingCollectibles] = useState(false);
   const [scheduledChanges, setScheduledChanges] = useState<ScheduledChange[]>(
     []
@@ -97,11 +102,19 @@ function MyChipsPage() {
   const [showBatchDisconnectConfirm, setShowBatchDisconnectConfirm] = useState(false);
   // Add state for collectible name lookup
   const [collectibleNamesMap, setCollectibleNamesMap] = useState<Record<number, string>>({});
-  // Add state for collectible search
-  const [collectibleSearchQuery, setCollectibleSearchQuery] = useState("");
-  const [isCollectibleDropdownOpen, setIsCollectibleDropdownOpen] = useState(false);
   // Add loading state for schedule change
   const [isSchedulingChange, setIsSchedulingChange] = useState(false);
+
+  // New state for multiple scheduled changes
+  const [scheduledChangeForms, setScheduledChangeForms] = useState<ScheduledChangeForm[]>([
+    {
+      collectibleId: null,
+      scheduledDate: "",
+      scheduledTime: "",
+      collectibleSearchQuery: "",
+      isCollectibleDropdownOpen: false,
+    }
+  ]);
 
   useEffect(() => {
     async function fetchChipLinks() {
@@ -240,44 +253,56 @@ function MyChipsPage() {
   const handleOpenModal = (chip: ChipLinkWithMetadata) => {
     setSelectedChip(chip);
     
-    // Check if there's an existing scheduled change for this chip
-    const existingSchedule = getScheduledChangeForChip(chip.chip_id);
+    // Check if there are existing scheduled changes for this chip
+    const existingSchedules = getScheduledChangesForChip(chip.chip_id);
     
-    if (existingSchedule && !existingSchedule.executed && existingSchedule.schedule_unix) {
-      // If there's a scheduled change, populate the form with existing values
-      setSelectedCollectibleId(existingSchedule.collectible_id);
+    if (existingSchedules.length > 0) {
+      // If there are scheduled changes, populate the form with existing values
+      const forms = existingSchedules
+        .sort((a, b) => (a.schedule_unix || 0) - (b.schedule_unix || 0))
+        .map(schedule => {
+          const scheduleDate = new Date((schedule.schedule_unix || 0) * 1000);
+          const dateString = scheduleDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+          const timeString = scheduleDate.toISOString().split('T')[1].substring(0, 5); // HH:MM format
+          
+          return {
+            id: schedule.id,
+            collectibleId: schedule.collectible_id,
+            scheduledDate: dateString,
+            scheduledTime: timeString,
+            collectibleSearchQuery: "",
+            isCollectibleDropdownOpen: false,
+          };
+        });
       
-      // Convert unix timestamp to date and time (UTC)
-      const scheduleDate = new Date(existingSchedule.schedule_unix * 1000);
-      const dateString = scheduleDate.toISOString().split('T')[0]; // YYYY-MM-DD format in UTC
-      const timeString = scheduleDate.toISOString().split('T')[1].substring(0, 5); // HH:MM format in UTC
-      
-      setScheduledDate(dateString);
-      setScheduledTime(timeString);
+      setScheduledChangeForms(forms);
     } else {
-      // No scheduled change, clear the form and don't pre-select any collectible
-      setSelectedCollectibleId(null);
-      setScheduledDate("");
-      setScheduledTime("");
+      // No scheduled changes, start with one empty form
+      setScheduledChangeForms([
+        {
+          collectibleId: null,
+          scheduledDate: "",
+          scheduledTime: "",
+          collectibleSearchQuery: "",
+          isCollectibleDropdownOpen: false,
+        }
+      ]);
     }
     
-    setCollectibleSearchQuery("");
-    setIsCollectibleDropdownOpen(false);
-    setIsSchedulingChange(false);
     fetchCollectiblesForArtist();
     setIsModalOpen(true);
   };
 
   const handleScheduleChange = async () => {
-    if (
-      !selectedChip ||
-      !selectedCollectibleId ||
-      !scheduledDate ||
-      !scheduledTime
-    ) {
+    // Validate that we have at least one complete entry
+    const validForms = scheduledChangeForms.filter(form => 
+      form.collectibleId !== null && form.scheduledDate && form.scheduledTime
+    );
+
+    if (!selectedChip || validForms.length === 0) {
       toast({
         title: "Error",
-        description: "Please fill in all fields.",
+        description: "Please fill in at least one complete schedule entry.",
         variant: "destructive",
       });
       return;
@@ -293,36 +318,39 @@ function MyChipsPage() {
       return;
     }
 
+    // Validate that all scheduled times are in the future and in sequential order
+    const now = new Date().getTime();
+    const schedules = validForms.map(form => {
+      const scheduleTime = new Date(
+        formatDate(
+          `${form.scheduledDate}T${form.scheduledTime}`,
+          "yyyy-MM-dd'T'HH:mm",
+          "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+        )
+      ).getTime();
+      return { form, scheduleTime };
+    }).sort((a, b) => a.scheduleTime - b.scheduleTime);
+
+    // Check if all are in the future
+    if (schedules[0].scheduleTime <= now) {
+      toast({
+        title: "Error",
+        description: "All scheduled times must be in the future.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSchedulingChange(true);
 
-    const scheduledDateTime = new Date(
-      formatDate(
-        `${scheduledDate}T${scheduledTime}`,
-        "yyyy-MM-dd'T'HH:mm",
-        "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
-      )
-    );
-    const scheduleUnix = Math.floor(scheduledDateTime.getTime() / 1000);
-
     try {
-      // Check if there's an existing scheduled change for this chip
-      const existingSchedule = getScheduledChangeForChip(selectedChip.chip_id);
-
-      // If there's an existing schedule that hasn't been executed, delete it first
-      if (existingSchedule && existingSchedule.executed === false) {
-        const deleteSuccess = await deleteScheduledCollectibleChange(
-          existingSchedule.id
-        );
-        if (!deleteSuccess) {
-          throw new Error("Failed to delete existing scheduled change");
-        }
-      }
-
-      // Save the new scheduled change to the database
-      await scheduleCollectibleChange(
+      // Save the new scheduled changes to the database
+      await scheduleMultipleCollectibleChanges(
         selectedChip.chip_id,
-        selectedCollectibleId,
-        scheduleUnix
+        schedules.map(({ form, scheduleTime }) => ({
+          collectibleId: form.collectibleId!,
+          scheduleUnix: Math.floor(scheduleTime / 1000)
+        }))
       );
 
       // Refresh the scheduled changes
@@ -333,7 +361,7 @@ function MyChipsPage() {
 
       toast({
         title: "Success",
-        description: "Change scheduled successfully.",
+        description: `${validForms.length} change${validForms.length > 1 ? 's' : ''} scheduled successfully.`,
       });
 
       setIsModalOpen(false);
@@ -347,6 +375,45 @@ function MyChipsPage() {
     } finally {
       setIsSchedulingChange(false);
     }
+  };
+
+  // Function to add a new scheduled change form
+  const addScheduledChangeForm = () => {
+    const lastForm = scheduledChangeForms[scheduledChangeForms.length - 1];
+    const minDateTime = lastForm.scheduledDate && lastForm.scheduledTime 
+      ? new Date(`${lastForm.scheduledDate}T${lastForm.scheduledTime}`).getTime() + 60000 // Add 1 minute
+      : new Date().getTime() + 60000;
+
+    const minDate = new Date(minDateTime);
+    const minDateString = minDate.toISOString().split('T')[0];
+    const minTimeString = minDate.toISOString().split('T')[1].substring(0, 5);
+
+    setScheduledChangeForms([
+      ...scheduledChangeForms,
+      {
+        collectibleId: null,
+        scheduledDate: minDateString,
+        scheduledTime: minTimeString,
+        collectibleSearchQuery: "",
+        isCollectibleDropdownOpen: false,
+      }
+    ]);
+  };
+
+  // Function to remove a scheduled change form
+  const removeScheduledChangeForm = (index: number) => {
+    if (scheduledChangeForms.length > 1) {
+      setScheduledChangeForms(scheduledChangeForms.filter((_, i) => i !== index));
+    }
+  };
+
+  // Function to update a specific form
+  const updateScheduledChangeForm = (index: number, updates: Partial<ScheduledChangeForm>) => {
+    setScheduledChangeForms(
+      scheduledChangeForms.map((form, i) => 
+        i === index ? { ...form, ...updates } : form
+      )
+    );
   };
 
   const handleDisconnectChip = async () => {
@@ -483,21 +550,21 @@ function MyChipsPage() {
        String(chip.batch_listing_id).toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  // Get scheduled change for a specific chip
-  const getScheduledChangeForChip = (chipId: string) => {
-    return scheduledChanges.find((change) => change.chip_id === chipId);
+  // Get scheduled changes for a specific chip (returns array)
+  const getScheduledChangesForChip = (chipId: string) => {
+    return scheduledChanges.filter((change) => change.chip_id === chipId && !change.executed);
   };
 
-  // Filter collectibles based on search query
-  const filteredCollectibles = collectibles.filter((collectible) =>
-    collectible.name.toLowerCase().includes(collectibleSearchQuery.toLowerCase()) ||
-    collectible.id.toString().includes(collectibleSearchQuery.toLowerCase())
-  );
+  // Get first scheduled change for a specific chip (for backwards compatibility)
+  const getScheduledChangeForChip = (chipId: string) => {
+    const changes = getScheduledChangesForChip(chipId);
+    return changes.length > 0 ? changes[0] : undefined;
+  };
 
-  // Get display value for selected collectible
-  const getSelectedCollectibleDisplay = () => {
-    if (!selectedCollectibleId) return "";
-    const selected = collectibles.find(c => c.id === selectedCollectibleId);
+  // Get display value for selected collectible (keeping for backwards compatibility)
+  const getSelectedCollectibleDisplay = (formIndex: number = 0) => {
+    if (!scheduledChangeForms[formIndex]?.collectibleId) return "";
+    const selected = collectibles.find(c => c.id === scheduledChangeForms[formIndex].collectibleId);
     return selected ? `${selected.name} (ID: ${selected.id})` : "";
   };
 
@@ -601,22 +668,22 @@ function MyChipsPage() {
                         <span className="text-gray-400">Not assigned</span>
                       )}
 
-                      {/* Show scheduled change if exists */}
-                      {getScheduledChangeForChip(chip.chip_id) && (
-                        <div className="mt-1 text-sm text-blue-600 flex items-center">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          Change scheduled to{" "}
-                          {collectibleNamesMap[getScheduledChangeForChip(chip.chip_id)?.collectible_id!]}
-                           {` (ID: ${getScheduledChangeForChip(chip.chip_id)?.collectible_id}) `}
-                          on{" "}
-                          {formatDate(
-                            new Date(
-                              getScheduledChangeForChip(chip.chip_id)
-                                ?.schedule_unix! * 1000
-                            ).toISOString(),
-                            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-                            "yyyy-MM-dd HH:mm"
-                          )}
+                      {/* Show scheduled changes if exist */}
+                      {getScheduledChangesForChip(chip.chip_id).length > 0 && (
+                        <div className="mt-1 space-y-1">
+                          {getScheduledChangesForChip(chip.chip_id).map((change, index) => (
+                            <div key={change.id} className="text-sm text-blue-600 flex items-center">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              Change {index + 1} scheduled to{" "}
+                              {collectibleNamesMap[change.collectible_id!]} (ID: ${change.collectible_id})
+                              {" "}on{" "}
+                              {formatDate(
+                                new Date(change.schedule_unix! * 1000).toISOString(),
+                                "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                "yyyy-MM-dd HH:mm"
+                              )}
+                            </div>
+                          ))}
                         </div>
                       )}
                     </TableCell>
@@ -660,8 +727,8 @@ function MyChipsPage() {
 
       {/* Modal for managing chip-collectible connections */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Manage Chip Connection</DialogTitle>
             <DialogDescription>
               {selectedChip && (
@@ -672,7 +739,7 @@ function MyChipsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 overflow-y-auto flex-1 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             {/* Show batch info if assigned */}
             {selectedChip?.batch_listing_id && (
               <div>
@@ -732,153 +799,233 @@ function MyChipsPage() {
 
             {/* Scheduled changes section */}
             {selectedChip &&
-              getScheduledChangeForChip(selectedChip.chip_id) && (
+              getScheduledChangesForChip(selectedChip.chip_id).length > 0 && (
                 <div>
-                  <h3 className="text-sm font-medium mb-2">Scheduled Change</h3>
-                  <div className="p-3 bg-blue-50 rounded-md flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">
-                        New Collectible:{" "}
-                        {collectibleNamesMap[getScheduledChangeForChip(selectedChip.chip_id)?.collectible_id!] || 
-                         `ID: ${getScheduledChangeForChip(selectedChip.chip_id)?.collectible_id}`}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Scheduled for:{" "}
-                        {formatDate(
-                          new Date(
-                            getScheduledChangeForChip(selectedChip.chip_id)
-                              ?.schedule_unix! * 1000
-                          ).toISOString(),
-                          "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-                          "yyyy-MM-dd HH:mm"
-                        )}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-500 hover:text-red-700"
-                      onClick={() =>
-                        handleDeleteScheduledChange(
-                          getScheduledChangeForChip(selectedChip.chip_id)?.id ||
-                            0
-                        )
-                      }
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <h3 className="text-sm font-medium mb-2">
+                    Scheduled Changes ({getScheduledChangesForChip(selectedChip.chip_id).length})
+                  </h3>
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                    {getScheduledChangesForChip(selectedChip.chip_id).map((change, index) => (
+                      <div key={change.id} className="p-3 bg-blue-50 rounded-md flex justify-between items-center">
+                        <div>
+                          <p className="font-medium">
+                            {index + 1}. New Collectible:{" "}
+                            {collectibleNamesMap[change.collectible_id!] || 
+                             `ID: ${change.collectible_id}`}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Scheduled for:{" "}
+                            {formatDate(
+                              new Date(change.schedule_unix! * 1000).toISOString(),
+                              "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                              "yyyy-MM-dd HH:mm"
+                            )}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700"
+                          onClick={() => handleDeleteScheduledChange(change.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
 
-            {/* Schedule a change section - only shown if not in batch */}
+            {/* Schedule changes section - only shown if not in batch */}
             {!selectedChip?.batch_listing_id && (
               <div>
-                <h3 className="text-sm font-medium mb-2">Schedule a Change</h3>
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-sm font-medium">Schedule Changes</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addScheduledChangeForm}
+                    className="text-green-600 hover:text-green-700"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Schedule
+                  </Button>
+                </div>
 
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm text-gray-500 mb-1 block">
-                      Select Collectible
-                    </label>
-                    <div className="relative">
-                      <Input
-                        type="text"
-                        placeholder="Search and select a collectible..."
-                        value={isCollectibleDropdownOpen ? collectibleSearchQuery : getSelectedCollectibleDisplay()}
-                        onChange={(e) => {
-                          setCollectibleSearchQuery(e.target.value);
-                          setIsCollectibleDropdownOpen(true);
-                        }}
-                        onFocus={() => {
-                          setCollectibleSearchQuery("");
-                          setIsCollectibleDropdownOpen(true);
-                        }}
-                        onBlur={(e) => {
-                          // Delay closing to allow for selection clicks
-                          setTimeout(() => {
-                            if (!e.currentTarget.contains(document.activeElement)) {
-                              setIsCollectibleDropdownOpen(false);
-                              setCollectibleSearchQuery("");
-                            }
-                          }, 150);
-                        }}
-                        className="w-full"
-                      />
-                      
-                      {isCollectibleDropdownOpen && (
-                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
-                          {loadingCollectibles ? (
-                            <div className="flex justify-center p-3">
-                              <Loader2Icon className="h-4 w-4 animate-spin" />
-                            </div>
-                          ) : filteredCollectibles.length === 0 ? (
-                            <div className="p-3 text-sm text-gray-500 text-center">
-                              {collectibleSearchQuery 
-                                ? "No collectibles found matching your search." 
-                                : "No collectibles available."}
-                            </div>
-                          ) : (
-                            filteredCollectibles.map((collectible) => (
-                              <div
-                                key={collectible.id}
-                                className={`p-3 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0 ${
-                                  selectedCollectibleId === collectible.id ? 'bg-blue-50' : ''
-                                }`}
-                                onMouseDown={(e) => {
-                                  e.preventDefault(); // Prevent input blur
-                                  setSelectedCollectibleId(collectible.id);
-                                  setIsCollectibleDropdownOpen(false);
-                                  setCollectibleSearchQuery("");
-                                }}
-                              >
-                                <div className="font-medium text-sm">
-                                  {collectible.name}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  ID: {collectible.id}
-                                </div>
-                              </div>
-                            ))
+                <div className="space-y-4 max-h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  {scheduledChangeForms.map((form, index) => {
+                    // Calculate minimum date/time for this entry
+                    const getMinDateTime = () => {
+                      if (index === 0) {
+                        return new Date().toISOString().split("T")[0];
+                      }
+                      const prevForm = scheduledChangeForms[index - 1];
+                      if (prevForm.scheduledDate && prevForm.scheduledTime) {
+                        const prevDateTime = new Date(`${prevForm.scheduledDate}T${prevForm.scheduledTime}`);
+                        prevDateTime.setMinutes(prevDateTime.getMinutes() + 1);
+                        return prevDateTime.toISOString().split("T")[0];
+                      }
+                      return new Date().toISOString().split("T")[0];
+                    };
+
+                    const getMinTime = () => {
+                      if (index === 0) {
+                        return "";
+                      }
+                      const prevForm = scheduledChangeForms[index - 1];
+                      if (prevForm.scheduledDate && prevForm.scheduledTime && form.scheduledDate === prevForm.scheduledDate) {
+                        const prevDateTime = new Date(`${prevForm.scheduledDate}T${prevForm.scheduledTime}`);
+                        prevDateTime.setMinutes(prevDateTime.getMinutes() + 1);
+                        return prevDateTime.toISOString().split("T")[1].substring(0, 5);
+                      }
+                      return "";
+                    };
+
+                    // Filter collectibles for this form
+                    const formFilteredCollectibles = collectibles.filter((collectible) =>
+                      collectible.name.toLowerCase().includes(form.collectibleSearchQuery.toLowerCase()) ||
+                      collectible.id.toString().includes(form.collectibleSearchQuery.toLowerCase())
+                    );
+
+                    return (
+                      <div key={index} className="p-3 border rounded-md bg-gray-50">
+                        <div className="flex justify-between items-center mb-3">
+                          <h4 className="text-sm font-medium">Schedule {index + 1}</h4>
+                          {scheduledChangeForms.length > 1 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeScheduledChangeForm(index)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           )}
                         </div>
-                      )}
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-sm text-gray-500 mb-1 block">
-                        Date
-                      </label>
-                      <Input
-                        type="date"
-                        value={scheduledDate}
-                        onChange={(e) => {
-                          setScheduledDate(e.target.value);
-                        }}
-                        min={new Date().toISOString().split("T")[0]}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-500 mb-1 block">
-                        Time
-                      </label>
-                      <Input
-                        type="time"
-                        value={scheduledTime}
-                        onChange={(e) => {
-                          setScheduledTime(e.target.value);
-                        }}
-                      />
-                    </div>
-                  </div>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-sm text-gray-500 mb-1 block">
+                              Select Collectible
+                            </label>
+                            <div className="relative">
+                              <Input
+                                type="text"
+                                placeholder="Search and select a collectible..."
+                                value={form.isCollectibleDropdownOpen ? form.collectibleSearchQuery : 
+                                  (form.collectibleId ? 
+                                    `${collectibles.find(c => c.id === form.collectibleId)?.name || ''} (ID: ${form.collectibleId})` : 
+                                    '')}
+                                onChange={(e) => {
+                                  updateScheduledChangeForm(index, {
+                                    collectibleSearchQuery: e.target.value,
+                                    isCollectibleDropdownOpen: true,
+                                  });
+                                }}
+                                onFocus={() => {
+                                  updateScheduledChangeForm(index, {
+                                    collectibleSearchQuery: "",
+                                    isCollectibleDropdownOpen: true,
+                                  });
+                                }}
+                                onBlur={(e) => {
+                                  // Delay closing to allow for selection clicks
+                                  setTimeout(() => {
+                                    if (!e.currentTarget.contains(document.activeElement)) {
+                                      updateScheduledChangeForm(index, {
+                                        isCollectibleDropdownOpen: false,
+                                        collectibleSearchQuery: "",
+                                      });
+                                    }
+                                  }, 150);
+                                }}
+                                className="w-full"
+                              />
+                              
+                              {form.isCollectibleDropdownOpen && (
+                                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-80 overflow-auto">
+                                  {loadingCollectibles ? (
+                                    <div className="flex justify-center p-3">
+                                      <Loader2Icon className="h-4 w-4 animate-spin" />
+                                    </div>
+                                  ) : formFilteredCollectibles.length === 0 ? (
+                                    <div className="p-3 text-sm text-gray-500 text-center">
+                                      {form.collectibleSearchQuery 
+                                        ? "No collectibles found matching your search." 
+                                        : "No collectibles available."}
+                                    </div>
+                                  ) : (
+                                    formFilteredCollectibles.map((collectible) => (
+                                      <div
+                                        key={collectible.id}
+                                        className={`p-3 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0 ${
+                                          form.collectibleId === collectible.id ? 'bg-blue-50' : ''
+                                        }`}
+                                        onMouseDown={(e) => {
+                                          e.preventDefault(); // Prevent input blur
+                                          updateScheduledChangeForm(index, {
+                                            collectibleId: collectible.id,
+                                            isCollectibleDropdownOpen: false,
+                                            collectibleSearchQuery: "",
+                                          });
+                                        }}
+                                      >
+                                        <div className="font-medium text-sm">
+                                          {collectible.name}
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                          ID: {collectible.id}
+                                        </div>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-sm text-gray-500 mb-1 block">
+                                Date
+                              </label>
+                              <Input
+                                type="date"
+                                value={form.scheduledDate}
+                                onChange={(e) => {
+                                  updateScheduledChangeForm(index, {
+                                    scheduledDate: e.target.value,
+                                  });
+                                }}
+                                min={getMinDateTime()}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-sm text-gray-500 mb-1 block">
+                                Time
+                              </label>
+                              <Input
+                                type="time"
+                                value={form.scheduledTime}
+                                onChange={(e) => {
+                                  updateScheduledChangeForm(index, {
+                                    scheduledTime: e.target.value,
+                                  });
+                                }}
+                                min={getMinTime()}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0">
             <Button 
               variant="outline" 
               onClick={() => setIsModalOpen(false)}
@@ -897,7 +1044,7 @@ function MyChipsPage() {
                     Scheduling...
                   </>
                 ) : (
-                  "Schedule Change"
+                  "Schedule Changes"
                 )}
               </Button>
             )}
