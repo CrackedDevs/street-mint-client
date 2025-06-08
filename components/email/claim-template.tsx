@@ -7,6 +7,7 @@ interface ClaimEmailTemplateProps {
   batchUrl?: string;
   batchName?: string;
   artist?: string;
+  stampbookUrl?: string;
 }
 
 export default function ClaimEmailTemplate({
@@ -16,6 +17,7 @@ export default function ClaimEmailTemplate({
   batchUrl,
   batchName,
   artist,
+  stampbookUrl,
 }: ClaimEmailTemplateProps) {
   if (!platform) {
     platform = "STREETMINT";
@@ -69,6 +71,19 @@ export default function ClaimEmailTemplate({
           target="_blank"
         >
           Click here to check how many ${batchName} stamps you've collected
+        </a>
+        `
+            : ""
+        }
+        ${
+          stampbookUrl
+            ? `
+        <a
+          href="${stampbookUrl}"
+          style="color: #3498db; text-decoration: underline; font-size: 16px; font-style: italic; font-weight: bold; display: block; margin-top: 10px;"
+          target="_blank"
+        >
+          Click here to check how many stamps you've collected
         </a>
         `
             : ""
