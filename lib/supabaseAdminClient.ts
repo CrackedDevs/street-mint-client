@@ -756,6 +756,64 @@ export async function scheduleCollectibleChange(chipId: string, collectibleId: n
     return data;
 }
 
+// New function to add a single scheduled change without deleting existing ones
+export async function addScheduledCollectibleChange(chipId: string, collectibleId: number, scheduleUnix: number) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    
+    // Insert the new scheduled change
+    const { data, error } = await supabaseAdmin
+        .from('collectible_schedule')
+        .insert({
+            chip_id: chipId,
+            collectible_id: collectibleId,
+            schedule_unix: scheduleUnix,
+            executed: false
+        });
+    
+    if (error) {
+        console.error('Error adding scheduled collectible change:', error);
+        return null;
+    }
+    
+    return data;
+}
+
+// Function to schedule multiple collectible changes for a chip (replaces all existing ones)
+export async function scheduleMultipleCollectibleChanges(chipId: string, changes: Array<{ collectibleId: number; scheduleUnix: number }>) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    
+    // First, delete all existing scheduled changes for this chip
+    const { error: deleteError } = await supabaseAdmin
+        .from('collectible_schedule')
+        .delete()
+        .eq('chip_id', chipId)
+        .eq('executed', false);
+    
+    if (deleteError) {
+        console.error('Error deleting existing scheduled changes:', deleteError);
+        return null;
+    }
+    
+    // Now insert all the new scheduled changes
+    const changesToInsert = changes.map(change => ({
+        chip_id: chipId,
+        collectible_id: change.collectibleId,
+        schedule_unix: change.scheduleUnix,
+        executed: false
+    }));
+    
+    const { data, error } = await supabaseAdmin
+        .from('collectible_schedule')
+        .insert(changesToInsert);
+    
+    if (error) {
+        console.error('Error scheduling multiple collectible changes:', error);
+        return null;
+    }
+    
+    return data;
+}
+
 export async function deleteScheduledCollectibleChange(id: number) {
     const supabaseAdmin = await getSupabaseAdmin();
     
