@@ -100,6 +100,8 @@ function MyChipsPage() {
   // Add state for collectible search
   const [collectibleSearchQuery, setCollectibleSearchQuery] = useState("");
   const [isCollectibleDropdownOpen, setIsCollectibleDropdownOpen] = useState(false);
+  // Add loading state for schedule change
+  const [isSchedulingChange, setIsSchedulingChange] = useState(false);
 
   useEffect(() => {
     async function fetchChipLinks() {
@@ -237,11 +239,31 @@ function MyChipsPage() {
 
   const handleOpenModal = (chip: ChipLinkWithMetadata) => {
     setSelectedChip(chip);
-    setSelectedCollectibleId(chip.collectible_id || null);
-    setScheduledDate("");
-    setScheduledTime("");
+    
+    // Check if there's an existing scheduled change for this chip
+    const existingSchedule = getScheduledChangeForChip(chip.chip_id);
+    
+    if (existingSchedule && !existingSchedule.executed && existingSchedule.schedule_unix) {
+      // If there's a scheduled change, populate the form with existing values
+      setSelectedCollectibleId(existingSchedule.collectible_id);
+      
+      // Convert unix timestamp to date and time (UTC)
+      const scheduleDate = new Date(existingSchedule.schedule_unix * 1000);
+      const dateString = scheduleDate.toISOString().split('T')[0]; // YYYY-MM-DD format in UTC
+      const timeString = scheduleDate.toISOString().split('T')[1].substring(0, 5); // HH:MM format in UTC
+      
+      setScheduledDate(dateString);
+      setScheduledTime(timeString);
+    } else {
+      // No scheduled change, clear the form and don't pre-select any collectible
+      setSelectedCollectibleId(null);
+      setScheduledDate("");
+      setScheduledTime("");
+    }
+    
     setCollectibleSearchQuery("");
     setIsCollectibleDropdownOpen(false);
+    setIsSchedulingChange(false);
     fetchCollectiblesForArtist();
     setIsModalOpen(true);
   };
@@ -270,6 +292,8 @@ function MyChipsPage() {
       });
       return;
     }
+
+    setIsSchedulingChange(true);
 
     const scheduledDateTime = new Date(
       formatDate(
@@ -320,6 +344,8 @@ function MyChipsPage() {
         description: "Failed to schedule change. Please try again later.",
         variant: "destructive",
       });
+    } finally {
+      setIsSchedulingChange(false);
     }
   };
 
@@ -853,11 +879,27 @@ function MyChipsPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsModalOpen(false)}
+              disabled={isSchedulingChange}
+            >
               Cancel
             </Button>
             {!selectedChip?.batch_listing_id && (
-              <Button onClick={handleScheduleChange}>Schedule Change</Button>
+              <Button 
+                onClick={handleScheduleChange}
+                disabled={isSchedulingChange}
+              >
+                {isSchedulingChange ? (
+                  <>
+                    <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                    Scheduling...
+                  </>
+                ) : (
+                  "Schedule Change"
+                )}
+              </Button>
             )}
           </DialogFooter>
         </DialogContent>
