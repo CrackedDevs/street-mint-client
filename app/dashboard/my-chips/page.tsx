@@ -357,6 +357,20 @@ function MyChipsPage() {
       const scheduledChangesData = await getScheduledCollectibleChanges();
       if (scheduledChangesData) {
         setScheduledChanges(scheduledChangesData);
+        
+        const collectibleIds = [...new Set(scheduledChangesData.map(change => change.collectible_id).filter((id): id is number => id !== null))];
+        const collectibleNamePromises = collectibleIds.map(async (id) => {
+          const collectible = await fetchCollectibleById(id);
+          return { id, name: collectible?.name || `Collectible ${id}` };
+        });
+        
+        const collectibleNames = await Promise.all(collectibleNamePromises);
+        const namesMap = collectibleNames.reduce((acc, { id, name }) => {
+          acc[id] = name;
+          return acc;
+        }, {} as Record<number, string>);
+        
+        setCollectibleNamesMap(namesMap);
       }
 
       toast({
@@ -675,7 +689,7 @@ function MyChipsPage() {
                             <div key={change.id} className="text-sm text-blue-600 flex items-center">
                               <Calendar className="h-3 w-3 mr-1" />
                               Change {index + 1} scheduled to{" "}
-                              {collectibleNamesMap[change.collectible_id!]} (ID: ${change.collectible_id})
+                              {collectibleNamesMap[change.collectible_id!]} (ID: {change.collectible_id})
                               {" "}on{" "}
                               {formatDate(
                                 new Date(change.schedule_unix! * 1000).toISOString(),
