@@ -226,10 +226,9 @@ export default function MintButtonClaim({
   }, [connected]);
 
   useEffect(() => {
-    //Auto fill the wallet address if the user has previously minted
-    const lastMintInput = localStorage.getItem("lastMintInput");
-    if (lastMintInput) {
-      setWalletAddress(lastMintInput || "");
+    const lastMintInputWallet = localStorage.getItem("lastMintInputWallet");
+    if (lastMintInputWallet) {
+      setWalletAddress(lastMintInputWallet || "");
     }
   }, []);
 
@@ -412,7 +411,7 @@ export default function MintButtonClaim({
             setShowAirdropModal(true);
             updateOrderAirdropStatus(lightOrder.id, true);
           }
-          setWalletAddress("");
+          localStorage.setItem("lastMintInputWallet", walletAddress.trim());
         } else {
           throw new Error("Minting process failed");
         }
@@ -753,6 +752,7 @@ export default function MintButtonClaim({
         <CtaPopUp
           title={collectible.cta_title ?? ""}
           description={collectible.cta_description ?? ""}
+          mintEmailOrWallet={walletAddress || ""}
           logoUrl={collectible.cta_logo_url ?? ""}
           ctaText={collectible.cta_text ?? ""}
           ctaLink={collectible.cta_link ?? ""}

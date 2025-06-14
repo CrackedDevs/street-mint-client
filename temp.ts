@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+// import { NextResponse } from "next/server";
 // import { uploadFileToPinata } from "@/lib/supabaseClient";
 // import { getSupabaseAdmin } from "@/lib/supabaseAdminClient";
 // import fs from "fs";
@@ -13,7 +13,7 @@ import { NextResponse } from "next/server";
 //     if (!fs.existsSync(fullPath)) {
 //       return NextResponse.json({ error: "File not found" }, { status: 404 });
 //     }
-``
+
 //     // Read the file
 //     const fileBuffer = fs.readFileSync(fullPath);
 

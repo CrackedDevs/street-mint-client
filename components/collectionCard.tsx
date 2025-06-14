@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Pencil } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,7 +61,7 @@ export default function CollectionCard({
             Collection ID: {collection.id}
           </p>
         </div>
-        <div className="mt-4">
+        <div className="mt-4 grid grid-cols-2 gap-2">
           <Link
             href={
               isAdmin
@@ -72,6 +72,14 @@ export default function CollectionCard({
             <Button variant="secondary" size="sm" className="w-full h-10 text-sm">
               View Collection
               <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+          <Link
+            href={`/dashboard/collection/${collection.id}/edit`}
+          >
+            <Button variant="outline" size="sm" className="w-full h-10 text-sm">
+              Edit Collection
+              <Pencil className="ml-2 h-4 w-4" />
             </Button>
           </Link>
         </div>

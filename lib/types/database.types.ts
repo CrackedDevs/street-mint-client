@@ -89,6 +89,7 @@ export type Database = {
       batch_listings: {
         Row: {
           airdrop_eligibility_index: number | null
+          always_active: boolean | null
           batch_end_date: string | null
           batch_hour: number | null
           batch_start_date: string | null
@@ -106,6 +107,7 @@ export type Database = {
           cta_enable: boolean | null
           cta_has_email_capture: boolean | null
           cta_has_text_capture: boolean | null
+          cta_image_url: string | null
           cta_link: string | null
           cta_logo_url: string | null
           cta_text: string | null
@@ -144,6 +146,7 @@ export type Database = {
         }
         Insert: {
           airdrop_eligibility_index?: number | null
+          always_active?: boolean | null
           batch_end_date?: string | null
           batch_hour?: number | null
           batch_start_date?: string | null
@@ -161,6 +164,7 @@ export type Database = {
           cta_enable?: boolean | null
           cta_has_email_capture?: boolean | null
           cta_has_text_capture?: boolean | null
+          cta_image_url?: string | null
           cta_link?: string | null
           cta_logo_url?: string | null
           cta_text?: string | null
@@ -199,6 +203,7 @@ export type Database = {
         }
         Update: {
           airdrop_eligibility_index?: number | null
+          always_active?: boolean | null
           batch_end_date?: string | null
           batch_hour?: number | null
           batch_start_date?: string | null
@@ -216,6 +221,7 @@ export type Database = {
           cta_enable?: boolean | null
           cta_has_email_capture?: boolean | null
           cta_has_text_capture?: boolean | null
+          cta_image_url?: string | null
           cta_link?: string | null
           cta_logo_url?: string | null
           cta_text?: string | null
@@ -278,6 +284,7 @@ export type Database = {
           collectible_id: number | null
           created_at: string
           id: number
+          label: string | null
         }
         Insert: {
           active?: boolean
@@ -287,6 +294,7 @@ export type Database = {
           collectible_id?: number | null
           created_at?: string
           id?: number
+          label?: string | null
         }
         Update: {
           active?: boolean
@@ -296,6 +304,7 @@ export type Database = {
           collectible_id?: number | null
           created_at?: string
           id?: number
+          label?: string | null
         }
         Relationships: [
           {
@@ -423,6 +432,7 @@ export type Database = {
           cta_enable: boolean | null
           cta_has_email_capture: boolean | null
           cta_has_text_capture: boolean | null
+          cta_image_url: string | null
           cta_link: string | null
           cta_logo_url: string | null
           cta_text: string | null
@@ -469,6 +479,7 @@ export type Database = {
           cta_enable?: boolean | null
           cta_has_email_capture?: boolean | null
           cta_has_text_capture?: boolean | null
+          cta_image_url?: string | null
           cta_link?: string | null
           cta_logo_url?: string | null
           cta_text?: string | null
@@ -515,6 +526,7 @@ export type Database = {
           cta_enable?: boolean | null
           cta_has_email_capture?: boolean | null
           cta_has_text_capture?: boolean | null
+          cta_image_url?: string | null
           cta_link?: string | null
           cta_logo_url?: string | null
           cta_text?: string | null
@@ -830,6 +842,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sponsors_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stampbooks: {
+        Row: {
+          artist_id: number
+          bg_color: string | null
+          collectibles: number[]
+          created_at: string
+          description: string | null
+          id: number
+          is_light: boolean
+          logo_image: string | null
+          loyalty_bg_color: string | null
+          loyalty_card_title: string | null
+          name: string | null
+          sorting_method: string | null
+        }
+        Insert: {
+          artist_id: number
+          bg_color?: string | null
+          collectibles?: number[]
+          created_at?: string
+          description?: string | null
+          id?: number
+          is_light?: boolean
+          logo_image?: string | null
+          loyalty_bg_color?: string | null
+          loyalty_card_title?: string | null
+          name?: string | null
+          sorting_method?: string | null
+        }
+        Update: {
+          artist_id?: number
+          bg_color?: string | null
+          collectibles?: number[]
+          created_at?: string
+          description?: string | null
+          id?: number
+          is_light?: boolean
+          logo_image?: string | null
+          loyalty_bg_color?: string | null
+          loyalty_card_title?: string | null
+          name?: string | null
+          sorting_method?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stampbooks_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
             referencedRelation: "artists"

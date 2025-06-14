@@ -206,14 +206,14 @@ export function getEmailTemplateHTML({
         }
         <p>${
           platform === "STREETMINT"
-            ? `P.S. Want to learn more about Street Mint and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://streetmint.xyz/faq">https://streetmint.xyz/faq</a>`
-            : `P.S. Want to learn more about IRLS and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://irls.xyz/faq">https://irls.xyz/faq</a>`
+            ? `P.S. Want to learn more about Street Mint and the exciting world of digital collectibles? Check out our FAQs: <a href="https://streetmint.xyz/faq">https://streetmint.xyz/faq</a>`
+            : `P.S. Want to learn more about IRLS and the exciting world of digital collectibles? Check out our FAQs: <a href="https://irls.xyz/faq">https://irls.xyz/faq</a>`
         }
         </p>
         <p>${
           platform === "STREETMINT"
             ? `P.P.S. Show off your latest find! Share your new collectible on social media with #StreetMint and tag us <a href="https://www.instagram.com/streetmint.xyz">https://www.instagram.com/streetmint.xyz</a>`
-            : `P.P.S. Show off your latest find! Share your new collectible on social media with #StreetMint and tag us <a href="https://www.instagram.com/streetmint.xyz">https://www.instagram.com/streetmint.xyz</a>`
+            : `P.P.S. Show off your latest find! Share your new collectible on social media with #IRLS and tag us <a href="https://www.instagram.com/streetmint.xyz">https://www.instagram.com/streetmint.xyz</a>`
         }
         </p>
       </div>

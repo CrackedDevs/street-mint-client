@@ -256,6 +256,31 @@ export async function POST(req: Request, res: NextApiResponse) {
       );
     }
 
+    const { data: collectible, error: collectibleError } = await supabase
+    .from("collectibles")
+    .select("*, collections(artist)")
+    .eq("id", collectibleId)
+    .single();
+
+    if (collectibleError) {
+      throw new Error("Failed to fetch collectible");
+    }
+
+    const artistId = collectible.collections?.artist;
+    let artist = null;
+    
+    if (artistId) {
+      const { data: artistData, error: artistError } = await supabase
+        .from("artists")
+        .select("username")
+        .eq("id", artistId)
+        .single();
+      
+      if (!artistError && artistData) {
+        artist = artistData.username;
+      }
+    }
+
     // For paid mints, verify and send transaction
     console.log("isCardPayment", isCardPayment);
     console.log("Iscarpayment typeof", typeof isCardPayment);
@@ -373,6 +398,7 @@ export async function POST(req: Request, res: NextApiResponse) {
       throw new Error("Failed to update admin signature auth");
     }
 
+    // SuperTeam UK Batch Hubspot Adding Order
     if (order.collectibles && order.collectibles.batch_listing_id && order.collectibles.batch_listing_id === 7030604016) {
       if (isEmail) {
         const hubspotResponse = await addOrder({
@@ -411,11 +437,11 @@ export async function POST(req: Request, res: NextApiResponse) {
         if (platform == "STREETMINT") {
           fromEmail = "hello@streetmint.xyz";
           fromName = "StreetMint";
-          emailSubject = "You now own a Street Mint Collectible!";
+          emailSubject = `You now own a Street Mint Collectible${artist ? ` by ${artist}` : ''}`;
         } else {
           fromEmail = "hello@irls.xyz";
           fromName = "IRLS";
-          emailSubject = "Congrats! You now own an IRLS Collectible";
+          emailSubject = `Congrats! You now own an IRLS Collectible${artist ? ` by ${artist}` : ''}`;
         }
 
         // Get batch URL if the collectible has a batch_id

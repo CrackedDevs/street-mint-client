@@ -22,6 +22,7 @@ interface CtaPopUpProps {
   publicKey: string;
   existingOrderId: string;
   isLightVersion?: boolean;
+  mintEmailOrWallet: string;
   // onSubmit?: (data: { email?: string; text?: string }) => void;
 }
 
@@ -40,6 +41,7 @@ function CtaPopUp({
   publicKey,
   existingOrderId,
   isLightVersion,
+  mintEmailOrWallet,
 }: // onSubmit,
 CtaPopUpProps) {
   const [email, setEmail] = useState("");
@@ -59,9 +61,12 @@ CtaPopUpProps) {
     setIsLoading(true);
 
     if (ctaLink) {
+      // Replace {#email#} placeholder with the captured email
+      const finalCtaLink = ctaLink.replace("{#email#}", mintEmailOrWallet || email || "");
+
       // Wait for confetti animation before redirect
       window.open(
-        ctaLink.includes("http") ? ctaLink : `https://${ctaLink}`,
+        finalCtaLink.includes("http") ? finalCtaLink : `https://${finalCtaLink}`,
         "_blank"
       );
     }
@@ -163,18 +168,33 @@ CtaPopUpProps) {
         )}
 
         {/* Content */}
-        <h2 className="mb-2 text-2xl font-bold text-gray-900">{title}</h2>
-        <p className="mb-6 text-gray-600">{description}</p>
+        <h2 className="mb-2 text-2xl font-bold text-gray-900 whitespace-pre-wrap text-center">{title}</h2>
+        <p className="mb-6 text-gray-600 whitespace-pre-wrap text-center">{description}</p>
+
+        {/* CTA Image */}
+        {collectible.cta_image_url && (
+          <div className="mb-6 flex justify-center">
+            <div className="relative w-full max-w-[800px] aspect-[4/3]">
+              <Image
+                src={collectible.cta_image_url}
+                alt="CTA Image"
+                fill
+                className="rounded-lg object-contain"
+                sizes="(max-width: 768px) 100vw, 800px"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 flex flex-col items-center">
           {hasTextCapture && (
             <input
               type="text"
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Enter your text"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2  focus:outline-none text-black"
+              className="w-full max-w-sm rounded-lg border border-gray-300 px-4 py-2 focus:outline-none text-black text-center"
               required
             />
           )}
@@ -185,7 +205,7 @@ CtaPopUpProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2  focus:outline-none text-black"
+              className="w-full max-w-sm rounded-lg border border-gray-300 px-4 py-2 focus:outline-none text-black text-center"
               required
             />
           )}
@@ -195,7 +215,7 @@ CtaPopUpProps) {
             <Button
               type="submit"
               disabled={isLoading}
-              className="relative rounded-lg  px-6 py-2 text-white transition-all  disabled:opacity-50"
+              className="relative rounded-lg px-6 py-2 text-white transition-all disabled:opacity-50"
             >
               <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
               {ctaText}

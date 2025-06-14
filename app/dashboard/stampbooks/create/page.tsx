@@ -1,0 +1,435 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Loader2, ArrowLeft } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useUserProfile } from "@/app/providers/UserProfileProvider";
+import { createStampbook, uploadFileToPinata } from "@/lib/supabaseClient";
+import { CollectibleSelector } from "@/components/CollectibleSelector";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+function CreateStampbookPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const { userProfile } = useUserProfile();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [logoImage, setLogoImage] = useState<File | null>(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string>("");
+  const [stampbook, setStampbook] = useState({
+    name: "",
+    description: "",
+    bg_color: "#ffffff",
+    loyalty_bg_color: "#9c9c9c",
+    collectibles: [] as number[],
+    sorting_method: "latest",
+    is_light: false,
+    loyalty_card_title: "LOYALTY CARD",
+  });
+
+  const handleStampbookChange = (
+    field: keyof typeof stampbook,
+    value: string | number[] | boolean
+  ) => {
+    setStampbook((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleLogoImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLogoImage(file);
+      const url = URL.createObjectURL(file);
+      setLogoPreviewUrl(url);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (logoPreviewUrl) {
+        URL.revokeObjectURL(logoPreviewUrl);
+      }
+    };
+  }, [logoPreviewUrl]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userProfile) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create a stampbook",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!stampbook.name) {
+      toast({
+        title: "Error",
+        description: "Please enter a name for the stampbook",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!stampbook.description) {
+      toast({
+        title: "Error",
+        description: "Please enter a description for the stampbook",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (stampbook.is_light === undefined) {
+      toast({
+        title: "Error",
+        description: "Please select a stampbook version",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!logoImage) {
+      toast({
+        title: "Error",
+        description: "Please upload a logo image",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!stampbook.collectibles.length) {
+      toast({
+        title: "Error",
+        description: "Please select at least one collectible",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      let logoImageUrl = "";
+      if (logoImage) {
+        logoImageUrl = (await uploadFileToPinata(logoImage)) || "";
+        if (!logoImageUrl) {
+          throw new Error("Failed to upload logo image");
+        }
+      }
+
+      const newStampbook = await createStampbook({
+        name: stampbook.name,
+        description: stampbook.description,
+        bg_color: stampbook.bg_color,
+        loyalty_bg_color: stampbook.loyalty_bg_color,
+        collectibles: stampbook.collectibles,
+        artist_id: userProfile.id,
+        logo_image: logoImageUrl,
+        sorting_method: stampbook.sorting_method,
+        is_light: stampbook.is_light,
+        loyalty_card_title: stampbook.loyalty_card_title,
+      });
+
+      if (!newStampbook) throw new Error("Failed to create stampbook");
+
+      toast({
+        title: "Success",
+        description: "Stampbook created successfully",
+      });
+
+      router.push("/dashboard/stampbooks");
+    } catch (error) {
+      console.error("Error creating stampbook:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create stampbook",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto py-10">
+      <div className="max-w-3xl mx-auto">
+        <Button
+          variant="ghost"
+          onClick={() => router.push("/dashboard/stampbooks")}
+          className="mb-8"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to My Stampbooks
+        </Button>
+        <Card className="w-full shadow-lg">
+          <CardHeader className="space-y-1 pb-8">
+            <CardTitle className="text-4xl font-bold text-center">
+              Create New Stampbook
+            </CardTitle>
+            <CardDescription className="text-center text-lg">
+              Fill in the details below to create your new stampbook.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-lg font-semibold">
+                    Name <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="name"
+                    value={stampbook.name}
+                    onChange={(e) =>
+                      handleStampbookChange("name", e.target.value)
+                    }
+                    className="text-lg"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="description"
+                    className="text-lg font-semibold"
+                  >
+                    Description <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    id="description"
+                    value={stampbook.description}
+                    onChange={(e) =>
+                      handleStampbookChange("description", e.target.value)
+                    }
+                    className="min-h-[120px] text-base"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="bg_color" className="text-lg font-semibold">
+                    Background Color
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="bg_color"
+                      type="color"
+                      value={stampbook.bg_color}
+                      onChange={(e) =>
+                        handleStampbookChange("bg_color", e.target.value)
+                      }
+                      className="w-20 h-10"
+                    />
+                    <Input
+                      type="text"
+                      value={stampbook.bg_color}
+                      onChange={(e) =>
+                        handleStampbookChange("bg_color", e.target.value)
+                      }
+                      className="flex-1"
+                      pattern="^#[0-9A-Fa-f]{6}$"
+                      placeholder="#ffffff"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="loyalty_bg_color"
+                    className="text-lg font-semibold"
+                  >
+                    Loyalty Background Color
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="loyalty_bg_color"
+                      type="color"
+                      value={stampbook.loyalty_bg_color}
+                      onChange={(e) =>
+                        handleStampbookChange(
+                          "loyalty_bg_color",
+                          e.target.value
+                        )
+                      }
+                      className="w-20 h-10"
+                    />
+                    <Input
+                      type="text"
+                      value={stampbook.loyalty_bg_color}
+                      onChange={(e) =>
+                        handleStampbookChange(
+                          "loyalty_bg_color",
+                          e.target.value
+                        )
+                      }
+                      className="flex-1"
+                      pattern="^#[0-9A-Fa-f]{6}$"
+                      placeholder="#000000"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="loyalty_card_title" className="text-lg font-semibold">
+                    Loyalty Card Title
+                  </Label>
+                  <Input
+                    id="loyalty_card_title"
+                    type="text"
+                    value={stampbook.loyalty_card_title || ""}
+                    onChange={(e) => handleStampbookChange("loyalty_card_title", e.target.value)}
+                    className="flex-1"
+                    placeholder="LOYALTY CARD"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="logo_image" className="text-lg font-semibold">
+                    Logo Image <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="logo_image"
+                    type="file"
+                    onChange={handleLogoImageChange}
+                    accept="image/*"
+                    className="text-base"
+                    required
+                  />
+                  {logoPreviewUrl && (
+                    <div className="mt-2 rounded-lg overflow-hidden">
+                      <Image
+                        src={logoPreviewUrl}
+                        alt="Logo preview"
+                        width={200}
+                        height={200}
+                        className="max-w-[200px] h-auto object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="sorting_method"
+                    className="text-lg font-semibold"
+                  >
+                    Sorting Method
+                  </Label>
+                  <Select
+                    value={stampbook.sorting_method}
+                    onValueChange={(value) =>
+                      handleStampbookChange("sorting_method", value)
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a sorting method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="latest">
+                        Sort by latest timestamp of collectibles
+                      </SelectItem>
+                      <SelectItem value="selection">
+                        Sort by selection method of collectibles
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-lg font-semibold">
+                    Stampbook Version <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      className={`relative flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${
+                        !stampbook.is_light
+                          ? "border-primary bg-primary/10"
+                          : "border-muted hover:border-primary/50"
+                      }`}
+                      onClick={() => {
+                        handleStampbookChange("is_light", false);
+                        handleStampbookChange("collectibles", []);
+                      }}
+                    >
+                      <h3 className="text-lg font-semibold">Standard Version</h3>
+                      <p className="text-sm text-muted-foreground text-center mt-2">
+                        Select the standard collectibles for the stampbook in which the user can mint either by wallet address or by email address.
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      className={`relative flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${
+                        stampbook.is_light
+                          ? "border-primary bg-primary/10"
+                          : "border-muted hover:border-primary/50"
+                      }`}
+                      onClick={() => {
+                        handleStampbookChange("is_light", true);
+                        handleStampbookChange("collectibles", []);
+                      }}
+                    >
+                      <h3 className="text-lg font-semibold">Light Version</h3>
+                      <p className="text-sm text-muted-foreground text-center mt-2">
+                        Select the light collectibles for the stampbook in which the user can mint by email address only.
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
+                {userProfile && (
+                  <CollectibleSelector
+                    artistId={userProfile.id}
+                    selectedCollectibles={stampbook.collectibles}
+                    onCollectiblesChange={(collectibles: number[]) =>
+                      handleStampbookChange("collectibles", collectibles)
+                    }
+                    isLight={stampbook.is_light}
+                  />
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full text-lg h-14 mt-8"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center gap-6 justify-center">
+                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                    Creating Stampbook...
+                  </div>
+                ) : (
+                  "Create Stampbook"
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+export default CreateStampbookPage;

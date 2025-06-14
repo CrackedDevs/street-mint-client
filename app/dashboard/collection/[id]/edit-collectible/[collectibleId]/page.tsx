@@ -70,7 +70,12 @@ function EditCollectiblePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [collectible, setCollectible] = useState<Collectible | null>(null);
   const [newGalleryImages, setNewGalleryImages] = useState<File[]>([]);
-  const [newCtaLogoImage, setNewCtaLogoImage] = useState<File>();
+  const [primaryImageLocalFile, setPrimaryImageLocalFile] = useState<File | null>(
+    null
+  );
+  const [galleryImages, setGalleryImages] = useState<File[]>([]);
+  const [newCtaLogoImage, setNewCtaLogoImage] = useState<File | null>(null);
+  const [newCtaImage, setNewCtaImage] = useState<File | null>(null);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [isLoadingSponsors, setIsLoadingSponsors] = useState(false);
   const [isFreeMint, setIsFreeMint] = useState(false);
@@ -171,13 +176,10 @@ function EditCollectiblePage() {
         try {
           const chips = await getChipLinksByArtistId(userProfile.id);
           if (chips) {
-            // Filter out chips that are already assigned to other collectibles
-            const availableChips = chips.filter((chip) => !chip.collectible_id && !chip.batch_listing_id);
+            const availableChips = chips.filter((chip) => (!chip.collectible_id || chip.collectible_id === Number(collectibleId)) && !chip.batch_listing_id);
 
-            // Get all chips, including those already assigned to other collectibles
             setAvailableChips(availableChips);
 
-            // Set selected chips that are already assigned to this collectible
             if (collectible?.id) {
               const assignedToThisCollectible = availableChips
                 .filter((chip) => chip.collectible_id === collectible.id)
@@ -213,17 +215,32 @@ function EditCollectiblePage() {
   };
 
   const handleCtaLogoImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files) {
       const file = e.target.files[0];
-      if (file.size > MAX_FILE_SIZE) {
+      if (file.size <= MAX_FILE_SIZE) {
+        setNewCtaLogoImage(file);
+      } else {
         toast({
           title: "Error",
-          description: "Image size should not exceed 10MB",
+          description: "File size must be less than 10MB",
           variant: "destructive",
         });
-        return;
       }
-      setNewCtaLogoImage(file);
+    }
+  };
+
+  const handleCtaImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const file = e.target.files[0];
+      if (file.size <= MAX_FILE_SIZE) {
+        setNewCtaImage(file);
+      } else {
+        toast({
+          title: "Error",
+          description: "File size must be less than 10MB",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -296,6 +313,12 @@ function EditCollectiblePage() {
         ctaLogoUrl = await uploadFileToPinata(newCtaLogoImage);
       }
 
+      // Upload new CTA image if any
+      let ctaImageUrl = collectible.cta_image_url;
+      if (newCtaImage) {
+        ctaImageUrl = await uploadFileToPinata(newCtaImage);
+      }
+
       // Update collectible with new data
       const updatedCollectible: Collectible = {
         ...collectible,
@@ -304,6 +327,8 @@ function EditCollectiblePage() {
           ...(newGalleryUrls.filter(Boolean) as string[]),
         ],
         cta_logo_url: ctaLogoUrl,
+        cta_image_url: ctaImageUrl,
+        stripe_price_id: collectible.stripe_price_id || "",
       };
 
       const result = await updateCollectible(updatedCollectible);
@@ -997,6 +1022,39 @@ function EditCollectiblePage() {
                       >
                         Logo
                       </Label>
+                      
+                      {/* Display existing CTA logo */}
+                      {collectible.cta_logo_url && !newCtaLogoImage && (
+                        <div className="mb-4">
+                          <p className="text-sm text-muted-foreground mb-2">Current logo:</p>
+                          <div className="relative inline-block">
+                            <Image
+                              src={collectible.cta_logo_url}
+                              alt="Current CTA Logo"
+                              width={150}
+                              height={150}
+                              className="object-contain border rounded-md bg-gray-50"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Display new CTA logo preview */}
+                      {newCtaLogoImage && (
+                        <div className="mb-4">
+                          <p className="text-sm text-muted-foreground mb-2">New logo preview:</p>
+                          <div className="relative inline-block">
+                            <Image
+                              src={URL.createObjectURL(newCtaLogoImage)}
+                              alt="New CTA Logo Preview"
+                              width={150}
+                              height={150}
+                              className="object-contain border rounded-md bg-gray-50"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
                       <Label
                         htmlFor="call-to-action-logo-url"
                         className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/50 transition-colors"
@@ -1005,7 +1063,9 @@ function EditCollectiblePage() {
                           <UploadIcon className="w-6 h-6 text-muted-foreground" />
                           <span className="text-base font-medium text-muted-foreground">
                             {newCtaLogoImage
-                              ? newCtaLogoImage.name
+                              ? `Replace with: ${newCtaLogoImage.name}`
+                              : collectible.cta_logo_url
+                              ? "Replace Logo"
                               : "Add Logo"}
                           </span>
                         </div>
@@ -1016,6 +1076,73 @@ function EditCollectiblePage() {
                         type="file"
                         accept="image/*"
                         onChange={handleCtaLogoImageChange}
+                        className="sr-only"
+                      />
+                    </div>
+                    <div>
+                      <Label
+                        htmlFor="call-to-action-image-url"
+                        className="text-lg font-semibold"
+                      >
+                        CTA Image
+                      </Label>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        This image will be displayed in the CTA popup after the button
+                      </p>
+                      
+                      {/* Display existing CTA image */}
+                      {collectible.cta_image_url && !newCtaImage && (
+                        <div className="mb-4">
+                          <p className="text-sm text-muted-foreground mb-2">Current CTA image:</p>
+                          <div className="relative inline-block">
+                            <Image
+                              src={collectible.cta_image_url}
+                              alt="Current CTA Image"
+                              width={200}
+                              height={200}
+                              className="object-contain border rounded-md bg-gray-50"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Display new CTA image preview */}
+                      {newCtaImage && (
+                        <div className="mb-4">
+                          <p className="text-sm text-muted-foreground mb-2">New CTA image preview:</p>
+                          <div className="relative inline-block">
+                            <Image
+                              src={URL.createObjectURL(newCtaImage)}
+                              alt="New CTA Image Preview"
+                              width={200}
+                              height={200}
+                              className="object-contain border rounded-md bg-gray-50"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div
+                        className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/50 transition-colors"
+                        onClick={() => document.getElementById("call-to-action-image-url")?.click()}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <UploadIcon className="w-6 h-6 text-muted-foreground" />
+                          <span className="text-base font-medium text-muted-foreground">
+                            {newCtaImage
+                              ? `Replace with: ${newCtaImage.name}`
+                              : collectible.cta_image_url
+                              ? "Replace CTA Image"
+                              : "Add CTA Image"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Input
+                        id="call-to-action-image-url"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleCtaImageChange}
                         className="sr-only"
                       />
                     </div>
@@ -1050,6 +1177,9 @@ function EditCollectiblePage() {
                           handleCollectibleChange("cta_link", e.target.value)
                         }
                       />
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Use {"{#email#}"} in the link to include the captured email address (e.g., https://example.com/signup?email={"{#email#}"})
+                      </p>
                     </div>
                     <div className="flex gap-2 items-center">
                       <Label

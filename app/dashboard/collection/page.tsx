@@ -10,18 +10,20 @@ import {
 } from "@/lib/supabaseClient";
 import { useWallet } from "@solana/wallet-adapter-react";
 import withAuth from "../withAuth";
-import { PlusIcon, Loader2Icon, TrashIcon } from "lucide-react";
+import { PlusIcon, Loader2Icon, TrashIcon, SearchIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useUserProfile } from "@/app/providers/UserProfileProvider";
 import DotPattern from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
 import ShimmerButton from "@/components/magicui/shimmer-button";
 import CollectionCard from "@/components/collectionCard";
+import { Input } from "@/components/ui/input";
 
 function CollectionsPage() {
   const [collections, setCollections] = useState<PopulatedCollection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { publicKey, connected } = useWallet();
   const { userProfile } = useUserProfile();
 
@@ -62,6 +64,13 @@ function CollectionsPage() {
     fetchCollections();
   }, [userProfile]);
 
+  const filteredCollections = collections.filter((collection) => {
+    const name = collection.name?.toLowerCase() || "";
+    const description = collection.description?.toLowerCase() || "";
+    const query = searchQuery.toLowerCase();
+    return name.includes(query) || description.includes(query);
+  });
+
   if (!connected) {
     return <></>;
   }
@@ -77,6 +86,21 @@ function CollectionsPage() {
             </ShimmerButton>
           </Link>
         </div>
+
+        {!loading && collections.length > 0 && (
+          <div className="relative mb-6 z-20">
+            <div className="flex items-center border rounded-md pr-3 bg-background">
+              <Input
+                type="text"
+                placeholder="Search collections..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+              <SearchIcon className="h-5 w-5 text-muted-foreground" />
+            </div>
+          </div>
+        )}
 
         {loading || !connected ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -107,29 +131,40 @@ function CollectionsPage() {
             </CardContent>
           </Card>
         ) : collections.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {collections.map((collection) => (
-              <div key={collection.id} className="relative z-20 bg-white">
-                <CollectionCard
-                  collection={{
-                    id: collection.id?.toString() || "",
-                    name: collection.name,
-                    description: collection.description,
-                    collectible_image_urls: collection.collectible_image_urls,
-                  }}
-                />
-                {/* LET THIS STAY */}
-                {/* <Button
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-2 right-2 z-30"
-                  onClick={() => handleDeleteCollection(collection.id)}
-                >
-                  <TrashIcon className="h-4 w-4" />
-                </Button> */}
+          <>
+            {filteredCollections.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCollections.map((collection) => (
+                  <div key={collection.id} className="relative z-20 bg-white">
+                    <CollectionCard
+                      collection={{
+                        id: collection.id?.toString() || "",
+                        name: collection.name,
+                        description: collection.description,
+                        collectible_image_urls: collection.collectible_image_urls,
+                      }}
+                    />
+                    {/* LET THIS STAY */}
+                    {/* <Button
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2 z-30"
+                      onClick={() => handleDeleteCollection(collection.id)}
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </Button> */}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            ) : (
+              <div className="text-center z-20 py-8">
+                <p className="text-lg mb-2">No collections match your search.</p>
+                <Button variant="outline" onClick={() => setSearchQuery("")}>
+                  Clear Search
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center z-20">
             <p className="text-lg mb-4">

@@ -74,6 +74,7 @@ function CreateCollectiblePage() {
   const { userProfile } = useUserProfile();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [newCtaLogoImage, setNewCtaLogoImage] = useState<File | null>(null);
+  const [newCtaImage, setNewCtaImage] = useState<File | null>(null);
   const [showCreatorForm, setShowCreatorForm] = useState(false);
   const [availableChips, setAvailableChips] = useState<
     Array<{ id: number; chip_id: string; active: boolean }>
@@ -132,6 +133,7 @@ function CreateCollectiblePage() {
     cta_title: "",
     cta_description: "",
     cta_logo_url: "",
+    cta_image_url: "",
     cta_text: "",
     cta_link: "",
     cta_has_email_capture: false,
@@ -304,6 +306,21 @@ function CreateCollectiblePage() {
     }
   };
 
+  const handleCtaImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const file = e.target.files[0];
+      if (file.size <= MAX_FILE_SIZE) {
+        setNewCtaImage(file);
+      } else {
+        toast({
+          title: "Error",
+          description: "File size must be less than 10MB",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const handleAddCreator = () => {
     const newCreator: CreatorRoyalty = {
       creator_wallet_address: "",
@@ -411,6 +428,11 @@ function CreateCollectiblePage() {
       const uploadedCtaLogoUrl = newCtaLogoImage
         ? await uploadFileToPinata(newCtaLogoImage)
         : null;
+
+      const uploadedCtaImageUrl = newCtaImage
+        ? await uploadFileToPinata(newCtaImage)
+        : null;
+
       const mintStartDate = formatDate(collectible.mint_start_date ?? "");
       const mintEndDate = formatDate(collectible.mint_end_date ?? "");
 
@@ -429,6 +451,7 @@ function CreateCollectiblePage() {
         id: NumericUUID(),
         price_usd: isFreeMint ? 0 : collectible.price_usd,
         cta_logo_url: uploadedCtaLogoUrl,
+        cta_image_url: uploadedCtaImageUrl,
         stripe_price_id: stripePriceId || "",
         mint_start_date: mintStartDate,
         mint_end_date: mintEndDate,
@@ -1236,6 +1259,38 @@ function CreateCollectiblePage() {
                       </div>
                       <div>
                         <Label
+                          htmlFor="call-to-action-image-url"
+                          className="text-lg font-semibold"
+                        >
+                          CTA Image
+                        </Label>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          This image will be displayed in the CTA popup after the button
+                        </p>
+                        <Label
+                          htmlFor="call-to-action-image-url"
+                          className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/50 transition-colors"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <UploadIcon className="w-6 h-6 text-muted-foreground" />
+                            <span className="text-base font-medium text-muted-foreground">
+                              {newCtaImage
+                                ? newCtaImage.name
+                                : "Add CTA Image"}
+                            </span>
+                          </div>
+                        </Label>
+
+                        <Input
+                          id="call-to-action-image-url"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCtaImageChange}
+                          className="sr-only"
+                        />
+                      </div>
+                      <div>
+                        <Label
                           htmlFor="call-to-action-cta-text"
                           className="text-lg font-semibold"
                         >
@@ -1265,6 +1320,9 @@ function CreateCollectiblePage() {
                             handleCollectibleChange("cta_link", e.target.value)
                           }
                         />
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Use {"{#email#}"} in the link to include the captured email address (e.g., https://example.com/signup?email={"{#email#}"})
+                        </p>
                       </div>
                       <div className="flex gap-2 items-center">
                         <Label

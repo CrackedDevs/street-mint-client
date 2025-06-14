@@ -6,6 +6,8 @@ interface ClaimEmailTemplateProps {
   signatureCode: string;
   batchUrl?: string;
   batchName?: string;
+  artist?: string;
+  stampbookUrl?: string;
 }
 
 export default function ClaimEmailTemplate({
@@ -14,9 +16,21 @@ export default function ClaimEmailTemplate({
   signatureCode,
   batchUrl,
   batchName,
+  artist,
+  stampbookUrl,
 }: ClaimEmailTemplateProps) {
   if (!platform) {
     platform = "STREETMINT";
+  }
+
+  let faqUrl = platform === "STREETMINT" ? "https://streetmint.xyz/faq" : "https://irls.xyz/faq";
+
+  if (artist && ["Stephen Miller", "Ratio", "Parks Sadler", "Emily Hana", "Dasha", "Jake Farmer", "Tim Gatnby", "Robi Walters", "Huntoland", "CH20", "Machinex"].includes(artist)) {
+    if (platform === "STREETMINT") {
+      faqUrl = "https://streetmint.xyz/artotel";
+    } else {
+      faqUrl = "https://streetmint.xyz/artotel";
+    }
   }
 
   return `
@@ -61,11 +75,24 @@ export default function ClaimEmailTemplate({
         `
             : ""
         }
+        ${
+          stampbookUrl
+            ? `
+        <a
+          href="${stampbookUrl}"
+          style="color: #3498db; text-decoration: underline; font-size: 16px; font-style: italic; font-weight: bold; display: block; margin-top: 10px;"
+          target="_blank"
+        >
+          Click here to check how many stamps you've collected
+        </a>
+        `
+            : ""
+        }
 
         <p>${
           platform === "STREETMINT"
-            ? `P.S. Want to learn more about Street Mint and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://streetmint.xyz/faq">https://streetmint.xyz/faq</a>`
-            : `P.S. Want to learn more about IRLS and the exciting world of digital art collectibles? Check out our FAQs: <a href="https://irls.xyz/faq">https://irls.xyz/faq</a>`
+            ? `P.S. Want to learn more about Street Mint and the exciting world of digital collectibles? Check out our FAQs: <a href="${faqUrl}">${faqUrl}</a>`
+            : `P.S. Want to learn more about IRLS and the exciting world of digital collectibles? Check out our FAQs: <a href="${faqUrl}">${faqUrl}</a>`
         }
         </p>
       </div>

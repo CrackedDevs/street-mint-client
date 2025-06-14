@@ -133,7 +133,7 @@ export default function MintButton({
   const connection = new Connection(process.env.NEXT_PUBLIC_RPC_URL!);
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
   const [showSuccessPopUp, setShowSuccessPopUp] = useState(false);
-  const [isLightVersion, setIsLightVersion] = useState(false);
+  const [isLightVersion, setIsLightVersion] = useState<boolean | null>(null);
   const [signatureCode, setSignatureCode] = useState<string | null>(null);
   const [showPaymentMethodDialog, setShowPaymentMethodDialog] = useState(false);
   const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] =
@@ -382,10 +382,14 @@ export default function MintButton({
   useEffect(() => {
     // Auto fill the wallet address if the user has previously minted
     const lastMintInput = localStorage.getItem("lastMintInput");
-    if (lastMintInput) {
-      setWalletAddress(lastMintInput || "");
+    const lastMintInputEmail = localStorage.getItem("lastMintInputEmail");
+    if (isLightVersion && lastMintInputEmail) {
+      setWalletAddress(lastMintInputEmail);
     }
-  }, []);
+    else if (isLightVersion && !isLightVersion && lastMintInput) {
+      setWalletAddress(lastMintInput);
+    }
+  }, [isLightVersion]);
 
   useEffect(() => {
     console.log("walletAddress", walletAddress);
@@ -611,8 +615,12 @@ export default function MintButton({
           setShowAirdropModal(true);
           updateOrderAirdropStatus(orderId, true);
         }
-        localStorage.setItem("lastMintInput", addressToUse);
-        // setWalletAddress("");
+        localStorage.setItem("lastMintInput", addressToUse.trim());
+        if (isEmail) {
+          localStorage.setItem("lastMintInputEmail", addressToUse.trim());
+        } else {
+          localStorage.setItem("lastMintInputWallet", addressToUse.trim());
+        }
       } else {
         throw new Error("Minting process failed");
       }
@@ -722,8 +730,9 @@ export default function MintButton({
           setShowAirdropModal(true);
           updateOrderAirdropStatus(orderId, true);
         }
-        localStorage.setItem("lastMintInput", addressToUse);
-        // setWalletAddress("");
+        // localStorage.setItem("lastMintInput", addressToUse);
+        localStorage.setItem("lastMintInputEmail", addressToUse);
+       
       } else {
         throw new Error("Minting process failed");
       }
@@ -1000,22 +1009,30 @@ export default function MintButton({
     </WhiteBgShimmerButton>
   );
 
-  const renderLightVersionMintButton = () => (
-    <WhiteBgShimmerButton
-      borderRadius="9999px"
-      className="w-full my-4 text-black hover:bg-gray-800 h-[44px] rounded font-bold"
-      onClick={handleLightVersionClaim}
+  const renderLightVersionMintButton = () => {
+
+    const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(
+      (walletAddress || "").trim()
+    );
+
+    return (
+      <WhiteBgShimmerButton
+        borderRadius="9999px"
+        className="w-full my-4 text-black hover:bg-gray-800 h-[44px] rounded font-bold"
+        onClick={handleLightVersionClaim}
       disabled={
         isMinting ||
         !isEligible ||
         existingOrder?.status === "completed" ||
         isLoading ||
-        !deviceId
+        !deviceId || 
+        !isEmail
       }
     >
       {getButtonText()}
     </WhiteBgShimmerButton>
   );
+  };
 
   const renderCompletedMint = () => (
     <div className="flex flex-col items-center my-3 w-full">
@@ -1219,6 +1236,7 @@ export default function MintButton({
       {ctaEnabled && showCtaPopUp && (
         <CtaPopUp
           title={collectible.cta_title ?? ""}
+          mintEmailOrWallet={walletAddress || ""}
           description={collectible.cta_description ?? ""}
           logoUrl={collectible.cta_logo_url ?? ""}
           ctaText={collectible.cta_text ?? ""}
@@ -1230,7 +1248,7 @@ export default function MintButton({
           collectible={collectible}
           publicKey={publicKey?.toString() ?? ""}
           existingOrderId={existingOrder?.id ?? ""}
-          isLightVersion={isLightVersion}
+          isLightVersion={isLightVersion ?? false}
         />
       )}
       <SuccessPopup

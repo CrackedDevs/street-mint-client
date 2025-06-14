@@ -31,12 +31,27 @@ export async function POST(req: Request, res: NextApiResponse) {
     // Fetch collectible details
     const { data: collectible, error: collectibleError } = await supabase
       .from("collectibles")
-      .select("*, collections(id)")
+      .select("*, collections(id, artist)")
       .eq("id", collectibleId)
       .single();
 
     if (collectibleError || !collectible) {
       throw new Error("Failed to fetch collectible");
+    }
+
+    const artistId = collectible.collections?.artist;
+    let artist = null;
+    
+    if (artistId) {
+      const { data: artistData, error: artistError } = await supabase
+        .from("artists")
+        .select("username")
+        .eq("id", artistId)
+        .single();
+      
+      if (!artistError && artistData) {
+        artist = artistData.username;
+      }
     }
 
     // Check eligibility
@@ -139,16 +154,33 @@ export async function POST(req: Request, res: NextApiResponse) {
         batchName = order.collectibles.name;
       }
 
+      // Check if collectible is part of stampbook 9
+      let stampbookUrl: string | undefined = undefined;
+      const { data: stampbook, error: stampbookError } = await supabase
+        .from("stampbooks")
+        .select("collectibles")
+        .eq("id", 9)
+        .single();
+
+      if (!stampbookError && stampbook && Array.isArray(stampbook.collectibles)) {
+        const isInStampbook = stampbook.collectibles.includes(collectibleId);
+        if (isInStampbook) {
+          stampbookUrl = `https://www.irls.xyz/stampbook/9?search=${emailAddress}`;
+        }
+      }
+
       const mailOptions = {
         from: `${fromName} <${fromEmail}>`,
         to: emailAddress,
-        subject: `Congrats! You now own an IRLS Collectible`,
+        subject: `Congrats! You now own an IRLS Collectible${artist ? ` by ${artist}` : ''}`,
         html: ClaimEmailTemplate({
           platform,
           nftImageUrl: collectible.primary_image_url,
           signatureCode,
           batchUrl,
           batchName,
+          artist: artist || "",
+          stampbookUrl,
         }),
       };
 

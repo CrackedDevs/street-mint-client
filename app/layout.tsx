@@ -4,6 +4,7 @@ import "./globals.css";
 import AppWalletProvider from "@/components/AppWalletProvider";
 import { FpjsProvider } from "@fingerprintjs/fingerprintjs-pro-react";
 import { UserProfileProvider } from "./providers/UserProfileProvider";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -35,6 +36,7 @@ export default function RootLayout({
               }}
             >
               {children}
+              <Toaster />
             </FpjsProvider>
           </UserProfileProvider>
         </AppWalletProvider>

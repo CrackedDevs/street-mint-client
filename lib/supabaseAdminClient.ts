@@ -26,6 +26,7 @@ export type ChipLink = {
     artists_id?: number | null | null;
     active: boolean;
     created_at: string;
+    label?: string | null;
 }
 
 export type CollectibleBySignatureCode = {
@@ -261,7 +262,7 @@ export async function getAllChipLinks() {
     const supabaseAdmin = await getSupabaseAdmin();
     const { data, error } : { data: ChipLink[] | null, error: any } = await supabaseAdmin
         .from('chip_links')
-        .select(`id, chip_id, collectible_id, artists_id, active, created_at`)
+        .select(`id, chip_id, collectible_id, artists_id, active, created_at, label`)
         .order('created_at', { ascending: false });
 
         if (error) {
@@ -443,7 +444,8 @@ export async function createChipLink(chipLink: ChipLinkCreate): Promise<{ succes
             collectible_id: chipLink.collectible_id,
             batch_listing_id: chipLink.batch_listing_id,
             active: chipLink.active,
-            artists_id: chipLink.artists_id
+            artists_id: chipLink.artists_id,
+            label: chipLink.label
         });
 
     if (insertError) {
@@ -456,21 +458,24 @@ export async function createChipLink(chipLink: ChipLinkCreate): Promise<{ succes
 
 export async function updateChipLink(id: number, chipLink: ChipLink) {
     const supabaseAdmin = await getSupabaseAdmin();
-    const { data, error }: { data: ChipLink | null, error: any } = await supabaseAdmin
+    const { data, error }: { data: ChipLink[] | null, error: any } = await supabaseAdmin
         .from('chip_links')
         .update({
             chip_id: chipLink.chip_id,
             collectible_id: chipLink.collectible_id,
             batch_listing_id: chipLink.batch_listing_id,
             active: chipLink.active,
+            label: chipLink.label,
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
     if (error) {
         console.error('Error updating chip link:', error);
         return null;
     }
-    return data;
+    
+    return data && data.length > 0 ? data[0] : null;
 }
 
 export const createCollectible = async (collectible: Omit<Collectible, 'id'>, collectionId: number): Promise<Collectible | null> => {
@@ -541,6 +546,21 @@ export async function deleteChipLink(id: number) {
     
     if (error) {
         console.error('Error deleting chip link:', error);
+        return false;
+    }
+    
+    return true;
+}
+
+export async function disconnectChipLink(id: number) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { error } = await supabaseAdmin
+        .from('chip_links')
+        .update({ collectible_id: null, batch_listing_id: null })
+        .eq('id', id);
+    
+    if (error) {
+        console.error('Error disconnecting chip link:', error);
         return false;
     }
     
@@ -640,7 +660,7 @@ export async function getChipLinksByArtistId(artistId: number) {
     const supabaseAdmin = await getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
         .from('chip_links')
-        .select(`id, chip_id, collectible_id, active, created_at, artists_id, batch_listing_id`)
+        .select(`id, chip_id, collectible_id, active, created_at, artists_id, batch_listing_id, label`)
         .eq('artists_id', artistId)
         .order('created_at', { ascending: false });
     
@@ -730,6 +750,64 @@ export async function scheduleCollectibleChange(chipId: string, collectibleId: n
     
     if (error) {
         console.error('Error scheduling collectible change:', error);
+        return null;
+    }
+    
+    return data;
+}
+
+// New function to add a single scheduled change without deleting existing ones
+export async function addScheduledCollectibleChange(chipId: string, collectibleId: number, scheduleUnix: number) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    
+    // Insert the new scheduled change
+    const { data, error } = await supabaseAdmin
+        .from('collectible_schedule')
+        .insert({
+            chip_id: chipId,
+            collectible_id: collectibleId,
+            schedule_unix: scheduleUnix,
+            executed: false
+        });
+    
+    if (error) {
+        console.error('Error adding scheduled collectible change:', error);
+        return null;
+    }
+    
+    return data;
+}
+
+// Function to schedule multiple collectible changes for a chip (replaces all existing ones)
+export async function scheduleMultipleCollectibleChanges(chipId: string, changes: Array<{ collectibleId: number; scheduleUnix: number }>) {
+    const supabaseAdmin = await getSupabaseAdmin();
+    
+    // First, delete all existing scheduled changes for this chip
+    const { error: deleteError } = await supabaseAdmin
+        .from('collectible_schedule')
+        .delete()
+        .eq('chip_id', chipId)
+        .eq('executed', false);
+    
+    if (deleteError) {
+        console.error('Error deleting existing scheduled changes:', deleteError);
+        return null;
+    }
+    
+    // Now insert all the new scheduled changes
+    const changesToInsert = changes.map(change => ({
+        chip_id: chipId,
+        collectible_id: change.collectibleId,
+        schedule_unix: change.scheduleUnix,
+        executed: false
+    }));
+    
+    const { data, error } = await supabaseAdmin
+        .from('collectible_schedule')
+        .insert(changesToInsert);
+    
+    if (error) {
+        console.error('Error scheduling multiple collectible changes:', error);
         return null;
     }
     
