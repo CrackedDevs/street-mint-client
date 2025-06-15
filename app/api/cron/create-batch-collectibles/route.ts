@@ -1,8 +1,9 @@
 import { getSupabaseAdmin } from "@/lib/supabaseAdminClient";
-import { Collectible, QuantityType } from "@/lib/supabaseClient";
+import { Collectible, QuantityType, uploadFileToPinata } from "@/lib/supabaseClient";
 import { NumericUUID } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 import { createCollectible } from "@/lib/supabaseAdminClient";
+import { generateCollectibleImage } from "@/lib/generateCollectibleImage";
 
 // 0: Sunday
 // 1: Monday
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
       if (frequencyType === 'weekly' && !frequencyDays.includes(currentDayOfWeek)) {
         continue;
       }
-      
+
       if (frequencyType === 'monthly' && !frequencyDays.includes(currentDayOfMonth)) {
         continue;
       }
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
 
       // Calculate mint end time based on frequency type
       let mintEnd;
-      
+
       if (frequencyType === 'daily') {
         // For daily, end just before the next day's batch
         mintEnd = new Date(
@@ -98,13 +99,13 @@ export async function GET(request: NextRequest) {
           const numericDays = frequencyDays.map(day => Number(day)).filter(day => !isNaN(day));
           const sortedDays = [...numericDays].sort((a, b) => a - b);
           let nextDay = sortedDays.find(day => day > currentDayOfWeek);
-          
+
           // If no next day found, get the first day of next week
           if (nextDay === undefined) {
             nextDay = sortedDays[0];
             // Calculate days until next occurrence (days until next week + the selected day)
             const daysUntilNext = 7 - currentDayOfWeek + nextDay;
-            
+
             // End time is just before the next scheduled batch
             mintEnd = new Date(
               Date.UTC(
@@ -122,7 +123,7 @@ export async function GET(request: NextRequest) {
           } else {
             // Calculate days until next occurrence
             const daysUntilNext = nextDay - currentDayOfWeek;
-            
+
             // End time is just before the next scheduled batch
             mintEnd = new Date(
               Date.UTC(
@@ -149,7 +150,7 @@ export async function GET(request: NextRequest) {
           const numericDays = frequencyDays.map(day => Number(day)).filter(day => !isNaN(day));
           const sortedDays = [...numericDays].sort((a, b) => a - b);
           let nextDay = sortedDays.find(day => day > currentDayOfMonth);
-          
+
           // If no next day found, get the first day of next month
           if (nextDay === undefined) {
             nextDay = sortedDays[0];
@@ -213,20 +214,34 @@ export async function GET(request: NextRequest) {
 
       console.log(`Mint period for batch ${listing.id}: ${mintStart.toISOString()} to ${mintEnd.toISOString()}`);
 
+      // TODO: Dynamically add date or day number
+      const day_number = listing.total_collectibles
+        ? listing.total_collectibles + 1
+        : 1;
+      const { file: collectible_image } = await generateCollectibleImage(listing.primary_image_url, `Day ${day_number}`);
+      const primary_image_url = await uploadFileToPinata(collectible_image);
+
+      if (!primary_image_url) {
+        return NextResponse.json(
+          { error: "Failed to upload collectible image to Pinata" },
+          { status: 500 }
+        );
+      }
+
       const collectible: Collectible = {
         id: listing.id,
         name: listing.collectible_name,
         description: listing.collectible_description,
-        primary_image_url: listing.primary_image_url,
+        primary_image_url: primary_image_url,
         quantity_type: listing.quantity_type as QuantityType,
         quantity: listing.quantity,
         creator_royalty_array:
           (listing.creator_royalty_array as
             | {
-                creator_wallet_address: string;
-                royalty_percentage: number;
-                name: string;
-              }[]
+              creator_wallet_address: string;
+              royalty_percentage: number;
+              name: string;
+            }[]
             | null) ?? null,
         price_usd: listing.price_usd,
         location: listing.location,
@@ -261,9 +276,7 @@ export async function GET(request: NextRequest) {
         custom_email_body: listing.custom_email_body || null,
         gallery_name: listing.gallery_name,
         batch_listing_id: listing.id,
-        day_number: listing.total_collectibles
-          ? listing.total_collectibles + 1
-          : 1,
+        day_number,
       };
 
       const collectibleToInsert: Collectible & { collection_id: number } = {
@@ -310,7 +323,7 @@ export async function GET(request: NextRequest) {
             .update({ collectible_id: newCollectible?.id })
             .in('id', chipLinks.map(chip => chip.id))
             .select();
-  
+
           if (chipError) {
             console.error(`Error updating chip links:`, chipError);
           }
@@ -343,7 +356,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { 
+      {
         message: `Processed ${processedListings.length} batch listings`,
         processed_listings: processedListings
       },
