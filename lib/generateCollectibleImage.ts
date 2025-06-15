@@ -16,8 +16,8 @@ export async function generateCollectibleImage(imageUrl: string, caption: string
   const metadata = await image.metadata();
 
   const width = metadata.width ?? 800;
-  const height = metadata.height ?? 600;
-  const padding = 64;
+  const height = metadata.height ?? 800;
+  const padding = 128;
 
   const svgText = `
     <svg width="${width}" height="${padding * 2}">
@@ -29,8 +29,8 @@ export async function generateCollectibleImage(imageUrl: string, caption: string
           }
           text {
             font-family: 'Inter';
-            font-size: 64px;
-            font-weight: 600;
+            font-size: 128px;
+            font-weight: 700;
             fill: #111;
             letter-spacing: 1px;
           }
