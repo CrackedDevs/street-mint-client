@@ -93,7 +93,6 @@ export type Database = {
           batch_end_date: string | null
           batch_hour: number | null
           batch_start_date: string | null
-          bg_color: string | null
           chain: string | null
           collectible_description: string
           collectible_name: string
@@ -117,6 +116,8 @@ export type Database = {
           custom_email_body: string | null
           custom_email_subject: string | null
           description: string | null
+          display_height: number | null
+          display_width: number | null
           enable_card_payments: boolean | null
           frequency_days: Json | null
           frequency_type: string | null
@@ -126,6 +127,13 @@ export type Database = {
           is_irls: boolean | null
           is_light_version: boolean
           is_video: boolean | null
+          label_format: Database["public"]["Enums"]["label_format"] | null
+          label_position_mode:
+            | Database["public"]["Enums"]["label_position_mode"]
+            | null
+          label_position_x: number | null
+          label_position_y: number | null
+          label_text_color: string | null
           location: string | null
           location_note: string | null
           logo_image: string | null
@@ -150,7 +158,6 @@ export type Database = {
           batch_end_date?: string | null
           batch_hour?: number | null
           batch_start_date?: string | null
-          bg_color?: string | null
           chain?: string | null
           collectible_description: string
           collectible_name: string
@@ -174,6 +181,8 @@ export type Database = {
           custom_email_body?: string | null
           custom_email_subject?: string | null
           description?: string | null
+          display_height?: number | null
+          display_width?: number | null
           enable_card_payments?: boolean | null
           frequency_days?: Json | null
           frequency_type?: string | null
@@ -183,6 +192,13 @@ export type Database = {
           is_irls?: boolean | null
           is_light_version?: boolean
           is_video?: boolean | null
+          label_format?: Database["public"]["Enums"]["label_format"] | null
+          label_position_mode?:
+            | Database["public"]["Enums"]["label_position_mode"]
+            | null
+          label_position_x?: number | null
+          label_position_y?: number | null
+          label_text_color?: string | null
           location?: string | null
           location_note?: string | null
           logo_image?: string | null
@@ -207,7 +223,6 @@ export type Database = {
           batch_end_date?: string | null
           batch_hour?: number | null
           batch_start_date?: string | null
-          bg_color?: string | null
           chain?: string | null
           collectible_description?: string
           collectible_name?: string
@@ -231,6 +246,8 @@ export type Database = {
           custom_email_body?: string | null
           custom_email_subject?: string | null
           description?: string | null
+          display_height?: number | null
+          display_width?: number | null
           enable_card_payments?: boolean | null
           frequency_days?: Json | null
           frequency_type?: string | null
@@ -240,6 +257,13 @@ export type Database = {
           is_irls?: boolean | null
           is_light_version?: boolean
           is_video?: boolean | null
+          label_format?: Database["public"]["Enums"]["label_format"] | null
+          label_position_mode?:
+            | Database["public"]["Enums"]["label_position_mode"]
+            | null
+          label_position_x?: number | null
+          label_position_y?: number | null
+          label_text_color?: string | null
           location?: string | null
           location_note?: string | null
           logo_image?: string | null
@@ -941,6 +965,8 @@ export type Database = {
     }
     Enums: {
       collectible_type: "IRLS" | "STREETMINT" | "TEST_IRLS" | "TEST_STREETMINT"
+      label_format: "date" | "day"
+      label_position_mode: "on" | "outside"
       quantity_type: "limited" | "unlimited" | "single"
     }
     CompositeTypes: {
@@ -1058,6 +1084,8 @@ export const Constants = {
   public: {
     Enums: {
       collectible_type: ["IRLS", "STREETMINT", "TEST_IRLS", "TEST_STREETMINT"],
+      label_format: ["date", "day"],
+      label_position_mode: ["on", "outside"],
       quantity_type: ["limited", "unlimited", "single"],
     },
   },

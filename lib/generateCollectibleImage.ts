@@ -68,3 +68,82 @@ export async function generateCollectibleImage(imageUrl: string, caption: string
 
   return { file, buffer: finalImageBuffer };
 }
+
+export async function generateLabeledImageFile({
+  imageURL,
+  caption,
+  x,
+  y,
+  displayWidth,
+  displayHeight,
+  labelTextColor = "rgba(31, 41, 55, 1)",
+  labelOnOutside = false,
+}: {
+  imageURL: string
+  caption: string | undefined
+  x: number | null
+  y: number | null
+  displayWidth: number | null
+  displayHeight: number | null
+  labelTextColor?: string | null
+  labelOnOutside?: boolean
+}): Promise<File | null> {
+  if (!imageURL || !x || !y || !displayWidth || !displayHeight || !caption || !labelTextColor) return null;
+
+  try {
+    const response = await fetch(imageURL)
+    const blob = await response.blob()
+    const img = await createImageBitmap(blob)
+
+    const scaleX = img.width / displayWidth
+    const scaleY = img.height / displayHeight
+
+    const paddingX = labelOnOutside ? 40 : 0
+    const paddingY = labelOnOutside ? 80 : 0
+
+    const canvas = document.createElement("canvas")
+    canvas.width = img.width + (labelOnOutside ? paddingX * scaleX : 0)
+    canvas.height = img.height + (labelOnOutside ? paddingY * scaleY : 0)
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return null
+
+    // Draw original image
+    ctx.drawImage(
+      img,
+      labelOnOutside ? (paddingX * scaleX) / 2 : 0,
+      labelOnOutside ? (paddingY * scaleY) / 2 : 0,
+      img.width,
+      img.height
+    )
+
+    // Scaled label position
+    const scaledX = x * scaleX
+    const scaledY = y * scaleY
+
+    // Draw label background
+    ctx.fillStyle = labelTextColor
+    ctx.beginPath()
+    ctx.roundRect(scaledX, scaledY, 120 * scaleX, 32 * scaleY, 6 * scaleX)
+    ctx.fill()
+
+    // Draw label text
+    ctx.fillStyle = "rgba(31, 41, 55, 1)"
+    ctx.font = `${14 * scaleY}px sans-serif`
+    ctx.textAlign = "center"
+    ctx.textBaseline = "middle"
+    ctx.fillText(caption, scaledX + (60 * scaleX), scaledY + (16 * scaleY))
+
+    return await new Promise<File | null>((resolve) => {
+      canvas.toBlob((resultBlob) => {
+        if (!resultBlob) return resolve(null)
+        const file = new File([resultBlob], "labeled-image.png", {
+          type: "image/png",
+        })
+        resolve(file)
+      }, "image/png")
+    })
+  } catch (err) {
+    console.error("Error generating labeled image:", err)
+    return null
+  }
+}

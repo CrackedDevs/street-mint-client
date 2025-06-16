@@ -3,7 +3,7 @@ import { Collectible, QuantityType, uploadFileToPinata } from "@/lib/supabaseCli
 import { NumericUUID } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 import { createCollectible } from "@/lib/supabaseAdminClient";
-import { generateCollectibleImage } from "@/lib/generateCollectibleImage";
+import { generateCollectibleImage, generateLabeledImageFile } from "@/lib/generateCollectibleImage";
 
 // 0: Sunday
 // 1: Monday
@@ -218,7 +218,30 @@ export async function GET(request: NextRequest) {
       const day_number = listing.total_collectibles
         ? listing.total_collectibles + 1
         : 1;
-      const { file: collectible_image } = await generateCollectibleImage(listing.primary_image_url, `Day ${day_number}`);
+
+      let caption;
+      if (listing.label_format === "date") {
+        caption = `Date: ${now.toDateString()}`;
+      } else {
+        const
+          caption = `Day ${day_number}`;
+      }
+      const collectible_image = await generateLabeledImageFile({
+        imageURL: listing.primary_image_url,
+        caption,
+        x: listing.label_position_x,
+        y: listing.label_position_y,
+        displayWidth: listing.display_width,
+        displayHeight: listing.display_height,
+        labelTextColor: listing.label_text_color,
+        labelOnOutside: listing.label_position_mode === "outside",
+      })
+      if(!collectible_image) {
+        return NextResponse.json(
+          { error: "Failed to generate collectible image" },
+          { status: 500 }
+        );
+      }
       const primary_image_url = await uploadFileToPinata(collectible_image);
 
       if (!primary_image_url) {
