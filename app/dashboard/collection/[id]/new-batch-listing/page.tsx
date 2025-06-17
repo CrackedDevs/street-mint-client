@@ -1176,7 +1176,7 @@ function CreateBatchListingPage() {
                       htmlFor="label-size"
                       className="text-lg font-semibold"
                     >
-                      Label Size
+                      Collectible Media Label Size
                     </Label>
                     <select
                       id="label-size"
