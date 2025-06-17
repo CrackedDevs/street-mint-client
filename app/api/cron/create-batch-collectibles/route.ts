@@ -223,8 +223,7 @@ export async function GET(request: NextRequest) {
       if (listing.label_format === "date") {
         caption = `Date: ${now.toDateString()}`;
       } else {
-        const
-          caption = `Day ${day_number}`;
+        caption = `Day ${day_number}`;
       }
       const collectible_image = await generateLabeledImageFile({
         imageURL: listing.primary_image_url,
