@@ -140,7 +140,7 @@ function CreateBatchListingPage() {
     gallery_name: null,
     logo_image: null,
     label_text_color: "#000000",
-    label_format: "day",
+    label_format: LabelFormat.None,
     label_position_x: 0,
     label_position_y: 0,
     display_width: 0,
@@ -1808,12 +1808,12 @@ function CreateBatchListingPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="batchListing-label-format" className="text-lg font-semibold">
-                    Label Format <span className="text-destructive">*</span>
+                    Collectible Media Label Format <span className="text-destructive">*</span>
                   </Label>
 
                   <select
                     id="batchListing-label-format"
-                    value={batchListing.label_format}
+                    value={batchListing.label_format || LabelFormat.None}
                     onChange={(e) =>
                       handleBatchListingChange(
                         "label_format",
@@ -1821,10 +1821,10 @@ function CreateBatchListingPage() {
                       )
                     }
                     className="w-full p-2 border rounded-md bg-background text-base"
-                    required
                   >
-                    <option value="day">Day</option>
-                    <option value="date">Date</option>
+                    <option value={LabelFormat.None}>No Label</option>
+                    <option value={LabelFormat.Day}>Day (Day 1, Day 2, etc.)</option>
+                    <option value={LabelFormat.Date}>Date (01/01/1970, 01/02/1970, etc.)</option>
                   </select>
                 </div>
 
@@ -1833,7 +1833,7 @@ function CreateBatchListingPage() {
                     htmlFor="label-text-color"
                     className="text-lg font-semibold"
                   >
-                    Label Text Color
+                    Collectible Media Label Text Color
                   </Label>
                   <div className="flex items-center space-x-2">
                     <Input
@@ -1860,7 +1860,7 @@ function CreateBatchListingPage() {
                   </p>
                 </div>
 
-                {batchListing.primary_image_url && batchListing.label_format && (
+                {batchListing.primary_image_url && batchListing.label_format !== LabelFormat.None && (
                   <div
                     className="relative mx-auto"
                     style={{

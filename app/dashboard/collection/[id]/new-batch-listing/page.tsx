@@ -122,7 +122,7 @@ function CreateBatchListingPage() {
     collectible_name: "",
     collectible_description: "",
     primary_image_url: "",
-    label_format: "day",
+    label_format: LabelFormat.None,
     label_position_x: 0,
     label_position_y: 0,
     display_width: 0,
@@ -164,7 +164,7 @@ function CreateBatchListingPage() {
     batch_hour: 0,
     collection_id: Number(collectionId),
     logo_image: null,
-    label_text_color: null,
+    label_text_color: "#000000",
     frequency_type: "daily",
     frequency_days: [],
     always_active: true,
@@ -1120,7 +1120,7 @@ function CreateBatchListingPage() {
 
                   <select
                     id="batchListing-label-format"
-                    value={batchListing.label_format}
+                    value={batchListing.label_format || LabelFormat.None}
                     onChange={(e) =>
                       handleBatchListingChange(
                         "label_format",
@@ -1130,6 +1130,7 @@ function CreateBatchListingPage() {
                     className="w-full p-2 border rounded-md bg-background text-base"
                     required
                   >
+                    <option value={LabelFormat.None}>No Label</option>
                     <option value={LabelFormat.Day}>Day</option>
                     <option value={LabelFormat.Date}>Date</option>
                   </select>
@@ -1169,7 +1170,7 @@ function CreateBatchListingPage() {
                     </p>
                   </div>
 
-                  {batchListing.primary_image_url && batchListing.label_format && (
+                  {batchListing.primary_image_url && batchListing.label_format !== LabelFormat.None && (
                     <div
                       className="relative mx-auto"
                       style={{

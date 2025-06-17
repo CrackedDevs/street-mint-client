@@ -1,5 +1,10 @@
 import { getSupabaseAdmin } from "@/lib/supabaseAdminClient";
-import { Collectible, QuantityType, uploadFileToPinata } from "@/lib/supabaseClient";
+import {
+  Collectible,
+  LabelFormat,
+  QuantityType,
+  uploadFileToPinata,
+} from "@/lib/supabaseClient";
 import { NumericUUID } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 import { createCollectible } from "@/lib/supabaseAdminClient";
@@ -45,7 +50,7 @@ export async function GET(request: NextRequest) {
     const currentDayOfWeek = now.getUTCDay(); // 0-6, where 0 is Sunday
     const currentDayOfMonth = now.getUTCDate(); // 1-31
 
-    console.log('currentDayOfWeek', currentDayOfWeek);
+    console.log("currentDayOfWeek", currentDayOfWeek);
 
     const processedListings = [];
 
@@ -56,16 +61,24 @@ export async function GET(request: NextRequest) {
       }
 
       // Check frequency type and days
-      const frequencyType = listing.frequency_type || 'daily';
-      const frequencyDays = Array.isArray(listing.frequency_days) ? listing.frequency_days : [];
-      console.log('frequencyDays', frequencyDays);
+      const frequencyType = listing.frequency_type || "daily";
+      const frequencyDays = Array.isArray(listing.frequency_days)
+        ? listing.frequency_days
+        : [];
+      console.log("frequencyDays", frequencyDays);
 
       // Skip if not scheduled for today based on frequency type
-      if (frequencyType === 'weekly' && !frequencyDays.includes(currentDayOfWeek)) {
+      if (
+        frequencyType === "weekly" &&
+        !frequencyDays.includes(currentDayOfWeek)
+      ) {
         continue;
       }
 
-      if (frequencyType === 'monthly' && !frequencyDays.includes(currentDayOfMonth)) {
+      if (
+        frequencyType === "monthly" &&
+        !frequencyDays.includes(currentDayOfMonth)
+      ) {
         continue;
       }
 
@@ -87,18 +100,18 @@ export async function GET(request: NextRequest) {
       // Calculate mint end time based on frequency type
       let mintEnd;
 
-      if (frequencyType === 'daily') {
+      if (frequencyType === "daily") {
         // For daily, end just before the next day's batch
-        mintEnd = new Date(
-          mintStart.getTime() + (23 * 60 + 59) * 60 * 1000
-        );
-      } else if (frequencyType === 'weekly') {
+        mintEnd = new Date(mintStart.getTime() + (23 * 60 + 59) * 60 * 1000);
+      } else if (frequencyType === "weekly") {
         if (listing.always_active) {
           // For weekly with always_active true, find the next scheduled day
           // Convert frequencyDays to number array for proper sorting and comparison
-          const numericDays = frequencyDays.map(day => Number(day)).filter(day => !isNaN(day));
+          const numericDays = frequencyDays
+            .map((day) => Number(day))
+            .filter((day) => !isNaN(day));
           const sortedDays = [...numericDays].sort((a, b) => a - b);
-          let nextDay = sortedDays.find(day => day > currentDayOfWeek);
+          let nextDay = sortedDays.find((day) => day > currentDayOfWeek);
 
           // If no next day found, get the first day of next week
           if (nextDay === undefined) {
@@ -143,13 +156,15 @@ export async function GET(request: NextRequest) {
           // If always_active is false, set mintEnd to 23 hours and 59 minutes after mintStart
           mintEnd = new Date(mintStart.getTime() + (23 * 60 + 59) * 60 * 1000);
         }
-      } else if (frequencyType === 'monthly') {
+      } else if (frequencyType === "monthly") {
         if (listing.always_active) {
           // For monthly with always_active true, find the next scheduled day
           // Convert frequencyDays to number array for proper sorting and comparison
-          const numericDays = frequencyDays.map(day => Number(day)).filter(day => !isNaN(day));
+          const numericDays = frequencyDays
+            .map((day) => Number(day))
+            .filter((day) => !isNaN(day));
           const sortedDays = [...numericDays].sort((a, b) => a - b);
-          let nextDay = sortedDays.find(day => day > currentDayOfMonth);
+          let nextDay = sortedDays.find((day) => day > currentDayOfMonth);
 
           // If no next day found, get the first day of next month
           if (nextDay === undefined) {
@@ -190,13 +205,13 @@ export async function GET(request: NextRequest) {
         }
       } else {
         // Fallback to daily behavior
-        mintEnd = new Date(
-          mintStart.getTime() + (23 * 60 + 59) * 60 * 1000
-        );
+        mintEnd = new Date(mintStart.getTime() + (23 * 60 + 59) * 60 * 1000);
       }
 
       // Check if the calculated mintEnd exceeds the batch's end date
-      const batchEndDate = listing.batch_end_date ? new Date(listing.batch_end_date) : null;
+      const batchEndDate = listing.batch_end_date
+        ? new Date(listing.batch_end_date)
+        : null;
       if (batchEndDate && mintEnd > batchEndDate) {
         // Set mintEnd to be the batch end date at 23:59
         mintEnd = new Date(
@@ -212,40 +227,60 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      console.log(`Mint period for batch ${listing.id}: ${mintStart.toISOString()} to ${mintEnd.toISOString()}`);
+      console.log(
+        `Mint period for batch ${
+          listing.id
+        }: ${mintStart.toISOString()} to ${mintEnd.toISOString()}`
+      );
 
       // TODO: Dynamically add date or day number
       const day_number = listing.total_collectibles
         ? listing.total_collectibles + 1
         : 1;
 
-      let caption;
-      if (listing.label_format === "date") {
-        caption = now.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      } else {
-        caption = `Day ${day_number}`;
-      }
-      const collectible_image = await generateLabeledImageFile({
-        imageURL: listing.primary_image_url,
-        caption,
-        x: listing.label_position_x,
-        y: listing.label_position_y,
-        displayWidth: listing.display_width,
-        displayHeight: listing.display_height,
-        labelTextColor: listing.label_text_color,
-      })
+      let primary_image_url = listing.primary_image_url;
 
-      console.log('collectible_image', collectible_image);
-      
-      if(!collectible_image) {
-        return NextResponse.json(
-          { error: "Failed to generate collectible image" },
-          { status: 500 }
-        );
-      }
-      const primary_image_url = await uploadFileToPinata(collectible_image);
+      if (
+        listing.label_format === LabelFormat.Date ||
+        listing.label_format === LabelFormat.Day
+      ) {
+        let caption;
+        if (listing.label_format === LabelFormat.Date) {
+          caption = now.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          });
+        } else {
+          caption = `Day ${day_number}`;
+        }
 
-      if (!primary_image_url) {
+        const collectible_image = await generateLabeledImageFile({
+          imageURL: listing.primary_image_url,
+          caption,
+          x: listing.label_position_x,
+          y: listing.label_position_y,
+          displayWidth: listing.display_width,
+          displayHeight: listing.display_height,
+          labelTextColor: listing.label_text_color,
+        });
+
+        console.log("collectible_image", collectible_image);
+
+        if (!collectible_image) {
+          return NextResponse.json(
+            { error: "Failed to generate collectible image" },
+            { status: 500 }
+          );
+        }
+        const dynamic_image_url = await uploadFileToPinata(collectible_image);
+
+        if (dynamic_image_url && dynamic_image_url !== null) {
+          primary_image_url = dynamic_image_url;
+        }
+      }
+
+      if (!primary_image_url || primary_image_url === null) {
         return NextResponse.json(
           { error: "Failed to upload collectible image to Pinata" },
           { status: 500 }
@@ -262,10 +297,10 @@ export async function GET(request: NextRequest) {
         creator_royalty_array:
           (listing.creator_royalty_array as
             | {
-              creator_wallet_address: string;
-              royalty_percentage: number;
-              name: string;
-            }[]
+                creator_wallet_address: string;
+                royalty_percentage: number;
+                name: string;
+              }[]
             | null) ?? null,
         price_usd: listing.price_usd,
         location: listing.location,
@@ -318,7 +353,10 @@ export async function GET(request: NextRequest) {
         );
 
         if (!newCollectible) {
-          console.error("Error creating collectible for batch listing:", listing.id);
+          console.error(
+            "Error creating collectible for batch listing:",
+            listing.id
+          );
           continue;
         }
 
@@ -333,9 +371,9 @@ export async function GET(request: NextRequest) {
         `);
 
         const { data: chipLinks, error: chipLinksError } = await supabaseAdmin
-          .from('chip_links')
-          .select('id')
-          .eq('batch_listing_id', listing.id);
+          .from("chip_links")
+          .select("id")
+          .eq("batch_listing_id", listing.id);
 
         if (chipLinksError) {
           console.error(`Error fetching chip links:`, chipLinksError);
@@ -343,9 +381,12 @@ export async function GET(request: NextRequest) {
 
         if (chipLinks && Array.isArray(chipLinks) && chipLinks.length > 0) {
           const { error: chipError } = await supabaseAdmin
-            .from('chip_links')
+            .from("chip_links")
             .update({ collectible_id: newCollectible?.id })
-            .in('id', chipLinks.map(chip => chip.id))
+            .in(
+              "id",
+              chipLinks.map((chip) => chip.id)
+            )
             .select();
 
           if (chipError) {
@@ -372,7 +413,7 @@ export async function GET(request: NextRequest) {
           collectible_id: newCollectible.id,
           frequency_type: frequencyType,
           mint_start: mintStart.toISOString(),
-          mint_end: mintEnd.toISOString()
+          mint_end: mintEnd.toISOString(),
         });
       } catch (error) {
         console.error(`Error processing batch listing ${listing.id}:`, error);
@@ -382,7 +423,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         message: `Processed ${processedListings.length} batch listings`,
-        processed_listings: processedListings
+        processed_listings: processedListings,
       },
       { status: 200 }
     );

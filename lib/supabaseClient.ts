@@ -31,6 +31,7 @@ export enum QuantityType {
 export enum LabelFormat {
     Date = "date",
     Day = "day",
+    None = "none",
 }
 export enum LabelPositionMode {
     On = "on",
@@ -97,7 +98,7 @@ export type BatchListing = {
     label_position_y: number,
     display_width: number,
     display_height: number,
-    label_format: "date" | "day";
+    label_format: LabelFormat;
     quantity_type: QuantityType;
     quantity: number | null;
     creator_royalty_array?: { creator_wallet_address: string; royalty_percentage: number; name: string; }[] | null;

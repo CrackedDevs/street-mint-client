@@ -130,6 +130,7 @@ export type Database = {
           label_format: Database["public"]["Enums"]["label_format"] | null
           label_position_x: number | null
           label_position_y: number | null
+          label_size: number | null
           label_text_color: string | null
           location: string | null
           location_note: string | null
@@ -192,6 +193,7 @@ export type Database = {
           label_format?: Database["public"]["Enums"]["label_format"] | null
           label_position_x?: number | null
           label_position_y?: number | null
+          label_size?: number | null
           label_text_color?: string | null
           location?: string | null
           location_note?: string | null
@@ -254,6 +256,7 @@ export type Database = {
           label_format?: Database["public"]["Enums"]["label_format"] | null
           label_position_x?: number | null
           label_position_y?: number | null
+          label_size?: number | null
           label_text_color?: string | null
           location?: string | null
           location_note?: string | null
@@ -956,8 +959,7 @@ export type Database = {
     }
     Enums: {
       collectible_type: "IRLS" | "STREETMINT" | "TEST_IRLS" | "TEST_STREETMINT"
-      label_format: "date" | "day"
-      label_position_mode: "on" | "outside"
+      label_format: "date" | "day" | "none"
       quantity_type: "limited" | "unlimited" | "single"
     }
     CompositeTypes: {
@@ -1075,8 +1077,7 @@ export const Constants = {
   public: {
     Enums: {
       collectible_type: ["IRLS", "STREETMINT", "TEST_IRLS", "TEST_STREETMINT"],
-      label_format: ["date", "day"],
-      label_position_mode: ["on", "outside"],
+      label_format: ["date", "day", "none"],
       quantity_type: ["limited", "unlimited", "single"],
     },
   },
