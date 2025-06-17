@@ -240,13 +240,14 @@ export default function BatchPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {allDays.map((item, index) => {
                   // Find collectible for this day
-                  const dayStr = item.date.toISOString().split("T")[0];
+                  // const dayStr = item.date.toISOString().split("T")[0];
                   const collectible = collectibles.find(
                     (c) =>
-                      c.mint_start_date &&
-                      new Date(c.mint_start_date)
-                        .toISOString()
-                        .split("T")[0] === dayStr
+                      // c.mint_start_date &&
+                      // new Date(c.mint_start_date)
+                      //   .toISOString()
+                      //   .split("T")[0] === dayStr
+                      c.day_number === index + 1
                   );
 
                   let isCollected = false;

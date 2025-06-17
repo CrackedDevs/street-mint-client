@@ -1058,24 +1058,17 @@ export default function MintButton({
         target="_blank"
         className="w-full"
       >
-        <WhiteBgShimmerButton
-          borderRadius="6px"
-          className="w-full mb-4 hover:bg-gray-800 h-[44px] text-black rounded font-bold"
+        <Button
+          className="w-full mb-4 hover:bg-gray-800 h-[44px] text-white rounded font-bold"
         >
           VIEW TRANSACTION
-        </WhiteBgShimmerButton>
+        </Button>
       </Link>
     </div>
   );
 
   const renderCompletedClaim = () => (
     <div className="flex flex-col items-center my-3 w-full">
-      <WhiteBgShimmerButton
-        borderRadius="6px"
-        className="w-full mb-4 hover:bg-gray-800 h-[44px] text-black rounded font-bold"
-      >
-        ALREADY CLAIMED
-      </WhiteBgShimmerButton>
 
       {collectible.batch_listing_id && (
         <Link
@@ -1090,6 +1083,12 @@ export default function MintButton({
           </WhiteBgShimmerButton>
         </Link>
       )}
+
+      <Button
+        className="w-full mb-4 hover:bg-gray-800 h-[44px] text-white rounded font-bold"
+      >
+        ALREADY CLAIMED
+      </Button>
     </div>
   );
 
