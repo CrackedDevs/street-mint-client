@@ -37,7 +37,6 @@ import LocationButton from "./LocationButton";
 import { SolanaFMService } from "@/lib/services/solanaExplorerService";
 import Link from "next/link";
 import { useVisitorData } from "@fingerprintjs/fingerprintjs-pro-react";
-import { v4 as uuidv4 } from "uuid";
 import { shortenAddress } from "@/lib/shortenAddress";
 import ShowAirdropModal from "./modals/ShowAirdropModal";
 import ShowDonationModal from "./modals/ShowDonationModal";
