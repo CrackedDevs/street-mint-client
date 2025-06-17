@@ -208,7 +208,7 @@ export default function BatchPage() {
 
           {/* Description Field */}
           <div className="mb-10">
-            <p className="text-base">{batchListing?.description}</p>
+            <p className="text-base whitespace-pre-wrap">{batchListing?.description}</p>
           </div>
 
           {/* Email/Wallet Input */}
