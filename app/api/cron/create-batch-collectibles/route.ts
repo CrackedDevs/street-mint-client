@@ -263,6 +263,8 @@ export async function GET(request: NextRequest) {
           displayWidth: listing.display_width,
           displayHeight: listing.display_height,
           labelTextColor: listing.label_text_color,
+          labelSize: listing.label_size ?? 16,
+          labelOnOutside: false,
         });
 
         console.log("collectible_image", collectible_image);

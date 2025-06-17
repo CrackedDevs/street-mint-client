@@ -140,6 +140,7 @@ export type BatchListing = {
     frequency_type: string | null;
     frequency_days: number[];
     always_active: boolean;
+    label_size: number;
 };
 
 export interface Order {

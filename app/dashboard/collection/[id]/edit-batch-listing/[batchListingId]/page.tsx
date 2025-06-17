@@ -148,6 +148,7 @@ function CreateBatchListingPage() {
     frequency_type: "daily",
     frequency_days: [],
     always_active: true,
+    label_size: 16,
   });
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [isFreeMint, setIsFreeMint] = useState(false);
@@ -1860,6 +1861,29 @@ function CreateBatchListingPage() {
                   </p>
                 </div>
 
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="label-size"
+                    className="text-lg font-semibold"
+                  >
+                    Label Size
+                  </Label>
+                  <select
+                    id="label-size"
+                    value={batchListing.label_size}
+                    onChange={(e) =>
+                      handleBatchListingChange("label_size", parseInt(e.target.value))
+                    }
+                    className="w-full p-2 border rounded-md bg-background text-base"
+                  >
+                    <option value="12">Very Small</option>
+                    <option value="14">Small</option>
+                    <option value="16">Medium</option>
+                    <option value="20">Large</option>
+                    <option value="24">Extra Large</option>
+                  </select>
+                </div>
+
                 {batchListing.primary_image_url && batchListing.label_format !== LabelFormat.None && (
                   <div
                     className="relative mx-auto"
@@ -1914,6 +1938,7 @@ function CreateBatchListingPage() {
                         className="absolute cursor-move px-3 py-1.5 z-10"
                         style={{
                           color: batchListing.label_text_color || "#000000",
+                          fontSize: `${batchListing.label_size}px`
                         }}
                       >
                         <p className="text-md font-semibold">

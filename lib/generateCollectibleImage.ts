@@ -77,6 +77,7 @@ export async function generateLabeledImageFile({
   displayWidth,
   displayHeight,
   labelTextColor = "rgba(31, 41, 55, 1)",
+  labelSize = 16,
   labelOnOutside = false,
 }: {
   imageURL: string
@@ -86,6 +87,7 @@ export async function generateLabeledImageFile({
   displayWidth: number | null
   displayHeight: number | null
   labelTextColor?: string | null
+  labelSize?: number
   labelOnOutside?: boolean
 }): Promise<File | null> {
   if (
@@ -133,7 +135,7 @@ export async function generateLabeledImageFile({
     const labelWidth = Math.round(120 * scaleX)
     const labelHeight = Math.round(32 * scaleY)
     const borderRadius = Math.round(6 * scaleX)
-    const fontSize = Math.max(10, Math.round(14 * scaleY))
+    const fontSize = Math.max(10, Math.round(labelSize * scaleY))
 
     const svg = `
       <svg width="${imgWidth + extraWidth}" height="${imgHeight + extraHeight}">
