@@ -3,7 +3,7 @@ import { Collectible, QuantityType, uploadFileToPinata } from "@/lib/supabaseCli
 import { NumericUUID } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 import { createCollectible } from "@/lib/supabaseAdminClient";
-import { generateCollectibleImage, generateLabeledImageFile } from "@/lib/generateCollectibleImage";
+import { generateLabeledImageFile } from "@/lib/generateCollectibleImage";
 
 // 0: Sunday
 // 1: Monday
@@ -221,7 +221,7 @@ export async function GET(request: NextRequest) {
 
       let caption;
       if (listing.label_format === "date") {
-        caption = `Date: ${now.toDateString()}`;
+        caption = now.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
       } else {
         caption = `Day ${day_number}`;
       }
@@ -233,8 +233,10 @@ export async function GET(request: NextRequest) {
         displayWidth: listing.display_width,
         displayHeight: listing.display_height,
         labelTextColor: listing.label_text_color,
-        labelOnOutside: listing.label_position_mode === "outside",
       })
+
+      console.log('collectible_image', collectible_image);
+      
       if(!collectible_image) {
         return NextResponse.json(
           { error: "Failed to generate collectible image" },

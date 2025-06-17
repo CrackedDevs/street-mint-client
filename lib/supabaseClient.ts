@@ -98,7 +98,6 @@ export type BatchListing = {
     display_width: number,
     display_height: number,
     label_format: "date" | "day";
-    label_position_mode: "on" | "outside";
     quantity_type: QuantityType;
     quantity: number | null;
     creator_royalty_array?: { creator_wallet_address: string; royalty_percentage: number; name: string; }[] | null;

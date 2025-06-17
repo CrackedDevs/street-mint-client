@@ -128,9 +128,6 @@ export type Database = {
           is_light_version: boolean
           is_video: boolean | null
           label_format: Database["public"]["Enums"]["label_format"] | null
-          label_position_mode:
-            | Database["public"]["Enums"]["label_position_mode"]
-            | null
           label_position_x: number | null
           label_position_y: number | null
           label_text_color: string | null
@@ -193,9 +190,6 @@ export type Database = {
           is_light_version?: boolean
           is_video?: boolean | null
           label_format?: Database["public"]["Enums"]["label_format"] | null
-          label_position_mode?:
-            | Database["public"]["Enums"]["label_position_mode"]
-            | null
           label_position_x?: number | null
           label_position_y?: number | null
           label_text_color?: string | null
@@ -258,9 +252,6 @@ export type Database = {
           is_light_version?: boolean
           is_video?: boolean | null
           label_format?: Database["public"]["Enums"]["label_format"] | null
-          label_position_mode?:
-            | Database["public"]["Enums"]["label_position_mode"]
-            | null
           label_position_x?: number | null
           label_position_y?: number | null
           label_text_color?: string | null

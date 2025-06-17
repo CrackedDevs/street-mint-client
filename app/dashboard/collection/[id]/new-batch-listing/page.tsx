@@ -123,7 +123,6 @@ function CreateBatchListingPage() {
     collectible_description: "",
     primary_image_url: "",
     label_format: "day",
-    label_position_mode: "outside",
     label_position_x: 0,
     label_position_y: 0,
     display_width: 0,
@@ -171,18 +170,12 @@ function CreateBatchListingPage() {
     always_active: true,
   });
 
-  const isOutside = batchListing.label_position_mode === "outside"
-  const paddingX = isOutside ? 40 : 0
-  const paddingY = isOutside ? 80 : 0
   const [imageSize, setImageSize] = useState({
     width: 0,
     height: 0,
     displayWidth: 0
   })
   const imageRef = useRef<HTMLImageElement>(null);
-  useEffect(() => {
-    setBatchListing({ ...batchListing, label_position_x: 0, label_position_y: 0 });
-  }, [batchListing.label_position_mode]);
 
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -1143,25 +1136,6 @@ function CreateBatchListingPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="batchListing-position-mode" className="text-lg font-semibold">
-                    Label Position Mode <span className="text-destructive">*</span>
-                  </Label>
-
-                  <select
-                    id="batchListing-position-mode"
-                    value={batchListing.label_position_mode}
-                    onChange={(e) =>
-                      handleBatchListingChange(
-                        "label_position_mode",
-                        e.target.value as LabelPositionMode
-                      )
-                    }
-                    className="w-full p-2 border rounded-md bg-background text-base"
-                    required
-                  >
-                    <option value={LabelPositionMode.On}>On Collectible Image</option>
-                    <option value={LabelPositionMode.Outside}>Outside Collectible Image</option>
-                  </select>
 
                   <div className="space-y-2">
                     <Label
@@ -1197,19 +1171,16 @@ function CreateBatchListingPage() {
 
                   {batchListing.primary_image_url && batchListing.label_format && (
                     <div
-                      className={`relative mx-auto border-gray-300 rounded bg-gray-50 ${isOutside ? "border" : ""
-                        }`}
+                      className="relative mx-auto"
                       style={{
-                        width: imageSize.width + paddingX,
-                        height: imageSize.height + paddingY,
+                        width: imageSize.width,
+                        height: imageSize.height,
                       }}
                     >
                       {/* Image */}
                       <div
                         className="absolute"
                         style={{
-                          top: isOutside ? paddingY / 2 : 0,
-                          left: isOutside ? paddingX / 2 : 0,
                           width: imageSize.width,
                           height: imageSize.height,
                         }}
@@ -1242,7 +1213,7 @@ function CreateBatchListingPage() {
                       <Draggable
                         bounds="parent"
                         defaultPosition={{ x: 0, y: 0 }}
-                        key={batchListing.label_position_mode}
+                        // key={batchListing.label_position_x}
                         onDrag={(_: any, data: { x: number; y: number }) => {
                           handleBatchListingChange(
 
@@ -1263,7 +1234,7 @@ function CreateBatchListingPage() {
                             color: batchListing.label_text_color || "#000000",  
                           }}
                         >
-                          <p className="text-sm font-medium">{batchListing.label_format === "date" ? "01/01/1970" : "Day 1"}</p>
+                          <p className="text-md font-semibold">{batchListing.label_format === "date" ? "01/01/1970" : "Day 1"}</p>
                         </div>
                       </Draggable>
 

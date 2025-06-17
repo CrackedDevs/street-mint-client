@@ -37,7 +37,9 @@ import {
   QuantityType,
   Sponsor,
   updateBatchListing,
-  uploadFileToPinata
+  uploadFileToPinata,
+  LabelFormat,
+  LabelPositionMode
 } from "@/lib/supabaseClient";
 import { NumericUUID } from "@/lib/utils";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -54,7 +56,8 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import Draggable from "react-draggable";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -138,7 +141,6 @@ function CreateBatchListingPage() {
     logo_image: null,
     label_text_color: "#000000",
     label_format: "day",
-    label_position_mode: "outside",
     label_position_x: 0,
     label_position_y: 0,
     display_width: 0,
@@ -152,6 +154,12 @@ function CreateBatchListingPage() {
   const [customEmail, setCustomEmail] = useState(false);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [isLoadingSponsors, setIsLoadingSponsors] = useState(false);
+  const [imageSize, setImageSize] = useState({
+    width: 0,
+    height: 0,
+    displayWidth: 0
+  });
+  const imageRef = useRef<HTMLImageElement>(null);
 
   // Fetch sponsors for the artist
   useEffect(() => {
@@ -1797,6 +1805,124 @@ function CreateBatchListingPage() {
                     </Label>
                   </div>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="batchListing-label-format" className="text-lg font-semibold">
+                    Label Format <span className="text-destructive">*</span>
+                  </Label>
+
+                  <select
+                    id="batchListing-label-format"
+                    value={batchListing.label_format}
+                    onChange={(e) =>
+                      handleBatchListingChange(
+                        "label_format",
+                        e.target.value as LabelFormat
+                      )
+                    }
+                    className="w-full p-2 border rounded-md bg-background text-base"
+                    required
+                  >
+                    <option value="day">Day</option>
+                    <option value="date">Date</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="label-text-color"
+                    className="text-lg font-semibold"
+                  >
+                    Label Text Color
+                  </Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      id="label-text-color"
+                      type="color"
+                      value={batchListing.label_text_color || "#000000"}
+                      onChange={(e) =>
+                        handleBatchListingChange("label_text_color", e.target.value)
+                      }
+                      className="w-16 h-10 p-1 rounded cursor-pointer"
+                    />
+                    <Input
+                      type="text"
+                      value={batchListing.label_text_color || "#000000"}
+                      onChange={(e) =>
+                        handleBatchListingChange("label_text_color", e.target.value)
+                      }
+                      placeholder="#000000"
+                      className="flex-grow"
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Choose a text color for your collectible label.
+                  </p>
+                </div>
+
+                {batchListing.primary_image_url && batchListing.label_format && (
+                  <div
+                    className="relative mx-auto"
+                    style={{
+                      width: imageSize.width,
+                      height: imageSize.height,
+                    }}
+                  >
+                    {/* Image */}
+                    <div
+                      className="absolute"
+                      style={{
+                        width: imageSize.width,
+                        height: imageSize.height,
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        ref={imageRef}
+                        src={batchListing.primary_image_url}
+                        alt="Editable image"
+                        className="object-cover"
+                        onLoad={(e) => {
+                          const img = e.currentTarget;
+                          const aspectRatio = img.naturalWidth / img.naturalHeight;
+                          const displayWidth = 400 * aspectRatio;
+
+                          setImageSize({
+                            width: displayWidth,
+                            height: 400,
+                            displayWidth: displayWidth
+                          });
+                        }}
+                        width={imageSize.displayWidth || 400}
+                        height={400}
+                      />
+                    </div>
+
+                    {/* Draggable label */}
+                    <Draggable
+                      bounds="parent"
+                      defaultPosition={{ 
+                        x: batchListing.label_position_x || 0, 
+                        y: batchListing.label_position_y || 0 
+                      }}
+                      onDrag={(_: any, data: { x: number; y: number }) => {
+                        handleBatchListingChange("label_position_x", data.x);
+                        handleBatchListingChange("label_position_y", data.y);
+                      }}
+                    >
+                      <div
+                        className="absolute cursor-move px-3 py-1.5 z-10"
+                        style={{
+                          color: batchListing.label_text_color || "#000000",
+                        }}
+                      >
+                        <p className="text-md font-semibold">
+                          {batchListing.label_format === "date" ? "01/01/1970" : "Day 1"}
+                        </p>
+                      </div>
+                    </Draggable>
+                  </div>
+                )}
               </div>
 
               {/* Chip Links Section */}
