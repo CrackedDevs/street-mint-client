@@ -1,6 +1,7 @@
-import sharp from 'sharp';
 import fs from 'fs';
+import fetch from 'node-fetch';
 import path from 'path';
+import sharp from 'sharp';
 
 const fontPath = path.resolve(process.cwd(), 'public/InterVariable.ttf');
 const fontBase64 = fs.readFileSync(fontPath).toString('base64');
@@ -68,7 +69,6 @@ export async function generateCollectibleImage(imageUrl: string, caption: string
 
   return { file, buffer: finalImageBuffer };
 }
-
 export async function generateLabeledImageFile({
   imageURL,
   caption,
@@ -88,62 +88,83 @@ export async function generateLabeledImageFile({
   labelTextColor?: string | null
   labelOnOutside?: boolean
 }): Promise<File | null> {
-  if (!imageURL || !x || !y || !displayWidth || !displayHeight || !caption || !labelTextColor) return null;
+  if (
+    !imageURL ||
+    caption == null ||
+    x == null ||
+    y == null ||
+    displayWidth == null ||
+    displayHeight == null ||
+    labelTextColor == null
+  ) {
+    return null
+  }
 
   try {
     const response = await fetch(imageURL)
-    const blob = await response.blob()
-    const img = await createImageBitmap(blob)
+    const imgBuffer = await response.buffer()
 
-    const scaleX = img.width / displayWidth
-    const scaleY = img.height / displayHeight
+    const imgSharp = sharp(imgBuffer)
+    const metadata = await imgSharp.metadata()
+
+    const imgWidth = metadata.width
+    const imgHeight = metadata.height
+
+    if (!imgWidth || !imgHeight) {
+      console.error("Invalid image metadata:", metadata)
+      return null
+    }
+
+    const scaleX = imgWidth / displayWidth
+    const scaleY = imgHeight / displayHeight
 
     const paddingX = labelOnOutside ? 40 : 0
     const paddingY = labelOnOutside ? 80 : 0
 
-    const canvas = document.createElement("canvas")
-    canvas.width = img.width + (labelOnOutside ? paddingX * scaleX : 0)
-    canvas.height = img.height + (labelOnOutside ? paddingY * scaleY : 0)
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return null
+    const extraWidth = labelOnOutside ? Math.round(paddingX * scaleX) : 0
+    const extraHeight = labelOnOutside ? Math.round(paddingY * scaleY) : 0
 
-    // Draw original image
-    ctx.drawImage(
-      img,
-      labelOnOutside ? (paddingX * scaleX) / 2 : 0,
-      labelOnOutside ? (paddingY * scaleY) / 2 : 0,
-      img.width,
-      img.height
-    )
+    const imageOffsetX = labelOnOutside ? Math.round((paddingX * scaleX) / 2) : 0
+    const imageOffsetY = labelOnOutside ? Math.round((paddingY * scaleY) / 2) : 0
 
-    // Scaled label position
-    const scaledX = x * scaleX
-    const scaledY = y * scaleY
+    const labelX = imageOffsetX + Math.round(x * scaleX)
+    const labelY = imageOffsetY + Math.round(y * scaleY)
 
-    // Draw label background
-    ctx.fillStyle = labelTextColor
-    ctx.beginPath()
-    ctx.roundRect(scaledX, scaledY, 120 * scaleX, 32 * scaleY, 6 * scaleX)
-    ctx.fill()
+    const labelWidth = Math.round(120 * scaleX)
+    const labelHeight = Math.round(32 * scaleY)
+    const borderRadius = Math.round(6 * scaleX)
+    const fontSize = Math.max(10, Math.round(14 * scaleY))
 
-    // Draw label text
-    ctx.fillStyle = "rgba(31, 41, 55, 1)"
-    ctx.font = `${14 * scaleY}px sans-serif`
-    ctx.textAlign = "center"
-    ctx.textBaseline = "middle"
-    ctx.fillText(caption, scaledX + (60 * scaleX), scaledY + (16 * scaleY))
+    const svg = `
+      <svg width="${imgWidth + extraWidth}" height="${imgHeight + extraHeight}">
+        <rect x="${labelX}" y="${labelY}" rx="${borderRadius}" ry="${borderRadius}"
+              width="${labelWidth}" height="${labelHeight}" fill="transparent" />
+        <text x="${labelX + labelWidth / 2}" y="${labelY + labelHeight / 2}"
+              font-size="${fontSize}" font-family="sans-serif"
+              fill="${labelTextColor}" dominant-baseline="middle" text-anchor="middle">
+          ${caption}
+        </text>
+      </svg>
+    `
 
-    return await new Promise<File | null>((resolve) => {
-      canvas.toBlob((resultBlob) => {
-        if (!resultBlob) return resolve(null)
-        const file = new File([resultBlob], "labeled-image.png", {
-          type: "image/png",
-        })
-        resolve(file)
-      }, "image/png")
+    const outputBuffer = await sharp({
+      create: {
+        width: imgWidth + extraWidth,
+        height: imgHeight + extraHeight,
+        channels: 4,
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
+      },
     })
+      .composite([
+        { input: imgBuffer, left: imageOffsetX, top: imageOffsetY },
+        { input: Buffer.from(svg), left: 0, top: 0 },
+      ])
+      .png()
+      .toBuffer()
+
+    return new File([outputBuffer], "labeled-image.png", { type: "image/png" })
   } catch (err) {
-    console.error("Error generating labeled image:", err)
+    console.error("Error generating labeled image with sharp:", err)
     return null
   }
 }
