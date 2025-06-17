@@ -182,7 +182,6 @@ export default function BatchPage() {
   return (
     <div
       className="w-full min-h-screen flex flex-col items-center justify-start py-10 px-4"
-      style={{ backgroundColor: batchListing?.bg_color || "white" }}
     >
       {isLoading ? (
         <div className="flex flex-col items-center justify-center h-64">

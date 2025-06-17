@@ -27,18 +27,19 @@ import { formatDate } from "@/helper/date";
 import { createProduct } from "@/helpers/stripe";
 import { useToast } from "@/hooks/use-toast";
 import {
+  createBatchListing,
   getChipLinksByArtistId,
-  getSponsorsByArtistId,
-  updateChipLink,
+  getSponsorsByArtistId
 } from "@/lib/supabaseAdminClient";
 import {
   BatchListing,
   Brand,
+  LabelFormat,
+  LabelPositionMode,
   QuantityType,
   Sponsor,
   uploadFileToPinata
 } from "@/lib/supabaseClient";
-import { createBatchListing } from "@/lib/supabaseAdminClient";
 import { NumericUUID } from "@/lib/utils";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -55,7 +56,8 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Draggable from "react-draggable";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -120,6 +122,11 @@ function CreateBatchListingPage() {
     collectible_name: "",
     collectible_description: "",
     primary_image_url: "",
+    label_format: LabelFormat.None,
+    label_position_x: 0,
+    label_position_y: 0,
+    display_width: 0,
+    display_height: 0,
     quantity_type: QuantityType.Unlimited,
     quantity: 0,
     price_usd: 0,
@@ -157,11 +164,19 @@ function CreateBatchListingPage() {
     batch_hour: 0,
     collection_id: Number(collectionId),
     logo_image: null,
-    bg_color: null,
+    label_text_color: "#000000",
     frequency_type: "daily",
     frequency_days: [],
     always_active: true,
+    label_size: 16,
   });
+
+  const [imageSize, setImageSize] = useState({
+    width: 0,
+    height: 0,
+    displayWidth: 0
+  })
+  const imageRef = useRef<HTMLImageElement>(null);
 
   const [primaryImageLocalFile, setPrimaryImageLocalFile] =
     useState<File | null>(null);
@@ -391,7 +406,7 @@ function CreateBatchListingPage() {
   const handleFrequencyTypeChange = (type: string) => {
     setFrequencyType(type);
     handleBatchListingChange("frequency_type", type);
-    
+
     // Reset frequency days when changing type
     if (type === "daily") {
       handleBatchListingChange("frequency_days", []);
@@ -409,7 +424,7 @@ function CreateBatchListingPage() {
       const newSelection = prev.includes(day)
         ? prev.filter(d => d !== day)
         : [...prev, day];
-      
+
       handleBatchListingChange("frequency_days", newSelection);
       return newSelection;
     });
@@ -420,7 +435,7 @@ function CreateBatchListingPage() {
       const newSelection = prev.includes(day)
         ? prev.filter(d => d !== day)
         : [...prev, day];
-      
+
       handleBatchListingChange("frequency_days", newSelection);
       return newSelection;
     });
@@ -495,7 +510,7 @@ function CreateBatchListingPage() {
       });
       return;
     }
-    
+
     // Validate always_active is set for weekly/monthly frequency types
     if ((frequencyType === "weekly" || frequencyType === "monthly") && batchListing.always_active === undefined) {
       toast({
@@ -548,8 +563,8 @@ function CreateBatchListingPage() {
         batch_start_date: formatDate(`${batchListing.batch_start_date}T00:00`),
         batch_end_date: formatDate(`${batchListing.batch_end_date}T00:00`),
         frequency_type: frequencyType,
-        frequency_days: frequencyType === "daily" ? [] : 
-                        frequencyType === "weekly" ? selectedWeekDays : selectedMonthDays,
+        frequency_days: frequencyType === "daily" ? [] :
+          frequencyType === "weekly" ? selectedWeekDays : selectedMonthDays,
         always_active: batchListing.always_active,
       };
 
@@ -713,7 +728,7 @@ function CreateBatchListingPage() {
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label
                       htmlFor="batch-frequency"
@@ -725,33 +740,30 @@ function CreateBatchListingPage() {
                       <button
                         type="button"
                         onClick={() => handleFrequencyTypeChange("daily")}
-                        className={`px-4 py-2 rounded-md ${
-                          frequencyType === "daily" 
-                            ? "bg-primary text-white" 
-                            : "bg-primary/10 hover:bg-primary/20"
-                        }`}
+                        className={`px-4 py-2 rounded-md ${frequencyType === "daily"
+                          ? "bg-primary text-white"
+                          : "bg-primary/10 hover:bg-primary/20"
+                          }`}
                       >
                         Daily
                       </button>
                       <button
                         type="button"
                         onClick={() => handleFrequencyTypeChange("weekly")}
-                        className={`px-4 py-2 rounded-md ${
-                          frequencyType === "weekly" 
-                            ? "bg-primary text-white" 
-                            : "bg-primary/10 hover:bg-primary/20"
-                        }`}
+                        className={`px-4 py-2 rounded-md ${frequencyType === "weekly"
+                          ? "bg-primary text-white"
+                          : "bg-primary/10 hover:bg-primary/20"
+                          }`}
                       >
                         Weekly
                       </button>
                       <button
                         type="button"
                         onClick={() => handleFrequencyTypeChange("monthly")}
-                        className={`px-4 py-2 rounded-md ${
-                          frequencyType === "monthly" 
-                            ? "bg-primary text-white" 
-                            : "bg-primary/10 hover:bg-primary/20"
-                        }`}
+                        className={`px-4 py-2 rounded-md ${frequencyType === "monthly"
+                          ? "bg-primary text-white"
+                          : "bg-primary/10 hover:bg-primary/20"
+                          }`}
                       >
                         Monthly
                       </button>
@@ -769,19 +781,18 @@ function CreateBatchListingPage() {
                             key={index}
                             type="button"
                             onClick={() => handleWeekDayToggle(index)}
-                            className={`p-2 rounded-md text-center ${
-                              selectedWeekDays.includes(index)
-                                ? "bg-primary text-white"
-                                : "bg-primary/10 hover:bg-primary/20"
-                            }`}
+                            className={`p-2 rounded-md text-center ${selectedWeekDays.includes(index)
+                              ? "bg-primary text-white"
+                              : "bg-primary/10 hover:bg-primary/20"
+                              }`}
                           >
                             {day}
                           </button>
                         ))}
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">
-                        {selectedWeekDays.length === 0 
-                          ? "Please select at least one day" 
+                        {selectedWeekDays.length === 0
+                          ? "Please select at least one day"
                           : `Selected: ${selectedWeekDays.map(d => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d]).join(", ")}`}
                       </p>
                     </div>
@@ -798,19 +809,18 @@ function CreateBatchListingPage() {
                             key={day}
                             type="button"
                             onClick={() => handleMonthDayToggle(day)}
-                            className={`p-2 rounded-md text-center ${
-                              selectedMonthDays.includes(day)
-                                ? "bg-primary text-white"
-                                : "bg-primary/10 hover:bg-primary/20"
-                            }`}
+                            className={`p-2 rounded-md text-center ${selectedMonthDays.includes(day)
+                              ? "bg-primary text-white"
+                              : "bg-primary/10 hover:bg-primary/20"
+                              }`}
                           >
                             {day}
                           </button>
                         ))}
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">
-                        {selectedMonthDays.length === 0 
-                          ? "Please select at least one day" 
+                        {selectedMonthDays.length === 0
+                          ? "Please select at least one day"
                           : `Selected: ${selectedMonthDays.sort((a, b) => a - b).join(", ")}`}
                       </p>
                     </div>
@@ -825,17 +835,15 @@ function CreateBatchListingPage() {
                         <button
                           type="button"
                           onClick={() => handleBatchListingChange("always_active", true)}
-                          className={`p-4 rounded-lg border-2 transition-colors ${
-                            batchListing.always_active === true 
-                              ? "border-primary bg-primary/10" 
-                              : "border-gray-200 hover:border-primary/50"
-                          }`}
+                          className={`p-4 rounded-lg border-2 transition-colors ${batchListing.always_active === true
+                            ? "border-primary bg-primary/10"
+                            : "border-gray-200 hover:border-primary/50"
+                            }`}
                         >
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="font-semibold">New Collectible Created</h3>
-                            <div className={`w-5 h-5 rounded-full border-2 border-black flex items-center justify-center ${
-                              batchListing.always_active === true ? "bg-primary/20" : ""
-                            }`}>
+                            <div className={`w-5 h-5 rounded-full border-2 border-black flex items-center justify-center ${batchListing.always_active === true ? "bg-primary/20" : ""
+                              }`}>
                               {batchListing.always_active === true && (
                                 <div className="w-3 h-3 rounded-full bg-primary"></div>
                               )}
@@ -845,21 +853,19 @@ function CreateBatchListingPage() {
                             This collectible will remain active until a new collectible is created in this batch
                           </p>
                         </button>
-                        
+
                         <button
                           type="button"
                           onClick={() => handleBatchListingChange("always_active", false)}
-                          className={`p-4 rounded-lg border-2 transition-colors ${
-                            batchListing.always_active === false 
-                              ? "border-primary bg-primary/10" 
-                              : "border-gray-200 hover:border-primary/50"
-                          }`}
+                          className={`p-4 rounded-lg border-2 transition-colors ${batchListing.always_active === false
+                            ? "border-primary bg-primary/10"
+                            : "border-gray-200 hover:border-primary/50"
+                            }`}
                         >
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="font-semibold">After 24 Hours</h3>
-                            <div className={`w-5 h-5 rounded-full border-2 border-black flex items-center justify-center ${
-                              batchListing.always_active === false ? "bg-primary/20" : ""
-                            }`}>
+                            <div className={`w-5 h-5 rounded-full border-2 border-black flex items-center justify-center ${batchListing.always_active === false ? "bg-primary/20" : ""
+                              }`}>
                               {batchListing.always_active === false && (
                                 <div className="w-3 h-3 rounded-full bg-primary"></div>
                               )}
@@ -1109,6 +1115,157 @@ function CreateBatchListingPage() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="batchListing-label-format" className="text-lg font-semibold">
+                    Label Format <span className="text-destructive">*</span>
+                  </Label>
+
+                  <select
+                    id="batchListing-label-format"
+                    value={batchListing.label_format || LabelFormat.None}
+                    onChange={(e) =>
+                      handleBatchListingChange(
+                        "label_format",
+                        e.target.value as LabelFormat
+                      )
+                    }
+                    className="w-full p-2 border rounded-md bg-background text-base"
+                    required
+                  >
+                    <option value={LabelFormat.None}>No Label</option>
+                    <option value={LabelFormat.Day}>Day</option>
+                    <option value={LabelFormat.Date}>Date</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="label-text-color"
+                      className="text-lg font-semibold"
+                    >
+                      Label Text Color
+                    </Label>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        id="label-text-color"
+                        type="color"
+                        value={batchListing.label_text_color || "#000000"}
+                        onChange={(e) =>
+                          handleBatchListingChange("label_text_color", e.target.value)
+                        }
+                        className="w-16 h-10 p-1 rounded cursor-pointer"
+                      />
+                      <Input
+                        type="text"
+                        value={batchListing.label_text_color || "#000000"}
+                        onChange={(e) =>
+                          handleBatchListingChange("label_text_color", e.target.value)
+                        }
+                        placeholder="#000000"
+                        className="flex-grow"
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Choose a text color for your collectible label. Remember, the background will be transparent.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="label-size"
+                      className="text-lg font-semibold"
+                    >
+                      Collectible Media Label Size
+                    </Label>
+                    <select
+                      id="label-size"
+                      value={batchListing.label_size}
+                      onChange={(e) =>
+                        handleBatchListingChange("label_size", parseInt(e.target.value))
+                      }
+                      className="w-full p-2 border rounded-md bg-background text-base"
+                    >
+                      <option value="12">Very Small</option>
+                      <option value="14">Small</option>
+                      <option value="16">Medium</option>
+                      <option value="20">Large</option>
+                      <option value="24">Extra Large</option>
+                    </select>
+                  </div>
+
+                  {batchListing.primary_image_url && batchListing.label_format !== LabelFormat.None && (
+                    <div
+                      className="relative mx-auto"
+                      style={{
+                        width: imageSize.width,
+                        height: imageSize.height,
+                      }}
+                    >
+                      {/* Image */}
+                      <div
+                        className="absolute"
+                        style={{
+                          width: imageSize.width,
+                          height: imageSize.height,
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          ref={imageRef}
+                          src={primaryImageLocalFile ? URL.createObjectURL(primaryImageLocalFile) : ""}
+                          alt="Editable image"
+                          className="object-cover"
+                          onLoad={(e) => {
+                            const img = e.currentTarget
+                            const aspectRatio = img.naturalWidth / img.naturalHeight
+                            const displayWidth = 400 * aspectRatio
+
+                            setImageSize({
+                              width: displayWidth,
+                              height: 400,
+                              displayWidth: displayWidth
+                            })
+                            handleBatchListingChange("display_width", displayWidth);
+                            handleBatchListingChange("display_height", 400);
+                          }}
+                          width={imageSize.displayWidth || 400}
+                          height={400}
+                        />
+                      </div>
+
+                      {/* Draggable label */}
+                      <Draggable
+                        bounds="parent"
+                        defaultPosition={{ x: 0, y: 0 }}
+                        onDrag={(_: any, data: { x: number; y: number }) => {
+                          handleBatchListingChange(
+                            "label_position_x",
+                            data.x
+                          )
+                          handleBatchListingChange(
+                            "label_position_y",
+                            data.y
+                          )
+                          console.log(data.x, data.y);
+                        }}
+                      >
+                        <div
+                          className={`absolute cursor-move px-3 py-1.5 z-10`}
+                          style={{
+                            color: batchListing.label_text_color || "#000000",
+                            fontSize: `${batchListing.label_size}px`
+                          }}
+                        >
+                          <p className="text-md font-semibold">{batchListing.label_format === "date" ? "01/01/1970" : "Day 1"}</p>
+                        </div>
+                      </Draggable>
+
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
                   <Label
                     htmlFor="logo-image"
                     className="text-lg font-semibold"
@@ -1140,38 +1297,6 @@ function CreateBatchListingPage() {
                       </div>
                     </Label>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="bg-color"
-                    className="text-lg font-semibold"
-                  >
-                    Background Color
-                  </Label>
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      id="bg-color"
-                      type="color"
-                      value={batchListing.bg_color || "#ffffff"}
-                      onChange={(e) =>
-                        handleBatchListingChange("bg_color", e.target.value)
-                      }
-                      className="w-16 h-10 p-1 rounded cursor-pointer"
-                    />
-                    <Input
-                      type="text"
-                      value={batchListing.bg_color || "#ffffff"}
-                      onChange={(e) =>
-                        handleBatchListingChange("bg_color", e.target.value)
-                      }
-                      placeholder="#ffffff"
-                      className="flex-grow"
-                    />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Choose a background color for your collectible. Remember, the text color is black.
-                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -1931,9 +2056,9 @@ function CreateBatchListingPage() {
                 type="submit"
                 className="w-full text-lg h-14 mt-8"
                 disabled={
-                  isSubmitting || 
-                  selectedChipIds.length === 0 || 
-                  availableChips.length === 0 || 
+                  isSubmitting ||
+                  selectedChipIds.length === 0 ||
+                  availableChips.length === 0 ||
                   (frequencyType === "weekly" && selectedWeekDays.length === 0) ||
                   (frequencyType === "monthly" && selectedMonthDays.length === 0) ||
                   ((frequencyType === "weekly" || frequencyType === "monthly") && batchListing.always_active === undefined)
