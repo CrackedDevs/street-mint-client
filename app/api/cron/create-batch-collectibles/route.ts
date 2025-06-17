@@ -314,6 +314,7 @@ export async function GET(request: NextRequest) {
         mint_end_date: mintEnd.toISOString(),
         airdrop_eligibility_index: listing.airdrop_eligibility_index,
         whitelist: listing.whitelist ? true : false,
+        collection_id: listing.collection_id,
         cta_enable: listing.cta_enable ? true : false,
         cta_title: listing.cta_title,
         cta_description: listing.cta_description,

@@ -280,9 +280,18 @@ export default function BatchPage() {
 
                   const isFutureDate = item.date > new Date();
 
+                  const handleCircleClick = () => {
+                    if (collectible) {
+                      window.open(`/mint/${collectible.id}`, '_blank');
+                    }
+                  };
+
                   return (
                     <div key={index} className="flex flex-col items-center">
-                      <div className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden border border-gray-300 bg-gray-50">
+                      <div 
+                        className={`w-24 h-24 rounded-full flex items-center justify-center overflow-hidden border border-gray-300 bg-gray-50 ${collectible ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                        onClick={handleCircleClick}
+                      >
                         {isCollected ? (
                           <Image
                             src={

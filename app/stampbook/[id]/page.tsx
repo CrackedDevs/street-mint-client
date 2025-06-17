@@ -202,7 +202,11 @@ export default function StampbookPage() {
                     : false;
 
                   return (
-                    <div key={index} className="flex flex-col items-center">
+                    <div 
+                      key={index} 
+                      className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => window.open(`/mint/${collectible.id}`, '_blank')}
+                    >
                       <div className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden border border-gray-300 bg-gray-50">
                         {isCollected ? (
                           <Image

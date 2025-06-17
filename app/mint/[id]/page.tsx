@@ -1,99 +1,83 @@
 import Image from "next/image";
-import {
-  getCollectionById,
-  getArtistById,
-  fetchCollectibleById,
-  QuantityType,
-  getCompletedOrdersCount,
-} from "@/lib/supabaseClient";
+import { getArtistById, getCollectibleById, getCollectionById, QuantityType, getCompletedOrdersCount } from "@/lib/supabaseClient";
 import Gallery from "@/components/gallery";
 import { Toaster } from "@/components/ui/toaster";
 import ArtistInfoComponent from "@/components/ArtistInfoComponent";
-import EditionInformation from "@/components/EditionInformation-Old";
+import EditionInformation from "@/components/EditionInformation";
+import { checkAuthStatus } from "@/lib/ixkioAuth";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { getSponsorImageByCollectibleId } from "@/lib/supabaseAdminClient";
+import LoadingOverlay from "@/components/LoadingOverlay";
+import { verifySignatureCode } from "@/lib/adminAuth";
 import { getSolPrice } from "@/lib/services/getSolPrice";
-import { recordNfcTap, verifyNfcSignature } from "@/lib/supabaseAdminClient";
 
-async function getNFTData(id: string, rnd: string, sign: string) {
-  let isIRLtapped = false;
-  let solPriceInUSD = 0;
-
-  const collectible = await fetchCollectibleById(Number(id));
-  if (!collectible) return null;
-
-  // Only fetch SOL price if usdc_price is defined and greater than 0
-  if (collectible.price_usd && collectible.price_usd > 0) {
-    const solPrice = await getSolPrice();
-    if (!solPrice) {
-      return null;
-    }
-    solPriceInUSD = solPrice;
-  }
-
-  if (collectible.nfc_public_key) {
-    const isValid = await verifyNfcSignature(
-      rnd,
-      sign,
-      collectible.nfc_public_key
-    );
-    if (!isValid) {
-      console.log("Signature is not valid");
-      isIRLtapped = false;
-    } else {
-      isIRLtapped = true;
-    }
-  }
-
-  const collection = await getCollectionById(collectible.collection_id);
-  if (!collection) return null;
-
-  const artist = await getArtistById(collection.artist);
-  if (!artist) return null;
-
-  // Calculate NFT price in SOL
-  const priceInSOL = collectible.price_usd / solPriceInUSD;
-
-  // Calculate remaining quantity for limited editions
-  let remainingQuantity = null;
-  if (collectible.quantity_type === "limited") {
-    remainingQuantity = collectible.quantity;
-  }
-  const soldCount = await getCompletedOrdersCount(collectible.id);
-
-  if (collectible.price_usd == 0 && rnd && sign) {
-    const recordSuccess = await recordNfcTap(rnd);
-    if (!recordSuccess) {
-      return;
-    }
-  }
-
-  return {
-    collectible,
-    collection,
-    artist,
-    priceInSOL,
-    remainingQuantity,
-    isIRLtapped,
-    soldCount,
-    randomNumber: rnd,
-  };
-}
-
-// Convert to an async Server Component
 export default async function NFTPage({
   params,
-  searchParams,
 }: {
   params: { id: string };
-  searchParams: { rnd: string; sign: string };
 }) {
-  const data = await getNFTData(params.id, searchParams.rnd, searchParams.sign);
+  // Get hostname from headers
+  const host = headers().get("host") || "";
+  const isIrlsDomain = host.includes("irls.xyz");
+  console.log("isIrlsDomain", isIrlsDomain);
 
-  if (!data) {
+  const BRAND_NAME = isIrlsDomain ? "IRLS" : "Street Mint";
+
+  if (!params.id) {
+    return <div>No collectible id provided</div>;
+  }
+
+  const collectibleId = parseInt(params.id);
+  const collectible = await getCollectibleById(collectibleId);
+
+  if (!collectible) {
+    return <div>Collectible not found</div>;
+  }
+
+  let collection = await getCollectionById(collectible?.collection_id || 0);
+  let artist = await getArtistById(collection?.artist || 0);
+  let solPriceInUSD = 0;
+  let remainingQuantity = null;
+
+     // Only fetch SOL price if usdc_price is defined and greater than 0
+     if (collectible && collectible.price_usd && collectible.price_usd > 0) {
+      const solPrice = await getSolPrice();
+      if (!solPrice) {
+        return null;
+      }
+      solPriceInUSD = solPrice;
+    }
+  
+    // Calculate NFT price in SOL
+    const priceInSOL = collectible.price_usd / solPriceInUSD;
+  
+    // Calculate remaining quantity for limited editions
+    if (collectible.quantity_type === "limited") {
+      remainingQuantity = collectible.quantity;
+    }
+    const soldCount = await getCompletedOrdersCount(collectible.id);
+
+  // Then fetch sponsor data if available
+  const sponsor_data = collectible
+    ? await getSponsorImageByCollectibleId(
+      collectibleId
+    )
+    : null;
+  console.log("Sponsor data:", sponsor_data);
+
+  if (!collectible || !collection || !artist) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Image
-          src="/logo.svg"
-          alt="Street mint logo"
+          src={
+            sponsor_data?.img_url ||
+            (isIrlsDomain ? "/irlLogo.svg" : "/logo.svg")
+          }
+          alt={
+            sponsor_data?.name ||
+            (isIrlsDomain ? "IRLS logo" : "Street mint logo")
+          }
           width={250}
           height={100}
           className="h-20 w-auto animate-pulse"
@@ -102,26 +86,25 @@ export default async function NFTPage({
     );
   }
 
-  const {
-    collectible,
-    collection,
-    artist,
-    priceInSOL,
-    remainingQuantity,
-    soldCount,
-    isIRLtapped,
-    randomNumber,
-  } = data;
+  const adminSignatureAuthenticated = false;
+  const isIRLtapped = false;
+
+  // Prepare sponsor logo and name, handling null values
+  const sponsorLogo = sponsor_data?.img_url || (isIrlsDomain ? "/irlLogo.svg" : "/logo.svg");
+  const sponsorName = sponsor_data?.name || (isIrlsDomain ? "IRLS" : "Street Mint");
 
   return (
     <div className="min-h-screen bg-white text-black">
+      {/* Always include client-side loading overlay with sponsor logo if available */}
+      <LoadingOverlay sponsorLogo={sponsorLogo} sponsorName={sponsorName} />
+
       {/* Header */}
       <header className="py-4 px-6 border-b border-gray-200">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex justify-center items-center w-full">
             <Image
-              src="/logo.svg"
-              alt="Street mint logo"
+              src={isIrlsDomain ? "/irlLogo.svg" : "/logo.svg"}
+              alt={isIrlsDomain ? "IRLS logo" : "Street mint logo"}
               width={150}
               height={50}
               className="h-8 w-auto"
@@ -133,15 +116,33 @@ export default async function NFTPage({
       {/* Main content */}
       <main className="py-8 md:px-10 gap-10 px-4">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
-          {/* Left column - Main Image */}
+          {/* Left column - Main Image / Video */}
           <div className="relative flex justify-center items-center h-full w-full">
-            <Image
-              src={collectible.primary_image_url}
-              alt={`${collectible.name} - Main Image`}
-              objectFit="contain"
-              width={500}
-              height={500}
-            />
+            {collectible.primary_media_type === "video" ? (
+              <video
+                src={collectible.primary_image_url}
+                autoPlay={true}
+                loop={true}
+                muted={true}
+                width={500}
+                height={500}
+              />
+            ) : collectible.primary_media_type === "audio" ? (
+              <audio
+                src={collectible.primary_image_url}
+                controls
+                loop
+                controlsList="nodownload"
+              />
+            ) : (
+              <Image
+                src={collectible.primary_image_url}
+                alt={`${collectible.name} - Main Image`}
+                objectFit="contain"
+                width={500}
+                height={500}
+              />
+            )}
           </div>
 
           {/* Right column - Details */}
@@ -154,7 +155,11 @@ export default async function NFTPage({
             <ArtistInfoComponent artist={artist} />
             {/* Edition Information Section */}
             <EditionInformation
-              randomNumber={randomNumber}
+              x=""
+              n=""
+              e=""
+              adminSignatureCode=""
+              adminSignatureAuthenticated={false}
               soldCount={soldCount}
               isIRLtapped={isIRLtapped}
               collection={{
@@ -168,12 +173,13 @@ export default async function NFTPage({
               }}
               collectible={{
                 ...collectible,
+                stripe_price_id: collectible.stripe_price_id || undefined,
                 creator_royalty_array: collectible.creator_royalty_array as
                   | {
-                      creator_wallet_address: string;
-                      royalty_percentage: number;
-                      name: string;
-                    }[]
+                    creator_wallet_address: string;
+                    royalty_percentage: number;
+                    name: string;
+                  }[]
                   | null,
                 quantity_type: collectible.quantity_type as QuantityType,
                 whitelist: collectible.whitelist || false,
@@ -187,16 +193,16 @@ export default async function NFTPage({
                 cta_text_list: (collectible.cta_text_list || []) as {
                   [key: string]: string;
                 }[],
-                enable_card_payments: collectible.enable_card_payments || false,
-                stripe_price_id: collectible.stripe_price_id || undefined,
-                only_card_payment: collectible.only_card_payment || false,
+                enable_card_payments: false,
+                only_card_payment: false,
               }}
               remainingQuantity={remainingQuantity}
               artistWalletAddress={artist.wallet_address}
+              onlyRead={true}
             />
           </div>
         </div>
-        <div className="max-w-7xl mt-10  mx-auto w-full bg-black text-white rounded-xl  py-8">
+        <div className="max-w-7xl mt-10  mx-auto w-full bg-black text-white rounded-xl py-8">
           <div className="max-w-7xl  mx-auto px-4">
             <h2 className="text-2xl font-bold mb-4">Description</h2>
             {collectible.description.split("\n").map((paragraph, index) => (
@@ -204,6 +210,11 @@ export default async function NFTPage({
                 {paragraph}
               </p>
             ))}
+            {collectible.location_note && (
+              <p className="text-md text-gray-400 col-span-2 mb-4">
+                <strong>Where:</strong> {collectible.location_note}
+              </p>
+            )}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div>
                 <p className="text-gray-400">Art title</p>
@@ -213,11 +224,7 @@ export default async function NFTPage({
                 <p className="text-gray-400">Artist</p>
                 <p>{artist.username}</p>
               </div>
-              {collectible.location_note && (
-                <p className="text-md text-gray-400">
-                  <strong>Where:</strong> {collectible.location_note}
-                </p>
-              )}
+
               <div>
                 <p className="text-gray-400">Location to mint</p>
                 <a
@@ -234,8 +241,7 @@ export default async function NFTPage({
                 <p>
                   {collectible.price_usd > 0 ? (
                     <>
-                      ${collectible.price_usd.toFixed(2)} (
-                      {priceInSOL.toFixed(2)} SOL)
+                      ${collectible.price_usd.toFixed(2)} ({priceInSOL.toFixed(2)} SOL)
                     </>
                   ) : (
                     "Free"
@@ -243,9 +249,15 @@ export default async function NFTPage({
                 </p>
               </div>
               <div>
-                <p className="text-gray-00">Blockchain</p>
+                <p className="text-gray-400">Blockchain</p>
                 <p>Solana</p>
               </div>
+              {collectible.gallery_name && (
+                <div>
+                  <p className="text-gray-400">Gallery</p>
+                  <p>{collectible.gallery_name || "N/A"}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

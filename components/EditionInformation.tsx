@@ -16,6 +16,7 @@ import { useState, useEffect } from "react";
 import { Earth, Stars, Clock } from "lucide-react";
 import { TimeService } from "@/lib/services/timeService";
 import { EditionService } from "@/lib/services/editionService";
+import LocationButton from "./LocationButton";
 
 export type MintStatus = "not-started" | "ongoing" | "ended" | "loading";
 
@@ -32,6 +33,7 @@ const EditionInformation = ({
   e,
   adminSignatureCode,
   adminSignatureAuthenticated,
+  onlyRead = false,
 }: {
   collection: Collection;
   collectible: Collectible;
@@ -45,6 +47,7 @@ const EditionInformation = ({
   e: string;
   adminSignatureCode: string;
   adminSignatureAuthenticated: boolean;
+  onlyRead?: boolean;
 }) => {
   const [mintingStatus, setMintingStatus] = useState<MintStatus>("loading");
   const [timeLeft, setTimeLeft] = useState<string>("");
@@ -180,7 +183,11 @@ const EditionInformation = ({
       </CardContent>
       <CardFooter className="w-full flex flex-col md:items-center space-y-6 md:space-y-6">
         <div className="w-full">
-          <MintButton
+          {onlyRead ? (
+            <>
+            <LocationButton location={collectible.location || ""} />
+            </>
+          ) : <MintButton
             x={x}
             n={n}
             e={e}
@@ -200,7 +207,7 @@ const EditionInformation = ({
               ...collection,
             }}
             mintStatus={mintingStatus}
-          />
+          />}
         </div>
         <div className="text-center text-sm font-semibold">
           ONLY AVAILABLE IRL
