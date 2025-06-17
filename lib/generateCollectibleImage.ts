@@ -142,7 +142,7 @@ export async function generateLabeledImageFile({
         <rect x="${labelX}" y="${labelY}" rx="${borderRadius}" ry="${borderRadius}"
               width="${labelWidth}" height="${labelHeight}" fill="transparent" />
         <text x="${labelX + labelWidth / 2}" y="${labelY + labelHeight / 2}"
-              font-size="${fontSize}" font-family="sans-serif"
+              font-size="${fontSize}" font-family="sans-serif" font-weight="semibold"
               fill="${labelTextColor}" dominant-baseline="middle" text-anchor="middle">
           ${caption}
         </text>

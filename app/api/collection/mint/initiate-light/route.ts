@@ -137,21 +137,29 @@ export async function POST(req: Request, res: NextApiResponse) {
         app_password = process.env.IRLS_NODEMAILER_APP_PASSWORD!;
       }
 
-      if (order.collectibles && order.collectibles.batch_listing_id && order.collectibles.batch_listing_id === 7030604016) {
-          const hubspotResponse = await addOrder({
-            email: emailAddress,
-            attendance_value: "Day " + (order.collectibles.day_number?.toString() || "")
-          });
-          console.log("hubspotResponse", hubspotResponse);
-      }
+      // if (order.collectibles && order.collectibles.batch_listing_id && order.collectibles.batch_listing_id === 7030604016) {
+      //     const hubspotResponse = await addOrder({
+      //       email: emailAddress,
+      //       attendance_value: "Day " + (order.collectibles.day_number?.toString() || "")
+      //     });
+      //     console.log("hubspotResponse", hubspotResponse);
+      // }
 
       // Get batch URL if the collectible has a batch_id
       let batchUrl: string | undefined = undefined;
       let batchName: string | undefined = undefined;
-      if (order.collectibles && order.collectibles.batch_listing_id) {
+      if (collectible && collectible.batch_listing_id) {
         const baseUrl = platform === "STREETMINT" ? "https://streetmint.xyz" : "https://irls.xyz";
-        batchUrl = `${baseUrl}/batch/${order.collectibles.batch_listing_id}?search=${emailAddress}`;
-        batchName = order.collectibles.name;
+        const {data: batch, error: batchError} = await supabase
+        .from("batch_listings")
+        .select("id, name")
+        .eq("id", collectible.batch_listing_id)
+        .single();
+
+        if (!batchError && batch) {
+          batchUrl = `${baseUrl}/batch/${batch.id}?search=${emailAddress}`;
+          batchName = batch.name || "";
+        }
       }
 
       // Check if collectible is part of stampbook 9
