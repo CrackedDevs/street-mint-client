@@ -140,6 +140,8 @@ export async function mintNFTWithBubbleGumTree(
           0
         );
 
+        console.log("totalRoyaltyPercentage", totalRoyaltyPercentage);
+
         // Map creators with proportional shares
         creators = creatorRoyaltyArray.map((creator) => {
           const royaltyPercent = Math.max(
@@ -154,7 +156,7 @@ export async function mintNFTWithBubbleGumTree(
 
           const share =
             totalRoyaltyPercentage > 0
-              ? Math.round((royaltyPercent / totalRoyaltyPercentage) * 100)
+              ? Math.floor((royaltyPercent / totalRoyaltyPercentage) * 100)
               : 0;
 
           return {
@@ -163,6 +165,19 @@ export async function mintNFTWithBubbleGumTree(
             share,
           };
         });
+
+        if (creators.length > 0) {
+          const totalShares = creators.reduce((sum, creator) => sum + creator.share, 0);
+          const remainder = 100 - totalShares;
+          
+        
+          for (let i = 0; i < remainder && i < creators.length; i++) {
+            creators[i].share += 1;
+          }
+        }
+
+        console.log("creators", creators);
+        console.log("total shares:", creators.reduce((sum, creator) => sum + creator.share, 0));
       }
 
       console.time("Mint to Collection");
