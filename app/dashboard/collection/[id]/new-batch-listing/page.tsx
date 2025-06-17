@@ -1230,6 +1230,8 @@ function CreateBatchListingPage() {
                               height: 400,
                               displayWidth: displayWidth
                             })
+                            handleBatchListingChange("display_width", displayWidth);
+                            handleBatchListingChange("display_height", 400);
                           }}
                           width={imageSize.displayWidth || 400}
                           height={400}
