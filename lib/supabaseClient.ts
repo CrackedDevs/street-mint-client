@@ -80,6 +80,7 @@ export type Collectible = {
     is_light_version: boolean;
     sponsor_id?: number | null;
     primary_media_type: string | null;
+    collection_id: number;
     custom_email: boolean | null;
     custom_email_subject: string | null;
     custom_email_body: string | null;

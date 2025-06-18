@@ -65,7 +65,11 @@ export default function BatchPage() {
           while (currentDate <= endDate) {
             days.push({
               date: new Date(currentDate),
-              label: `Day ${dayCount}`
+              label: new Date(currentDate).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })
             });
             currentDate.setDate(currentDate.getDate() + 1);
             dayCount++;
@@ -85,7 +89,11 @@ export default function BatchPage() {
             if (daysToInclude.includes(dayOfWeek)) {
               days.push({
                 date: new Date(currentDate),
-                label: `Week ${weekCount} - ${dayNames[dayOfWeek]}`
+                label: new Date(currentDate).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })
               });
             }
             
@@ -112,7 +120,11 @@ export default function BatchPage() {
               const month = currentDate.toLocaleString('default', { month: 'short' });
               days.push({
                 date: new Date(currentDate),
-                label: `Month ${monthCount} - ${month} ${dayOfMonth}`
+                label: new Date(currentDate).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })
               });
             }
             
@@ -218,7 +230,7 @@ export default function BatchPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Enter email or wallet"
+                placeholder={batchListing?.is_light_version ? "Enter email" : "Enter email or wallet"}
                 className="w-full border-2 border-black h-12 pr-12"
               />
               <button 
@@ -268,9 +280,18 @@ export default function BatchPage() {
 
                   const isFutureDate = item.date > new Date();
 
+                  const handleCircleClick = () => {
+                    if (collectible) {
+                      window.open(`/mint/${collectible.id}`, '_blank');
+                    }
+                  };
+
                   return (
                     <div key={index} className="flex flex-col items-center">
-                      <div className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden border border-gray-300 bg-gray-50">
+                      <div 
+                        className={`w-24 h-24 rounded-full flex items-center justify-center overflow-hidden border border-gray-300 bg-gray-50 ${collectible ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                        onClick={handleCircleClick}
+                      >
                         {isCollected ? (
                           <Image
                             src={

@@ -127,6 +127,7 @@ function CreateCollectiblePage() {
     nfc_public_key: "",
     mint_start_date: "",
     mint_end_date: "",
+    collection_id: Number(collectionId),
     airdrop_eligibility_index: null,
     whitelist: false,
     cta_enable: false,

@@ -37,7 +37,6 @@ import LocationButton from "./LocationButton";
 import { SolanaFMService } from "@/lib/services/solanaExplorerService";
 import Link from "next/link";
 import { useVisitorData } from "@fingerprintjs/fingerprintjs-pro-react";
-import { v4 as uuidv4 } from "uuid";
 import { shortenAddress } from "@/lib/shortenAddress";
 import ShowAirdropModal from "./modals/ShowAirdropModal";
 import ShowDonationModal from "./modals/ShowDonationModal";
@@ -1020,56 +1019,74 @@ export default function MintButton({
         borderRadius="9999px"
         className="w-full my-4 text-black hover:bg-gray-800 h-[44px] rounded font-bold"
         onClick={handleLightVersionClaim}
-      disabled={
-        isMinting ||
-        !isEligible ||
-        existingOrder?.status === "completed" ||
-        isLoading ||
-        !deviceId || 
-        !isEmail
-      }
-    >
-      {getButtonText()}
-    </WhiteBgShimmerButton>
-  );
+        disabled={
+          isMinting ||
+          !isEligible ||
+          existingOrder?.status === "completed" ||
+          isLoading ||
+          !deviceId ||
+          !isEmail
+        }
+      >
+        {getButtonText()}
+      </WhiteBgShimmerButton>
+    );
   };
 
-  const renderCompletedMint = () => (
-    <div className="flex flex-col items-center my-3 w-full">
-      {collectible.batch_listing_id && (
-        <Link
-          href={`/batch/${collectible.batch_listing_id}?search=${walletAddress}`}
-          className="w-full"
-          target="_blank"
-        >
-          <WhiteBgShimmerButton
-            borderRadius="6px"
-            className="w-full mb-4 hover:bg-gray-800 h-[44px] text-black rounded font-bold"
+  const renderCompletedMint = () => {
+    if (collectible.batch_listing_id) {
+      return (
+        <div className="flex flex-col items-center my-3 w-full">
+          <Link
+            href={`/batch/${collectible.batch_listing_id}?search=${walletAddress}`}
+            className="w-full"
+            target="_blank"
           >
-            VIEW LOYALTY CARD
-          </WhiteBgShimmerButton>
-        </Link>
-      )}
+            <WhiteBgShimmerButton
+              borderRadius="6px"
+              className="w-full mb-4 hover:bg-gray-800 h-[44px] text-black rounded font-bold"
+            >
+              VIEW LOYALTY CARD
+            </WhiteBgShimmerButton>
+          </Link>
 
-      <Link
-        href={SolanaFMService.getTransaction(
-          transactionSignature || existingOrder.mint_address
-        )}
-        target="_blank"
-        className="w-full"
-      >
-        <Button
-          className="w-full mb-4 hover:bg-gray-800 h-[44px] text-white rounded font-bold"
-        >
-          VIEW TRANSACTION
-        </Button>
-      </Link>
-    </div>
-  );
+          <Link
+            href={SolanaFMService.getTransaction(
+              transactionSignature || existingOrder.mint_address
+            )}
+            target="_blank"
+            className="w-full"
+          >
+            <Button className="w-full mb-4 hover:bg-gray-800 h-[44px] text-white rounded font-bold">
+              VIEW TRANSACTION
+            </Button>
+          </Link>
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex flex-col items-center my-3 w-full">
+          <Link
+            href={SolanaFMService.getTransaction(
+              transactionSignature || existingOrder.mint_address
+            )}
+            target="_blank"
+            className="w-full"
+          >
+            <WhiteBgShimmerButton
+              borderRadius="6px"
+              className="w-full mb-4 hover:bg-gray-800 h-[44px] text-black rounded font-bold"
+            >
+              VIEW TRANSACTION
+            </WhiteBgShimmerButton>
+          </Link>
+        </div>
+      );
+    }
+  };
 
   const renderCompletedClaim = () => (
     <div className="flex flex-col items-center my-3 w-full">
-
       {collectible.batch_listing_id && (
         <Link
           href={`/batch/${collectible.batch_listing_id}?search=${walletAddress}`}
@@ -1084,9 +1101,7 @@ export default function MintButton({
         </Link>
       )}
 
-      <Button
-        className="w-full mb-4 hover:bg-gray-800 h-[44px] text-white rounded font-bold"
-      >
+      <Button className="w-full mb-4 hover:bg-gray-800 h-[44px] text-white rounded font-bold">
         ALREADY CLAIMED
       </Button>
     </div>
