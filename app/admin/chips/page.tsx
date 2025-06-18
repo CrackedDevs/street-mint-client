@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical, Trash2, Search, X, ChevronDown, Edit } from "lucide-react";
+import Link from "next/link";
 import {
   getAllArtists,
   createChipLink,
@@ -653,9 +654,13 @@ export default function ChipsManagementPage() {
                   </TableCell>
                   <TableCell>
                     {chip.collectible_id ? (
-                      <div className="text-primary underline hover:text-primary/80 transition-colors">
+                      <Link 
+                        href={`/mint/${chip.collectible_id}`}
+                        className="text-primary underline hover:text-primary/80 transition-colors"
+                        target="_blank"
+                      >
                         {chip.metadata?.collectible_name || chip.collectible_id}
-                      </div>
+                      </Link>
                     ) : (
                       <span className="text-muted-foreground">Not assigned</span>
                     )}
