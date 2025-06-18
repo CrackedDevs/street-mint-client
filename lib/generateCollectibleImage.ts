@@ -99,6 +99,17 @@ export async function generateLabeledImageFile({
     displayHeight == null ||
     labelTextColor == null
   ) {
+    console.log("Invalid image metadata:", {
+      imageURL,
+      caption,
+      x,
+      y,
+      displayWidth,
+      displayHeight,
+      labelTextColor,
+      labelSize,
+      labelOnOutside
+    })
     return null
   }
 
@@ -139,11 +150,24 @@ export async function generateLabeledImageFile({
 
     const svg = `
       <svg width="${imgWidth + extraWidth}" height="${imgHeight + extraHeight}">
+        <defs>
+          <style type="text/css">
+            @font-face {
+              font-family: 'Inter';
+              src: url('data:font/ttf;base64,${fontBase64}') format('truetype');
+            }
+            .label-text {
+              font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif;
+              font-size: ${fontSize}px;
+              font-weight: 700;
+              fill: ${labelTextColor};
+            }
+          </style>
+        </defs>
         <rect x="${labelX}" y="${labelY}" rx="${borderRadius}" ry="${borderRadius}"
               width="${labelWidth}" height="${labelHeight}" fill="transparent" />
-        <text x="${labelX + labelWidth / 2}" y="${labelY + labelHeight / 2}"
-              font-size="${fontSize}" font-family="sans-serif" font-weight="semibold"
-              fill="${labelTextColor}" dominant-baseline="middle" text-anchor="middle">
+        <text x="${labelX + labelWidth / 2 - Math.round(4 * scaleX)}" y="${labelY + labelHeight / 2}" 
+              class="label-text" dominant-baseline="middle" text-anchor="middle">
           ${caption}
         </text>
       </svg>
