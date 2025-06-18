@@ -50,7 +50,10 @@ export async function GET(request: NextRequest) {
     const currentDayOfWeek = now.getUTCDay(); // 0-6, where 0 is Sunday
     const currentDayOfMonth = now.getUTCDate(); // 1-31
 
+    console.log("currentUTCHour", currentUTCHour);
     console.log("currentDayOfWeek", currentDayOfWeek);
+    console.log("currentDayOfMonth", currentDayOfMonth);
+    console.log("currentDate", currentDate);
 
     const processedListings = [];
 
