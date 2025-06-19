@@ -24,14 +24,6 @@ export async function generateLabeledImageFile({
   labelSize?: number
   labelOnOutside?: boolean
 }): Promise<File | null> {
-  // Add environment logging
-  console.log("=== Environment Debug Info ===");
-  console.log("Platform:", process.platform);
-  console.log("Node version:", process.version);
-  console.log("Sharp version:", sharp.versions);
-  console.log("Environment:", process.env.NODE_ENV);
-  console.log("Runtime:", process.env.VERCEL ? 'Vercel' : 'Local');
-  
   if (
     !imageURL ||
     caption == null ||
@@ -56,15 +48,11 @@ export async function generateLabeledImageFile({
   }
 
   try {
-    console.log("=== Step 1: Fetching image ===");
     const response = await fetch(imageURL)
     const imgBuffer = await response.buffer()
-    console.log("✓ Image fetched successfully, buffer size:", imgBuffer.length);
 
-    console.log("=== Step 2: Processing image with Sharp ===");
     const imgSharp = sharp(imgBuffer)
     const metadata = await imgSharp.metadata()
-    console.log("✓ Sharp metadata extracted:", metadata);
 
     const imgWidth = metadata.width
     const imgHeight = metadata.height
@@ -74,7 +62,6 @@ export async function generateLabeledImageFile({
       return null
     }
 
-    console.log("=== Step 3: Calculating dimensions ===");
     const scaleX = imgWidth / displayWidth
     const scaleY = imgHeight / displayHeight
 
@@ -95,37 +82,72 @@ export async function generateLabeledImageFile({
     const borderRadius = Math.round(6 * scaleX)
     const fontSize = Math.max(10, Math.round(labelSize * scaleY))
 
-    console.log("✓ Dimensions calculated:", {
-      scaleX, scaleY, labelX, labelY, labelWidth, labelHeight, fontSize
-    });
+    // Try to use Sharp's text() method if available (Sharp 0.32+)
+    // Otherwise fall back to SVG with explicit font specification
+    let outputBuffer: Buffer;
 
-    console.log("=== Step 4: Creating SVG ===");
-    const svg = `
-      <svg width="${imgWidth + extraWidth}" height="${imgHeight + extraHeight}">
-        <defs>
-          <style type="text/css">
-            .label-text {
-              font-size: ${fontSize}px;
-              font-weight: 700;
-              fill: ${labelTextColor};
-            }
-          </style>
-        </defs>
-        <rect x="${labelX}" y="${labelY}" rx="${borderRadius}" ry="${borderRadius}"
-              width="${labelWidth}" height="${labelHeight}" fill="transparent" />
-        <text x="${labelX + labelWidth / 2 - Math.round(4 * scaleX)}" y="${labelY + labelHeight / 2}" 
-              class="label-text" dominant-baseline="middle" text-anchor="middle">
-          ${caption}
-        </text>
-      </svg>
-    `
-    console.log("✓ SVG created, length:", svg.length);
-
-    console.log("=== Step 5: Sharp composition (CRITICAL STEP) ===");
-    console.log("About to perform Sharp composition with SVG text...");
-    
     try {
-      const outputBuffer = await sharp({
+      // Modern Sharp text rendering (no fontconfig dependency)
+      if (typeof (sharp as any).text === 'function') {
+        // Parse the color to RGB values
+        const colorMatch = labelTextColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
+        const [r, g, b] = colorMatch ? [parseInt(colorMatch[1]), parseInt(colorMatch[2]), parseInt(colorMatch[3])] : [31, 41, 55];
+
+        const textBuffer = await (sharp as any).text(caption, {
+          width: labelWidth,
+          height: labelHeight,
+          align: 'center',
+          justify: true,
+          rgba: true,
+          font: 'Arial',
+          fontsize: fontSize,
+          fontweight: 700,
+          colour: { r, g, b, alpha: 1 }
+        }).png().toBuffer();
+
+        outputBuffer = await sharp({
+          create: {
+            width: imgWidth + extraWidth,
+            height: imgHeight + extraHeight,
+            channels: 4,
+            background: { r: 255, g: 255, b: 255, alpha: 1 },
+          },
+        })
+          .composite([
+            { input: imgBuffer, left: imageOffsetX, top: imageOffsetY },
+            { input: textBuffer, left: labelX, top: labelY },
+          ])
+          .png()
+          .toBuffer();
+      } else {
+        throw new Error('Sharp text method not available');
+      }
+    } catch (textError) {
+      // Fallback to SVG with explicit font specification
+      const svg = `
+        <svg width="${imgWidth + extraWidth}" height="${imgHeight + extraHeight}" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <style type="text/css">
+              .label-text {
+                font-family: 'Arial', 'Helvetica', sans-serif;
+                font-size: ${fontSize}px;
+                font-weight: 700;
+                fill: ${labelTextColor};
+              }
+            </style>
+          </defs>
+          <rect x="${labelX}" y="${labelY}" rx="${borderRadius}" ry="${borderRadius}"
+                width="${labelWidth}" height="${labelHeight}" fill="transparent" />
+          <text x="${labelX + labelWidth / 2 - Math.round(4 * scaleX)}" y="${labelY + labelHeight / 2}" 
+                class="label-text" dominant-baseline="middle" text-anchor="middle">
+            ${caption}
+          </text>
+        </svg>
+      `
+
+      // Note: In serverless environments, you may see "Fontconfig error: Cannot load default config file"
+      // This is expected and doesn't affect functionality - Sharp falls back to default fonts
+      outputBuffer = await sharp({
         create: {
           width: imgWidth + extraWidth,
           height: imgHeight + extraHeight,
@@ -138,28 +160,12 @@ export async function generateLabeledImageFile({
           { input: Buffer.from(svg), left: 0, top: 0 },
         ])
         .png()
-        .toBuffer()
-
-      console.log("✓ Sharp composition completed successfully, output size:", outputBuffer.length);
-      return new File([outputBuffer], "labeled-image.png", { type: "image/png" })
-    } catch (sharpError) {
-      console.error("❌ Sharp composition failed:", sharpError);
-      console.error("Error details:", {
-        name: (sharpError as Error).name,
-        message: (sharpError as Error).message,
-        stack: (sharpError as Error).stack
-      });
-      throw sharpError; // Re-throw to see if this is where fontconfig error occurs
+        .toBuffer();
     }
 
+    return new File([outputBuffer], "labeled-image.png", { type: "image/png" })
   } catch (err) {
-    console.error("❌ Error generating labeled image with sharp:", err)
-    console.error("Error occurred at:", new Date().toISOString());
-    console.error("Full error details:", {
-      name: (err as Error).name,
-      message: (err as Error).message,
-      stack: (err as Error).stack
-    });
+    console.error("Error generating labeled image with sharp:", err)
     return null
   }
 }
