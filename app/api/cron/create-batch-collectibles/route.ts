@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
       .from("batch_listings")
       .select("*")
       .lte("batch_start_date", currentDate.toISOString())
-      .gte("batch_end_date", currentDate.toISOString());
+      .gte("batch_end_date", currentDate.toISOString())
+      .eq("id", 5787604996);
 
     if (fetchError) {
       console.error("Error fetching batch listings:", fetchError);
@@ -46,7 +47,8 @@ export async function GET(request: NextRequest) {
     }
 
     const now = new Date();
-    const currentUTCHour = now.getUTCHours();
+    // const currentUTCHour = now.getUTCHours();
+    const currentUTCHour = 2;
     const currentDayOfWeek = now.getUTCDay(); // 0-6, where 0 is Sunday
     const currentDayOfMonth = now.getUTCDate(); // 1-31
 
