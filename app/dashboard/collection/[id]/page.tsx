@@ -183,7 +183,7 @@ function Component() {
                 <AlertTriangleIcon className="mx-auto h-16 w-16 text-destructive mb-4" />
                 <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
                 <p className="text-gray-600 mb-6">
-                  You don't have permission to view this collection. Only the collection owner can access it.
+                  You don&apos;t have permission to view this collection. Only the collection owner can access it.
                 </p>
                 <Button 
                   onClick={() => router.push('/dashboard')}

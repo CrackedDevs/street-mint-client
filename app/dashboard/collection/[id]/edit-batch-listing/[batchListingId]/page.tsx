@@ -749,7 +749,7 @@ function CreateBatchListingPage() {
                 <AlertTriangleIcon className="mx-auto h-16 w-16 text-destructive mb-4" />
                 <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
                 <p className="text-muted-foreground mb-6">
-                  You don't have permission to edit this batch listing. Only the collection owner can make changes.
+                  You don&apos;t have permission to edit this batch listing. Only the collection owner can make changes.
                 </p>
                 <Button 
                   onClick={() => router.push('/dashboard')}
