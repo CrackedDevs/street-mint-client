@@ -12,7 +12,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Loader2, ArrowLeftIcon } from "lucide-react";
+import { Loader2, ArrowLeftIcon, AlertTriangleIcon } from "lucide-react";
 import { Collection, getCollectionById, updateCollection } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useParams } from "next/navigation";
@@ -25,45 +25,66 @@ function EditCollectionPage() {
   const { id } = useParams();
   const { toast } = useToast();
   const { publicKey } = useWallet();
+  const { userProfile } = useUserProfile();
   const [collectionName, setCollectionName] = useState("");
   const [collectionDescription, setCollectionDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const { userProfile } = useUserProfile();
 
+  // Authorization states
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [collection, setCollection] = useState<Collection | null>(null);
+
+  // Authorization check - verify collection belongs to the logged-in artist
   useEffect(() => {
-    async function fetchCollection() {
-      if (!id) return;
-      
+    const checkAuthorization = async () => {
+      if (!userProfile?.id || !id) {
+        setIsCheckingAuth(false);
+        return;
+      }
+
       try {
-        setIsLoading(true);
-        const collection = await getCollectionById(Number(id));
-        
-        if (collection) {
-          setCollectionName(collection.name);
-          setCollectionDescription(collection.description);
+        const fetchedCollection = await getCollectionById(Number(id));
+        if (fetchedCollection) {
+          setCollection(fetchedCollection as Collection);
+          const authorized = fetchedCollection.artist === userProfile.id;
+          setIsAuthorized(authorized);
+          
+          if (authorized) {
+            setCollectionName(fetchedCollection.name);
+            setCollectionDescription(fetchedCollection.description);
+          } else {
+            toast({
+              title: "Unauthorized",
+              description: "You don't have permission to edit this collection.",
+              variant: "destructive",
+            });
+          }
         } else {
+          setIsAuthorized(false);
           toast({
             title: "Error",
-            description: "Collection not found",
+            description: "Collection not found.",
             variant: "destructive",
           });
-          router.push("/dashboard/collection");
         }
       } catch (error) {
-        console.error("Error fetching collection:", error);
+        console.error("Error checking authorization:", error);
+        setIsAuthorized(false);
         toast({
           title: "Error",
-          description: "Failed to load collection",
+          description: "Failed to verify permissions.",
           variant: "destructive",
         });
       } finally {
+        setIsCheckingAuth(false);
         setIsLoading(false);
       }
-    }
+    };
 
-    fetchCollection();
-  }, [id, router, toast]);
+    checkAuthorization();
+  }, [userProfile?.id, id, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,10 +135,45 @@ function EditCollectionPage() {
     }
   };
 
-  if (isLoading) {
+  // Show loading while checking authorization
+  if (isCheckingAuth || isLoading) {
     return (
-      <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8 flex justify-center items-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-lg">
+              {isCheckingAuth ? "Verifying permissions..." : "Loading collection..."}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show unauthorized message if user doesn't have permission
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto">
+          <Card className="w-full shadow-lg">
+            <CardContent className="py-12">
+              <div className="text-center">
+                <AlertTriangleIcon className="mx-auto h-16 w-16 text-destructive mb-4" />
+                <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+                <p className="text-muted-foreground mb-6">
+                  You don't have permission to edit this collection. Only the collection owner can make changes.
+                </p>
+                <Button 
+                  onClick={() => router.push('/dashboard')}
+                  variant="outline"
+                >
+                  Return to Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }

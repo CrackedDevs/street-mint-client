@@ -9,6 +9,8 @@ import {
   MapPin,
   Calendar,
   Search,
+  Loader2,
+  AlertTriangleIcon
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +32,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import withAuth from "../../withAuth";
 import { TimeService } from "@/lib/services/timeService";
+import { useUserProfile } from "@/app/providers/UserProfileProvider";
+import { useToast } from "@/hooks/use-toast";
 
 type CollectionWithIds = Omit<Collection, "collectibles">;
 
@@ -51,14 +55,67 @@ const fetchBatchListingsByCollectionId = async (collectionId: number): Promise<B
 function Component() {
   const { id } = useParams();
   const router = useRouter();
+  const { userProfile } = useUserProfile();
+  const { toast } = useToast();
   const [collection, setCollection] = useState<CollectionWithIds | null>(null);
   const [collectibles, setCollectibles] = useState<Collectible[]>([]);
   const [filteredCollectibles, setFilteredCollectibles] = useState<Collectible[]>([]);
   const [batchListings, setBatchListings] = useState<BatchListing[] | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Authorization states
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Authorization check - verify collection belongs to the logged-in artist
+  useEffect(() => {
+    const checkAuthorization = async () => {
+      if (!userProfile?.id || !id) {
+        setIsCheckingAuth(false);
+        return;
+      }
+
+      try {
+        const collectionData = await getCollectionById(Number(id));
+        if (collectionData) {
+          const authorized = collectionData.artist === userProfile.id;
+          setIsAuthorized(authorized);
+          
+          if (!authorized) {
+            toast({
+              title: "Unauthorized",
+              description: "You don't have permission to view this collection.",
+              variant: "destructive",
+            });
+          }
+        } else {
+          setIsAuthorized(false);
+          toast({
+            title: "Error",
+            description: "Collection not found.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error checking authorization:", error);
+        setIsAuthorized(false);
+        toast({
+          title: "Error",
+          description: "Failed to verify permissions.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuthorization();
+  }, [userProfile?.id, id, toast]);
+
   useEffect(() => {
     async function fetchCollectionAndCollectibles() {
+      if (!isAuthorized) return;
+
       const collectionData = await getCollectionById(Number(id));
 
       if (!collectionData) {
@@ -84,7 +141,7 @@ function Component() {
       setBatchListings(batchListingsData);
     }
     fetchCollectionAndCollectibles();
-  }, [id]);
+  }, [id, isAuthorized]);
 
   // Filter collectibles based on search query
   useEffect(() => {
@@ -100,6 +157,47 @@ function Component() {
       setFilteredCollectibles(filtered);
     }
   }, [searchQuery, collectibles]);
+
+  // Show loading while checking authorization
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-lg">Verifying permissions...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show unauthorized message if user doesn't have permission
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <Card className="w-full shadow-lg">
+            <CardContent className="py-12">
+              <div className="text-center">
+                <AlertTriangleIcon className="mx-auto h-16 w-16 text-destructive mb-4" />
+                <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+                <p className="text-gray-600 mb-6">
+                  You don't have permission to view this collection. Only the collection owner can access it.
+                </p>
+                <Button 
+                  onClick={() => router.push('/dashboard')}
+                  variant="outline"
+                >
+                  Return to Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (!collection) {
     return (

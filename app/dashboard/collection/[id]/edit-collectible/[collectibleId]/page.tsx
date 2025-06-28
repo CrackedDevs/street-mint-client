@@ -33,7 +33,9 @@ import {
 import {
   Brand,
   Collectible,
+  Collection,
   fetchCollectibleById,
+  getCollectionById,
   QuantityType,
   Sponsor,
   updateCollectible,
@@ -47,7 +49,8 @@ import {
   MapPinIcon,
   PlusCircleIcon,
   UploadIcon,
-  XCircleIcon
+  XCircleIcon,
+  AlertTriangleIcon
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -94,9 +97,76 @@ function EditCollectiblePage() {
   const [isLoadingChips, setIsLoadingChips] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  // Authorization states
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [collection, setCollection] = useState<Collection | null>(null);
+
+  // Authorization check - verify collection belongs to the logged-in artist
   useEffect(() => {
-    // Fetch the collectible data
+    const checkAuthorization = async () => {
+      if (!userProfile?.id || !collectibleId) {
+        setIsCheckingAuth(false);
+        return;
+      }
+
+      try {
+        // First fetch the collectible to get the collection_id
+        const fetchedCollectible = await fetchCollectibleById(Number(collectibleId));
+        if (!fetchedCollectible) {
+          setIsAuthorized(false);
+          toast({
+            title: "Error",
+            description: "Collectible not found.",
+            variant: "destructive",
+          });
+          setIsCheckingAuth(false);
+          return;
+        }
+
+        // Then fetch the collection using the collection_id from the collectible
+        const fetchedCollection = await getCollectionById(fetchedCollectible.collection_id);
+        if (fetchedCollection) {
+          setCollection(fetchedCollection as Collection);
+          const authorized = fetchedCollection.artist === userProfile.id;
+          setIsAuthorized(authorized);
+          
+          if (!authorized) {
+            toast({
+              title: "Unauthorized",
+              description: "You don't have permission to edit this collectible.",
+              variant: "destructive",
+            });
+          }
+        } else {
+          setIsAuthorized(false);
+          toast({
+            title: "Error",
+            description: "Collection not found.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error checking authorization:", error);
+        setIsAuthorized(false);
+        toast({
+          title: "Error",
+          description: "Failed to verify permissions.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuthorization();
+  }, [userProfile?.id, collectibleId, toast]);
+
+  useEffect(() => {
+    // Fetch the collectible data - only after authorization is confirmed
     const fetchCollectible = async () => {
+      if (!isAuthorized) return;
+      
       const fetchedCollectible = await fetchCollectibleById(
         Number(collectibleId)
       );
@@ -142,12 +212,12 @@ function EditCollectiblePage() {
     };
 
     fetchCollectible();
-  }, [collectibleId, collectionId]);
+  }, [collectibleId, isAuthorized]);
 
   // Fetch sponsors for the artist
   useEffect(() => {
     const fetchSponsors = async () => {
-      if (userProfile?.id) {
+      if (userProfile?.id && isAuthorized) {
         setIsLoadingSponsors(true);
         try {
           const fetchedSponsors = await getSponsorsByArtistId(userProfile.id);
@@ -166,12 +236,12 @@ function EditCollectiblePage() {
     };
 
     fetchSponsors();
-  }, [userProfile?.id, toast]);
+  }, [userProfile?.id, isAuthorized, toast]);
 
   // Fetch available chips for the artist
   useEffect(() => {
     const fetchArtistChips = async () => {
-      if (userProfile?.id) {
+      if (userProfile?.id && isAuthorized) {
         setIsLoadingChips(true);
         try {
           const chips = await getChipLinksByArtistId(userProfile.id);
@@ -203,7 +273,7 @@ function EditCollectiblePage() {
     };
 
     fetchArtistChips();
-  }, [userProfile?.id, collectible?.id, toast]);
+  }, [userProfile?.id, isAuthorized, collectible?.id, toast]);
 
   const handleCollectibleChange = (field: keyof Collectible, value: any) => {
     if (field === "mint_start_date") {
@@ -412,6 +482,47 @@ function EditCollectiblePage() {
     }
   };
 
+  // Show loading while checking authorization
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-lg">Verifying permissions...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show unauthorized message if user doesn't have permission
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <Card className="w-full shadow-lg">
+            <CardContent className="py-12">
+              <div className="text-center">
+                <AlertTriangleIcon className="mx-auto h-16 w-16 text-destructive mb-4" />
+                <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+                <p className="text-muted-foreground mb-6">
+                  You don't have permission to edit this collectible. Only the collection owner can make changes.
+                </p>
+                <Button 
+                  onClick={() => router.push('/dashboard')}
+                  variant="outline"
+                >
+                  Return to Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (!collectible) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -463,7 +574,7 @@ function EditCollectiblePage() {
                 <Button
                   onClick={() => {
                     setShowSuccessModal(false);
-                    router.push(`/dashboard/collection/${collectionId}`);
+                    router.push(`/dashboard/collection/${collection?.id || ''}`);
                   }}
                   className="w-full bg-primary hover:bg-primary/90 text-white h-12"
                 >
@@ -478,7 +589,7 @@ function EditCollectiblePage() {
       <div className="max-w-4xl mx-auto">
         <Button
           variant="outline"
-          onClick={() => router.push(`/dashboard/collection/${collectionId}`)}
+          onClick={() => router.push(`/dashboard/collection/${collection?.id || ''}`)}
           className="mb-6"
         >
           <ArrowLeftIcon className="h-4 w-4 mr-2" />
