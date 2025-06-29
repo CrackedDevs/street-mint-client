@@ -32,7 +32,9 @@ import {
 import {
   BatchListing,
   Brand,
+  Collection,
   getBatchListingById,
+  getCollectionById,
   getLatestCollectibleByBatchListingId,
   QuantityType,
   Sponsor,
@@ -51,7 +53,8 @@ import {
   MapPinIcon,
   PlusCircleIcon,
   UploadIcon,
-  XCircleIcon
+  XCircleIcon,
+  AlertTriangleIcon
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -94,6 +97,11 @@ function CreateBatchListingPage() {
   const [frequencyType, setFrequencyType] = useState<string>("daily");
   const [selectedWeekDays, setSelectedWeekDays] = useState<number[]>([]);
   const [selectedMonthDays, setSelectedMonthDays] = useState<number[]>([]);
+  
+  // Authorization states
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [collection, setCollection] = useState<Collection | null>(null);
 
   const [batchListing, setBatchListing] = useState<BatchListing>({
     id: NumericUUID(),
@@ -162,10 +170,70 @@ function CreateBatchListingPage() {
   });
   const imageRef = useRef<HTMLImageElement>(null);
 
+  // Authorization check - verify collection belongs to the logged-in artist
+  useEffect(() => {
+    const checkAuthorization = async () => {
+      if (!userProfile?.id || !batchListingId) {
+        setIsCheckingAuth(false);
+        return;
+      }
+
+      try {
+        // First fetch the batch listing to get the collection_id
+        const fetchedBatchListing = await getBatchListingById(Number(batchListingId));
+        if (!fetchedBatchListing) {
+          setIsAuthorized(false);
+          toast({
+            title: "Error",
+            description: "Batch listing not found.",
+            variant: "destructive",
+          });
+          setIsCheckingAuth(false);
+          return;
+        }
+
+        // Then fetch the collection using the collection_id from the batch listing
+        const fetchedCollection = await getCollectionById(fetchedBatchListing.collection_id);
+        if (fetchedCollection) {
+          setCollection(fetchedCollection as Collection);
+          const authorized = fetchedCollection.artist === userProfile.id;
+          setIsAuthorized(authorized);
+          
+          if (!authorized) {
+            toast({
+              title: "Unauthorized",
+              description: "You don't have permission to edit this batch listing.",
+              variant: "destructive",
+            });
+          }
+        } else {
+          setIsAuthorized(false);
+          toast({
+            title: "Error",
+            description: "Collection not found.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error checking authorization:", error);
+        setIsAuthorized(false);
+        toast({
+          title: "Error",
+          description: "Failed to verify permissions.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuthorization();
+  }, [userProfile?.id, batchListingId, toast]);
+
   // Fetch sponsors for the artist
   useEffect(() => {
     const fetchSponsors = async () => {
-      if (userProfile?.id) {
+      if (userProfile?.id && isAuthorized) {
         setIsLoadingSponsors(true);
         try {
           const fetchedSponsors = await getSponsorsByArtistId(userProfile.id);
@@ -184,11 +252,11 @@ function CreateBatchListingPage() {
     };
 
     fetchSponsors();
-  }, [userProfile?.id, toast]);
+  }, [userProfile?.id, isAuthorized, toast]);
 
   useEffect(() => {
     async function fetchBatchListing() {
-      if (batchListingId && userProfile?.id) {
+      if (batchListingId && userProfile?.id && isAuthorized) {
         try {
           const id = parseInt(batchListingId as string);
 
@@ -246,12 +314,12 @@ function CreateBatchListingPage() {
     }
 
     fetchBatchListing();
-  }, [userProfile?.id]);
+  }, [userProfile?.id, isAuthorized, batchListingId]);
 
   // Fetch chips for the artist
   useEffect(() => {
     const fetchArtistChips = async () => {
-      if (userProfile?.id) {
+      if (userProfile?.id && isAuthorized) {
         setIsLoadingChips(true);
         try {
           const chips = await getChipLinksByArtistId(userProfile.id);
@@ -291,7 +359,7 @@ function CreateBatchListingPage() {
     };
 
     fetchArtistChips();
-  }, [userProfile?.id, batchListingId, toast]);
+  }, [userProfile?.id, isAuthorized, batchListingId, toast]);
 
   const handleBatchListingChange = (field: keyof BatchListing, value: any) => {
     if (field === "name" && value.length > 32 || field === "collectible_name" && value.length > 32) {
@@ -656,6 +724,47 @@ function CreateBatchListingPage() {
     }
   };
 
+  // Show loading while checking authorization
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-lg">Verifying permissions...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show unauthorized message if user doesn't have permission
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <Card className="w-full shadow-lg">
+            <CardContent className="py-12">
+              <div className="text-center">
+                <AlertTriangleIcon className="mx-auto h-16 w-16 text-destructive mb-4" />
+                <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+                <p className="text-muted-foreground mb-6">
+                  You don&apos;t have permission to edit this batch listing. Only the collection owner can make changes.
+                </p>
+                <Button 
+                  onClick={() => router.push('/dashboard')}
+                  variant="outline"
+                >
+                  Return to Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20 py-12 px-4 sm:px-6 lg:px-8">
       <AnimatePresence>
@@ -701,7 +810,7 @@ function CreateBatchListingPage() {
                 <Button
                   onClick={() => {
                     setShowSuccessModal(false);
-                    router.push(`/dashboard/collection/${collectionId}`);
+                    router.push(`/dashboard/collection/${collection?.id || ''}`);
                   }}
                   className="w-full bg-primary hover:bg-primary/90 text-white h-12"
                 >
@@ -715,7 +824,7 @@ function CreateBatchListingPage() {
       <div className="max-w-4xl mx-auto">
         <Button
           variant="ghost"
-          onClick={() => router.push(`/dashboard/collection/${collectionId}`)}
+          onClick={() => router.push(`/dashboard/collection/${collection?.id || ''}`)}
           className="mb-8"
         >
           <ArrowLeftIcon className="mr-2 h-4 w-4" />
